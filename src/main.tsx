@@ -6,6 +6,9 @@ import './index.css';
 
 import App from './App';
 import Home from './pages/Home';
+import Podcast from './pages/Podcast';
+import Tienda from './pages/Tienda';
+import SobreMi from './pages/SobreMi';
 
 const router = createBrowserRouter([
   {
@@ -16,7 +19,18 @@ const router = createBrowserRouter([
         index: true,
         element: <Home />,
       },
-      // Aquí se añadirán otras rutas como /productos, /sobre-mi, etc.
+      {
+        path: 'podcast',
+        element: <Podcast />,
+      },
+      {
+        path: 'tienda',
+        element: <Tienda />,
+      },
+      {
+        path: 'sobre-mi',
+        element: <SobreMi />,
+      },
     ],
   },
 ]);
