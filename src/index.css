@@ -1,25 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap");
 @import "tailwindcss";
+
+.font-dancing-script {
+  font-family: "Dancing Script", cursive;
+}
 
 @theme {
   /* --- PALETA DE COLORES PRINCIPAL --- */
 
   /* 1. Primario (Botones/Acciones) */
-  --color-primary: #a4ac85;
+  --color-primary: #a68a63;
 
   /* 2. Secundario (Enlaces/Encabezados) */
   --color-secondary: #666d4b;
 
   /* 3. Terciario (Acento cálido) */
-  --color-tertiary: #a68a63;
+  --color-tertiary: #a4ac85;
 
   /* 4. Acento (Detalles/Bordes) */
   --color-accent: #562f10;
 
-
   /* --- COLORES DE ESTADO Y NEUTROS --- */
 
   /* Para notificaciones, alertas o información neutral. */
-  --color-info: #778da9;          /* Azul Pizarra */
+  --color-info: #778da9; /* Azul Pizarra */
 
   /* Fondo para el header */
   --color-header-bg: #c1c4a7;
@@ -46,8 +50,13 @@ body {
 /* --- ANIMACIONES PERSONALIZADAS --- */
 
 @keyframes blink {
-  from, to { border-color: transparent }
-  50% { border-color: var(--color-primary); }
+  from,
+  to {
+    border-color: transparent;
+  }
+  50% {
+    border-color: var(--color-primary);
+  }
 }
 
 @keyframes fadeInUp {
@@ -71,7 +80,8 @@ body {
 }
 
 @keyframes gentle-wind {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0) rotate(0deg);
   }
   50% {
@@ -80,8 +90,12 @@ body {
 }
 
 @keyframes typing {
-  from { width: 0 }
-  to { width: 100% }
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes flow-across {
@@ -89,7 +103,8 @@ body {
     transform: translateX(-150px) rotate(-20deg);
     opacity: 0;
   }
-  10%, 90% {
+  10%,
+  90% {
     opacity: 1;
   }
   100% {
@@ -99,7 +114,38 @@ body {
 }
 
 @keyframes fadeIn {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pen-write {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+@keyframes typing-yo-soy {
+  from {
+    width: 0;
+  }
+  to {
+    width: 6ch;
+  } /* 6 characters for "Yo soy" */
+}
+
+@keyframes typing-yo-soy {
+  from {
+    width: 0;
+  }
+  to {
+    width: 7ch;
+  } /* 6 characters for "Yo soy" */
 }
 
 .animate-blink {
@@ -107,7 +153,11 @@ body {
 }
 
 .animated-gradient-bg {
-  background: radial-gradient(circle, var(--color-primary), var(--color-header-bg));
+  background: radial-gradient(
+    circle,
+    var(--color-primary),
+    var(--color-header-bg)
+  );
   background-size: 200% 200%;
   animation: animated-gradient 20s ease infinite;
 }
@@ -137,8 +187,12 @@ body {
   }
 }
 
+.text-shadow-light {
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
 .hero-frame {
-  background-image: url('/plant-frame-placeholder.svg');
+  background-image: url("/plant-frame-placeholder.svg");
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
@@ -146,6 +200,6 @@ body {
 
 @media (max-width: 768px) {
   .hero-frame {
-    background-image: url('/plant-frame-mobile-placeholder.svg');
+    background-image: url("/plant-frame-mobile-placeholder.svg");
   }
 }
