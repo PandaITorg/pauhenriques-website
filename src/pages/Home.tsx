@@ -1,7 +1,12 @@
+import { FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { useInView } from "react-intersection-observer";
 import PauImage from "../assets/pau-no-bg.png";
 import marcoSuperior from "../assets/marco-superior.svg";
 import marcoInferior from "../assets/marco-inferior.svg";
 import marcoDerecho from "../assets/marco-derecho.svg";
+import sobreMiPauForrest from "../assets/sobremi-Pau-Forrest.jpg";
+import sobreMiJorgeYPau from "../assets/sobre-mi-Jorge-y-Pau.jpg";
+import branch from "../assets/branch.svg";
 
 const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
@@ -40,11 +45,33 @@ const MistDivider = () => (
   </div>
 );
 
+interface AnimatedPolaroidProps {
+  src: string;
+  alt: string;
+  rotation: string;
+}
+
+const AnimatedPolaroid = ({ src, alt, rotation }: AnimatedPolaroidProps) => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.5,
+  });
+
+  return (
+    <div ref={ref} className={`relative w-64 mx-auto ${inView ? "fall-in" : "opacity-0"}`}>
+      <img src={branch} alt="branch" className="absolute -top-10 -left-10 w-24 h-24 transform -rotate-45" />
+      <div className={`polaroid ${rotation}`}>
+        <img src={src} alt={alt} className="w-full h-auto" />
+      </div>
+    </div>
+  );
+};
+
 export default function Home() {
   return (
     <div className="overflow-x-hidden">
       <section className="relative min-h-[calc(100vh-5rem)] flex items-end">
-        {/* Background elements */}
+                {/* Background elements */}
         <div className="absolute inset-0 animated-gradient-bg z-0"></div>
 
         {/* Adaptive SVG Frame */}
@@ -165,22 +192,28 @@ export default function Home() {
               style={{ animation: "fadeInUp 1s 2.9s ease-out forwards" }}
             >
               <a
-                href="/productos"
-                className="bg-background text-text-main font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out hover:brightness-125 hover:scale-105 active:scale-95 transform"
+                href="/tienda"
+                className="bg-primary text-white font-bold py-3 px-8 rounded-full flex items-center space-x-2 transition-all duration-300 ease-in-out hover:brightness-110 hover:scale-105 active:scale-95 transform"
               >
-                Ve a mi tienda
+                <span>Ve a mi tienda</span>
               </a>
               <a
-                href="#sobre-mi"
-                className="bg-transparent border-2 border-secondary text-secondary font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out hover:bg-secondary hover:text-text-main hover:scale-105 active:scale-95 transform"
+                href="https://www.instagram.com/pau_henriques/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-secondary text-white font-bold py-3 px-8 rounded-full flex items-center space-x-2 transition-all duration-300 ease-in-out hover:brightness-110 hover:scale-105 active:scale-95 transform"
               >
-                Sobre Mí
+                <span>Sígueme</span>
+                <FaInstagram />
               </a>
               <a
-                href="/contacto"
-                className="bg-transparent border-2 border-secondary text-secondary font-bold py-3 px-8 rounded-lg transition-all duration-300 ease-in-out hover:bg-secondary hover:text-text-main hover:scale-105 active:scale-95 transform"
+                href="https://wa.me/593991712532"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-tertiary text-white font-bold py-3 px-8 rounded-full flex items-center space-x-2 transition-all duration-300 ease-in-out hover:brightness-110 hover:scale-105 active:scale-95 transform"
               >
-                Contáctame
+                <span>Contáctame</span>
+                <FaWhatsapp />
               </a>
             </div>
           </div>
@@ -199,15 +232,33 @@ export default function Home() {
         <MistDivider />
       </section>
 
-      <section id="sobre-mi" className="bg-header-bg py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold text-text-inverted mb-4">
-            Sobre Mí
-          </h2>
-          <p className="text-lg text-text-inverted max-w-3xl mx-auto">
-            Aquí va el texto sobre Pau Henriques. Una descripción de su
-            historia, su misión y su pasión por la vida sin tóxicos.
-          </p>
+      <section id="sobre-mi" className="bg-background py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl font-bold text-text-main mb-12 text-center">Sobre Mí</h2>
+            
+            <div className="space-y-12">
+              <p className="text-lg text-text-secondary leading-relaxed">
+                Hace 15 años me diagnosticaron Psoriasis en la piel, una condición “incurable” y en ese momento empezó mi interés por entender temas que van más allá de un diagnóstico.
+              </p>
+
+              <AnimatedPolaroid src={sobreMiPauForrest} alt="Pau en el bosque" rotation="-rotate-3" />
+
+              <p className="text-lg text-text-secondary leading-relaxed">
+                Tuve un gran despertar y una curiosidad incansable en aprender cómo poder sanar mi cuerpo de adentro para afuera. En como vivir un estilo de vida libre de tóxicos.
+              </p>
+
+              <p className="text-lg text-text-secondary leading-relaxed">
+                Actualmente trabajo junto a mi compañero de vida y esposo Jorge, liderando la Marca Carico en el Ecuador. Nos enfocamos en brindar una mejor salud y estilo de vida a todos nuestros clientes.
+              </p>
+
+              <AnimatedPolaroid src={sobreMiJorgeYPau} alt="Jorge y Pau" rotation="rotate-2" />
+
+              <p className="text-lg text-text-secondary leading-relaxed">
+                Nuestra filosofía y nuestros productos han mejorado la salud y el estilo de vida que tenemos junto con el de cientos de clientes con testimonios de vida impactantes.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </div>
