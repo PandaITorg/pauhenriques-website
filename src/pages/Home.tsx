@@ -1,5 +1,6 @@
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { useInView } from "react-intersection-observer";
+import { Link } from "react-router";
 import PauImage from "../assets/pau-no-bg.png";
 import marcoSuperior from "../assets/marco-superior.svg";
 import marcoInferior from "../assets/marco-inferior.svg";
@@ -7,6 +8,8 @@ import marcoDerecho from "../assets/marco-derecho.svg";
 import sobreMiPauForrest from "../assets/sobremi-Pau-Forrest.jpg";
 import sobreMiJorgeYPau from "../assets/sobre-mi-Jorge-y-Pau.jpg";
 import branch from "../assets/branch.svg";
+import podcastImage from '../assets/de-toxica-a-sin-toxicos.jpg';
+import Testimonios from '../components/Testimonios';
 
 const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
@@ -67,11 +70,56 @@ const AnimatedPolaroid = ({ src, alt, rotation }: AnimatedPolaroidProps) => {
   );
 };
 
+const PodcastSection = () => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.2,
+  });
+
+  return (
+    <section ref={ref} className="bg-tertiary py-16 overflow-hidden">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <div
+            className={`md:w-1/2 text-center md:text-left transition-all duration-1000 ${
+              inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
+            }`}
+          >
+            <h2 className="text-4xl md:text-5xl font-bold text-text-inverted mb-4">
+              De Tóxica a Sin Tóxicos
+            </h2>
+            <p className="text-lg text-text-inverted mb-6">
+              En este espacio vamos a tocar temas sobre salud, bienestar y desarrollo personal de una forma muy real y vulnerable. Estaré acompañada algunas veces de mi esposo, invitados especiales y gurus de temas de interés.
+            </p>
+            <Link
+              to="/podcast"
+              className="inline-block bg-primary text-white font-bold py-3 px-8 rounded-full transition-all duration-300 ease-in-out hover:brightness-110 hover:scale-105 active:scale-95 transform"
+            >
+              Ver episodios
+            </Link>
+          </div>
+          <div
+            className={`md:w-1/2 transition-all duration-1000 delay-300 ${
+              inView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
+            }`}
+          >
+            <img
+              src={podcastImage}
+              alt="De Tóxica a Sin Tóxicos Podcast"
+              className="rounded-lg shadow-2xl w-full h-auto object-cover"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function Home() {
   return (
     <div className="overflow-x-hidden">
       <section className="relative min-h-[calc(100vh-5rem)] flex items-end">
-                {/* Background elements */}
+        {/* Background elements */}
         <div className="absolute inset-0 animated-gradient-bg z-0"></div>
 
         {/* Adaptive SVG Frame */}
@@ -261,6 +309,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <PodcastSection />
+      <Testimonios />
     </div>
   );
 }

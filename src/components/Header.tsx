@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import logo from '../assets/pauhenriques-lightest-green.png';
 import { FaWhatsapp, FaBars, FaTimes } from 'react-icons/fa';
 
@@ -16,21 +17,21 @@ export default function Header() {
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div>
-          <a href="/">
+          <Link to="/">
             <img src={logo} alt="Pau Henriques Logo" className="h-16" />
-          </a>
+          </Link>
         </div>
 
         {/* Desktop Navigation Links */}
         <ul className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
             <li key={link.href}>
-              <a
-                href={link.href}
+              <Link
+                to={link.href}
                 className="text-text-main transform transition-all duration-300 hover:text-primary hover:scale-105"
               >
                 {link.text}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
@@ -66,19 +67,20 @@ export default function Header() {
           <ul className="flex flex-col items-center space-y-4 py-4">
             {navLinks.map((link) => (
               <li key={link.href}>
-                <a
-                  href={link.href}
+                <Link
+                  to={link.href}
                   className="text-text-main transform transition-all duration-300 hover:text-primary hover:scale-105"
+                  onClick={() => setIsMenuOpen(false)} // Close menu on click
                 >
                   {link.text}
-                </a>
+                </Link>
               </li>
             ))}
             <li>
               <a
                 href="https://wa.me/593991712532"
-            target="_blank"
-            rel="noopener noreferrer"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-primary text-white px-6 py-2 rounded-full flex items-center space-x-2 transform transition-all duration-300 hover:scale-105"
               >
                 <span>Contáctame</span>
