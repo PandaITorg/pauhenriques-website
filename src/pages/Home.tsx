@@ -10,6 +10,7 @@ import sobreMiJorgeYPau from "../assets/sobre-mi-Jorge-y-Pau.jpg";
 import branch from "../assets/branch.svg";
 import podcastImage from '../assets/de-toxica-a-sin-toxicos.jpg';
 import Testimonios from '../components/Testimonios';
+import ProductVideos from '../components/ProductVideos';
 
 const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
@@ -77,7 +78,7 @@ const PodcastSection = () => {
   });
 
   return (
-    <section ref={ref} className="bg-tertiary py-16 overflow-hidden">
+    <section ref={ref} className="bg-tertiary py-16 overflow-hidden relative">
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <div
@@ -111,6 +112,7 @@ const PodcastSection = () => {
           </div>
         </div>
       </div>
+      <MistDivider />
     </section>
   );
 };
@@ -280,7 +282,7 @@ export default function Home() {
         <MistDivider />
       </section>
 
-      <section id="sobre-mi" className="bg-background py-20">
+      <section id="sobre-mi" className="bg-background py-20 relative">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl font-bold text-text-main mb-12 text-center">Sobre Mí</h2>
@@ -308,7 +310,10 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <MistDivider />
       </section>
+
+      <ProductVideos />
 
       <PodcastSection />
       <Testimonios />

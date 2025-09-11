@@ -233,7 +233,7 @@ body {
 /* --- Testimonial Branch Animations --- */
 .testimonial-branch-container {
   position: absolute;
-  top: 10rem; /* Adjust as needed */
+  top: 10rem; /* Fixed position from top */
   width: 80vw; /* Occupy 80% of viewport width */
   max-width: 600px; /* Add a max-width for very large screens */
   will-change: transform;
@@ -298,21 +298,21 @@ body {
 /* Keyframes */
 @keyframes grow-branch {
   from { transform: translateX(-110%); }
-  to { transform: translateX(0); }
+  to { transform: translateX(-2%); }
 }
 
 @keyframes retract-branch {
-  from { transform: translateX(0); }
+  from { transform: translateX(-2%); }
   to { transform: translateX(-110%); }
 }
 
 @keyframes grow-branch-right {
   from { transform: translateX(110%); }
-  to { transform: translateX(0); }
+  to { transform: translateX(2%); }
 }
 
 @keyframes retract-branch-right {
-  from { transform: translateX(0); }
+  from { transform: translateX(2%); }
   to { transform: translateX(110%); }
 }
 

@@ -13,7 +13,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-background shadow-md h-20 sticky top-0 z-50">
+        <header className="bg-background shadow-md h-20 sticky top-0 z-[51]">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div>
