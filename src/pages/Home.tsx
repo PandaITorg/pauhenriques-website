@@ -16,7 +16,10 @@ const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
     <div
       className="absolute inset-0"
-      style={{ animation: "flow-mist 20s linear infinite alternate", willChange: "transform" }}
+      style={{
+        animation: "flow-mist 20s linear infinite alternate",
+        willChange: "transform",
+      }}
     >
       <svg
         viewBox="0 0 2000 150"
@@ -32,7 +35,10 @@ const MistDivider = () => (
     </div>
     <div
       className="absolute inset-0"
-      style={{ animation: "flow-mist 30s linear infinite alternate-reverse", willChange: "transform" }}
+      style={{
+        animation: "flow-mist 30s linear infinite alternate-reverse",
+        willChange: "transform",
+      }}
     >
       <svg
         viewBox="0 0 2000 150"
@@ -85,7 +91,10 @@ const PodcastSection = () => {
   });
 
   return (
-    <section ref={ref} className="bg-tertiary py-16 overflow-hidden relative">
+    <section
+      ref={ref}
+      className="bg-tertiary pt-16 pb-32 overflow-hidden relative"
+    >
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <div
