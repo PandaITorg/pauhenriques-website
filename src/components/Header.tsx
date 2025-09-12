@@ -1,19 +1,19 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
-import logo from '../assets/pauhenriques-lightest-green.png';
-import { FaWhatsapp, FaBars, FaTimes } from 'react-icons/fa';
+import { useState } from "react";
+import { Link } from "react-router";
+import logo from "../assets/pauhenriques-lightest-green.png";
+import { FaWhatsapp, FaBars, FaTimes } from "react-icons/fa";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const navLinks = [
-    { href: '/podcast', text: 'Podcast' },
-    { href: '/tienda', text: 'Tienda' },
-    { href: '/sobre-mi', text: 'Sobre Mí' },
+    { href: "/podcast", text: "Podcast" },
+    { href: "/tienda", text: "Tienda" },
+    { href: "/sobre-mi", text: "Sobre Mí" },
   ];
 
   return (
-        <header className="bg-background shadow-md h-20 sticky top-0 z-[51]">
+    <header className="bg-background shadow-md h-20 sticky top-0 z-[51]">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <div>

@@ -8,15 +8,15 @@ import marcoDerecho from "../assets/marco-derecho.svg";
 import sobreMiPauForrest from "../assets/sobremi-Pau-Forrest.jpg";
 import sobreMiJorgeYPau from "../assets/sobre-mi-Jorge-y-Pau.jpg";
 import branch from "../assets/branch.svg";
-import podcastImage from '../assets/de-toxica-a-sin-toxicos.jpg';
-import Testimonios from '../components/Testimonios';
-import ProductVideos from '../components/ProductVideos';
+import podcastImage from "../assets/de-toxica-a-sin-toxicos.jpg";
+import Testimonios from "../components/Testimonios";
+import ProductVideos from "../components/ProductVideos";
 
 const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
     <div
       className="absolute inset-0"
-      style={{ animation: "flow-mist 20s linear infinite" }}
+      style={{ animation: "flow-mist 20s linear infinite alternate", willChange: "transform" }}
     >
       <svg
         viewBox="0 0 2000 150"
@@ -32,7 +32,7 @@ const MistDivider = () => (
     </div>
     <div
       className="absolute inset-0"
-      style={{ animation: "flow-mist 30s linear infinite reverse" }}
+      style={{ animation: "flow-mist 30s linear infinite alternate-reverse", willChange: "transform" }}
     >
       <svg
         viewBox="0 0 2000 150"
@@ -62,8 +62,15 @@ const AnimatedPolaroid = ({ src, alt, rotation }: AnimatedPolaroidProps) => {
   });
 
   return (
-    <div ref={ref} className={`relative w-64 mx-auto ${inView ? "fall-in" : "opacity-0"}`}>
-      <img src={branch} alt="branch" className="absolute -top-10 -left-10 w-24 h-24 transform -rotate-45" />
+    <div
+      ref={ref}
+      className={`relative w-64 mx-auto ${inView ? "fall-in" : "opacity-0"}`}
+    >
+      <img
+        src={branch}
+        alt="branch"
+        className="absolute -top-10 -left-10 w-24 h-24 transform -rotate-45"
+      />
       <div className={`polaroid ${rotation}`}>
         <img src={src} alt={alt} className="w-full h-auto" />
       </div>
@@ -83,14 +90,17 @@ const PodcastSection = () => {
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <div
             className={`md:w-1/2 text-center md:text-left transition-all duration-1000 ${
-              inView ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
+              inView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
             }`}
           >
             <h2 className="text-4xl md:text-5xl font-bold text-text-inverted mb-4">
               De Tóxica a Sin Tóxicos
             </h2>
             <p className="text-lg text-text-inverted mb-6">
-              En este espacio vamos a tocar temas sobre salud, bienestar y desarrollo personal de una forma muy real y vulnerable. Estaré acompañada algunas veces de mi esposo, invitados especiales y gurus de temas de interés.
+              En este espacio vamos a tocar temas sobre salud, bienestar y
+              desarrollo personal de una forma muy real y vulnerable. Estaré
+              acompañada algunas veces de mi esposo, invitados especiales y
+              gurus de temas de interés.
             </p>
             <Link
               to="/podcast"
@@ -101,7 +111,7 @@ const PodcastSection = () => {
           </div>
           <div
             className={`md:w-1/2 transition-all duration-1000 delay-300 ${
-              inView ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
+              inView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
             }`}
           >
             <img
@@ -285,27 +295,46 @@ export default function Home() {
       <section id="sobre-mi" className="bg-background py-20 relative">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold text-text-main mb-12 text-center">Sobre Mí</h2>
-            
+            <h2 className="text-4xl font-bold text-text-main mb-12 text-center">
+              Sobre Mí
+            </h2>
+
             <div className="space-y-12">
               <p className="text-lg text-text-secondary leading-relaxed">
-                Hace 15 años me diagnosticaron Psoriasis en la piel, una condición “incurable” y en ese momento empezó mi interés por entender temas que van más allá de un diagnóstico.
+                Hace 15 años me diagnosticaron Psoriasis en la piel, una
+                condición “incurable” y en ese momento empezó mi interés por
+                entender temas que van más allá de un diagnóstico.
               </p>
 
-              <AnimatedPolaroid src={sobreMiPauForrest} alt="Pau en el bosque" rotation="-rotate-3" />
+              <AnimatedPolaroid
+                src={sobreMiPauForrest}
+                alt="Pau en el bosque"
+                rotation="-rotate-3"
+              />
 
               <p className="text-lg text-text-secondary leading-relaxed">
-                Tuve un gran despertar y una curiosidad incansable en aprender cómo poder sanar mi cuerpo de adentro para afuera. En como vivir un estilo de vida libre de tóxicos.
+                Tuve un gran despertar y una curiosidad incansable en aprender
+                cómo poder sanar mi cuerpo de adentro para afuera. En como vivir
+                un estilo de vida libre de tóxicos.
               </p>
 
               <p className="text-lg text-text-secondary leading-relaxed">
-                Actualmente trabajo junto a mi compañero de vida y esposo Jorge, liderando la Marca Carico en el Ecuador. Nos enfocamos en brindar una mejor salud y estilo de vida a todos nuestros clientes.
+                Actualmente trabajo junto a mi compañero de vida y esposo Jorge,
+                liderando la Marca Carico en el Ecuador. Nos enfocamos en
+                brindar una mejor salud y estilo de vida a todos nuestros
+                clientes.
               </p>
 
-              <AnimatedPolaroid src={sobreMiJorgeYPau} alt="Jorge y Pau" rotation="rotate-2" />
+              <AnimatedPolaroid
+                src={sobreMiJorgeYPau}
+                alt="Jorge y Pau"
+                rotation="rotate-2"
+              />
 
               <p className="text-lg text-text-secondary leading-relaxed">
-                Nuestra filosofía y nuestros productos han mejorado la salud y el estilo de vida que tenemos junto con el de cientos de clientes con testimonios de vida impactantes.
+                Nuestra filosofía y nuestros productos han mejorado la salud y
+                el estilo de vida que tenemos junto con el de cientos de
+                clientes con testimonios de vida impactantes.
               </p>
             </div>
           </div>
