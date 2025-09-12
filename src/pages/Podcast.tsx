@@ -3,16 +3,19 @@ import { Link } from 'react-router';
 
 const Podcast = () => {
   return (
-    <div className="bg-gray-50 py-12">
+    <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a] min-h-screen">
       <div className="container mx-auto px-4">
         <div className="mb-8">
-          <Link to="/" className="text-green-800 hover:underline">
+          <Link to="/" className="text-[#a68a63] hover:text-[#562f10] font-bold">
             &larr; Volver al inicio
           </Link>
         </div>
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">
+        <h1 className="text-4xl font-bold text-center mb-4">
           Episodios del Podcast
         </h1>
+        <p className="text-lg text-center mb-8 max-w-2xl mx-auto">
+          Sumérgete en conversaciones profundas sobre bienestar, salud natural y cómo transformar tu vida. Cada episodio está diseñado para inspirarte y darte herramientas prácticas para vivir una vida más plena y sin tóxicos.
+        </p>
         <div className="flex justify-center">
           <iframe
             title="De Tóxica a Sin Tóxicos Podcast Episodes"
