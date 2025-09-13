@@ -1,18 +1,22 @@
-import { StrictMode } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider } from "react-router";
+import { createBrowserRouter } from "react-router";
+import Root from "./Root"; // Import the Root component
 
 import "./index.css";
 
-import App from "./App";
-import Home from "./pages/Home";
-import Podcast from "./pages/Podcast";
-import Tienda from "./pages/Tienda";
-import SobreMi from "./pages/SobreMi";
-import PoliticaPrivacidad from "./pages/PoliticaPrivacidad";
-import TerminosServicio from "./pages/TerminosServicio";
+// Lazy-loaded components
+const App = React.lazy(() => import("./App"));
+const Home = React.lazy(() => import("./pages/Home"));
+const Podcast = React.lazy(() => import("./pages/Podcast"));
+const Tienda = React.lazy(() => import("./pages/Tienda"));
+const SobreMi = React.lazy(() => import("./pages/SobreMi"));
+const PoliticaPrivacidad = React.lazy(
+  () => import("./pages/PoliticaPrivacidad")
+);
+const TerminosServicio = React.lazy(() => import("./pages/TerminosServicio"));
 
-const router = createBrowserRouter([
+export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
@@ -45,8 +49,4 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>
-);
+createRoot(document.getElementById("root")!).render(<Root />);

@@ -332,3 +332,24 @@ body {
     transform: translateX(-50%);
   }
 }
+
+.simple-spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid var(--color-text-main); /* Light color for the border */
+  border-bottom-color: var(--color-primary); /* Primary color for the spinning part */
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+

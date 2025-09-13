@@ -1,26 +1,17 @@
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { useInView } from "react-intersection-observer";
 import { Link } from "react-router";
-import PauImage from "../assets/pau-no-bg.png";
+import PauImage from "../assets/pau-no-bg.webp";
 import marcoSuperior from "../assets/marco-superior.svg";
 import marcoInferior from "../assets/marco-inferior.svg";
 import marcoDerecho from "../assets/marco-derecho.svg";
-import sobreMiPauForrest from "../assets/sobremi-Pau-Forrest.jpg";
-import sobreMiJorgeYPau from "../assets/sobre-mi-Jorge-y-Pau.jpg";
+import sobreMiPauForrest from "../assets/sobremi-Pau-Forrest.webp";
+import sobreMiJorgeYPau from "../assets/sobre-mi-Jorge-y-Pau.webp";
 import branch from "../assets/branch.svg";
 import podcastImage from "../assets/de-toxica-a-sin-toxicos.jpg";
 import Testimonios from "../components/Testimonios";
 import ProductVideos from "../components/ProductVideos";
 import HomeSchema from "../components/HomeSchema";
-
-export const metadata = {
-  title: "Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos",
-  description:
-    "Transforma tu vida con Pau Henriques. Descubre cómo sanar tu cuerpo, vivir sin tóxicos y alcanzar un bienestar integral. Conoce mi historia, mi podcast y mis productos.",
-  alternates: {
-    canonical: "https://www.pauhenriques.com/",
-  },
-};
 
 const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
