@@ -1,6 +1,11 @@
 export default function PoliticaPrivacidad() {
   return (
-    <div className="bg-background text-text-main py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      <title>Política de Privacidad | Pau Henriques</title>
+      <meta name="description" content="Conoce cómo manejamos tu información personal y protegemos tu privacidad en nuestro sitio web. Consulta nuestra política de privacidad para más detalles." />
+      <link rel="canonical" href="https://www.pauhenriques.com/politica-privacidad" />
+      <meta name="robots" content="noindex, follow" />
+      <div className="bg-background text-text-main py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-primary mb-6">
           Política de Privacidad
@@ -157,5 +162,6 @@ export default function PoliticaPrivacidad() {
         </p>
       </div>
     </div>
+    </>
   );
 }

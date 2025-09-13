@@ -1,6 +1,11 @@
 export default function TerminosServicio() {
   return (
-    <div className="bg-background text-text-main py-12 px-4 sm:px-6 lg:px-8">
+    <>
+      <title>Términos de Servicio | Pau Henriques</title>
+      <meta name="description" content="Consulta los términos y condiciones que rigen el uso de nuestro sitio web y la compra de nuestros productos. Lee nuestros términos de servicio para más información." />
+      <link rel="canonical" href="https://www.pauhenriques.com/terminos-servicio" />
+      <meta name="robots" content="noindex, follow" />
+      <div className="bg-background text-text-main py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-primary mb-6">
           Términos de Servicio
@@ -126,5 +131,6 @@ export default function TerminosServicio() {
         </p>
       </div>
     </div>
+    </>
   );
 }

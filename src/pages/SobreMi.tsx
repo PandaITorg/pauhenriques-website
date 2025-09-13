@@ -4,7 +4,11 @@ import { FaInstagram, FaPodcast } from 'react-icons/fa';
 
 export default function SobreMi() {
   return (
-    <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
+    <>
+      <title>Sobre Mí | Pau Henriques - Mi Historia de Sanación y Bienestar</title>
+      <meta name="description" content="Conoce mi historia con la psoriasis y cómo transformé mi vida a través de una alimentación saludable y un estilo de vida sin tóxicos. Te ayudo a sanar tu cuerpo de forma natural." />
+      <link rel="canonical" href="https://www.pauhenriques.com/sobre-mi" />
+      <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
       <h1 className="text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
 
       {/* Section 1: Transformando vidas */}
@@ -72,5 +76,6 @@ export default function SobreMi() {
         </div>
       </section>
     </div>
+    </>
   );
 }

@@ -129,7 +129,7 @@ export default function Footer() {
           <div className="flex items-center">
             <span className="mr-2">Desarrollado por</span>
             <a
-              href="https://www.pandait.com"
+              href="https://pandait.tech"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:opacity-80 transition-opacity"

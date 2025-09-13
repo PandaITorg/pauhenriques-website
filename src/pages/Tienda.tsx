@@ -13,7 +13,11 @@ export default function Tienda() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
+    <>
+      <title>Tienda | Pau Henriques - Productos para una Vida Saludable</title>
+      <meta name="description" content="Próximamente: una selección exclusiva de productos para un estilo de vida sin tóxicos. Suscríbete para ser el primero en saber de nuestra gran apertura." />
+      <link rel="canonical" href="https://www.pauhenriques.com/tienda" />
+      <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
       <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md w-full">
         <h1 className="text-4xl font-bold mb-4 text-[#343d2a]">
           ¡Próximamente: Nuestra Tienda en Línea!
@@ -50,5 +54,6 @@ export default function Tienda() {
         )}
       </div>
     </div>
+    </>
   );
 }

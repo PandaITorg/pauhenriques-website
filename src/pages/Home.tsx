@@ -138,7 +138,11 @@ const PodcastSection = () => {
 
 export default function Home() {
   return (
-    <div className="overflow-x-hidden">
+    <>
+      <title>Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos</title>
+      <meta name="description" content="Transforma tu vida con Pau Henriques. Descubre cómo sanar tu cuerpo, vivir sin tóxicos y alcanzar un bienestar integral. Conoce mi historia, mi podcast y mis productos." />
+      <link rel="canonical" href="https://www.pauhenriques.com/" />
+      <div className="overflow-x-hidden">
       <section className="relative min-h-[calc(100vh-5rem)] flex items-end">
         {/* Background elements */}
         <div className="absolute inset-0 animated-gradient-bg z-0"></div>
@@ -356,5 +360,6 @@ export default function Home() {
       <PodcastSection />
       <Testimonios />
     </div>
+    </>
   );
 }
