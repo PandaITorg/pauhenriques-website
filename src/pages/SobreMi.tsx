@@ -1,13 +1,21 @@
 import pauSobreMi1 from '../assets/pau-sobre-mi-1.jpg';
 import pauSobreMi2 from '../assets/pau-sobre-mi-2.jpg';
 import { FaInstagram, FaPodcast } from 'react-icons/fa';
+import SobreMiSchema from "../components/SobreMiSchema";
+
+export const metadata = {
+  title: "Sobre Mí | Pau Henriques - Mi Historia de Sanación y Bienestar",
+  description:
+    "Conoce mi historia con la psoriasis y cómo transformé mi vida a través de una alimentación saludable y un estilo de vida sin tóxicos. Te ayudo a sanar tu cuerpo de forma natural.",
+  alternates: {
+    canonical: "https://www.pauhenriques.com/sobre-mi",
+  },
+};
 
 export default function SobreMi() {
   return (
     <>
-      <title>Sobre Mí | Pau Henriques - Mi Historia de Sanación y Bienestar</title>
-      <meta name="description" content="Conoce mi historia con la psoriasis y cómo transformé mi vida a través de una alimentación saludable y un estilo de vida sin tóxicos. Te ayudo a sanar tu cuerpo de forma natural." />
-      <link rel="canonical" href="https://www.pauhenriques.com/sobre-mi" />
+      <SobreMiSchema />
       <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
       <h1 className="text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
 
@@ -32,9 +40,11 @@ export default function SobreMi() {
               muted
               autoPlay
               src="https://res.cloudinary.com/dro8ckpco/video/upload/v1757636446/premiomapa_klw5lo.mp4"
+              aria-describedby="video-description"
             >
-              Your browser does not support the video tag.
+              Tu navegador no soporta el tag de video. Este video muestra a Pau Henriques explicando los beneficios de transformar tu vida sin consumir medicinas.
             </video>
+            <p id="video-description" className="sr-only">Video: Pau Henriques explica cómo transformar tu vida sin consumir medicinas, destacando el uso de sartenes de acero quirúrgico para una alimentación saludable y libre de tóxicos.</p>
           </div>
         </div>
       </section>
@@ -48,10 +58,10 @@ export default function SobreMi() {
           </p>
           <div className="flex flex-wrap justify-center gap-6 mt-8">
             <div className="relative p-4 bg-white shadow-lg rotate-3 hover:rotate-0 transition-transform duration-300 ease-in-out">
-              <img src={pauSobreMi1} alt="Pau Enriquez 1" className="w-48 h-auto" />
+              <img src={pauSobreMi1} alt="Pau Henriques en un entorno natural, sonriendo y feliz" className="w-48 h-auto" />
             </div>
             <div className="relative p-4 bg-white shadow-lg -rotate-3 hover:rotate-0 transition-transform duration-300 ease-in-out">
-              <img src={pauSobreMi2} alt="Pau Enriquez 2" className="w-48 h-auto" />
+              <img src={pauSobreMi2} alt="Pau Henriques y Jorge, su esposo, en un evento de salud integral" className="w-48 h-auto" />
             </div>
           </div>
         </div>

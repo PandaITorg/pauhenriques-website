@@ -11,6 +11,16 @@ import branch from "../assets/branch.svg";
 import podcastImage from "../assets/de-toxica-a-sin-toxicos.jpg";
 import Testimonios from "../components/Testimonios";
 import ProductVideos from "../components/ProductVideos";
+import HomeSchema from "../components/HomeSchema";
+
+export const metadata = {
+  title: "Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos",
+  description:
+    "Transforma tu vida con Pau Henriques. Descubre cómo sanar tu cuerpo, vivir sin tóxicos y alcanzar un bienestar integral. Conoce mi historia, mi podcast y mis productos.",
+  alternates: {
+    canonical: "https://www.pauhenriques.com/",
+  },
+};
 
 const MistDivider = () => (
   <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
@@ -139,9 +149,7 @@ const PodcastSection = () => {
 export default function Home() {
   return (
     <>
-      <title>Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos</title>
-      <meta name="description" content="Transforma tu vida con Pau Henriques. Descubre cómo sanar tu cuerpo, vivir sin tóxicos y alcanzar un bienestar integral. Conoce mi historia, mi podcast y mis productos." />
-      <link rel="canonical" href="https://www.pauhenriques.com/" />
+      <HomeSchema />
       <div className="overflow-x-hidden">
       <section className="relative min-h-[calc(100vh-5rem)] flex items-end">
         {/* Background elements */}
