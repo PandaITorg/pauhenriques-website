@@ -1,5 +1,15 @@
 import { FaSpotify, FaApple } from "react-icons/fa";
 import podcastCover from "../assets/de-toxica-a-sin-toxicos.jpg"; // Using the provided image
+import PodcastSchema from "../components/PodcastSchema";
+
+export const metadata = {
+  title: 'Podcast "De Tóxica a Sin Tóxicos" | Pau Henriques',
+  description:
+    "Escucha los episodios del podcast de Pau Henriques sobre bienestar, salud natural y desarrollo personal. Inspiración y herramientas prácticas para una vida plena y sin tóxicos.",
+  alternates: {
+    canonical: "https://www.pauhenriques.com/podcast",
+  },
+};
 
 const Podcast = () => {
   const episodes = [
@@ -36,13 +46,9 @@ const Podcast = () => {
 
   return (
     <>
-      {/* Metadatos SEO para la página de Podcast */}
-      <title>Podcast "De Tóxica a Sin Tóxicos" | Pau Henriques</title>
-      <meta
-        name="description"
-        content="Escucha los episodios del podcast de Pau Henriques sobre bienestar, salud natural y desarrollo personal. Inspiración y herramientas prácticas para una vida plena y sin tóxicos."
-      />
-      <link rel="canonical" href="https://www.pauhenriques.com/podcast" />
+      {/* Structured Data for Podcast Episodes */}
+      <PodcastSchema episodes={episodes} />
+
       <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a] min-h-screen">
         <div className="container mx-auto px-4">
           {/* Hero Section */}
@@ -77,7 +83,7 @@ const Podcast = () => {
                   href="https://podcasts.apple.com/us/podcast/de-t%C3%B3xica-a-sin-t%C3%B3xicos/id1567244331" // Placeholder for Apple Podcasts link
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[#a68a63] hover:bg-[#562f10] text-white font-bold py-2 px-4 rounded-full transition-colors duration-300 inline-flex items-center justify-center w-full sm:w-auto"
+                  className="bg-[#a68a63] hover:bg-[#562f10] text-white font-bold py-2 px-4 rounded-full transition-colors duration-300 inline-flex items-center"
                 >
                   <FaApple className="mr-2" /> Escuchar en Apple Podcasts
                 </a>
