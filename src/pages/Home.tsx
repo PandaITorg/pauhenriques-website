@@ -125,6 +125,7 @@ const PodcastSection = () => {
             }`}
           >
             <img
+              loading="lazy"
               src={podcastImage}
               alt="De Tóxica a Sin Tóxicos Podcast"
               className="rounded-lg shadow-2xl w-full h-auto object-cover"
