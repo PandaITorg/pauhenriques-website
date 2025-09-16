@@ -8,12 +8,12 @@ export default function SobreMi() {
     <>
       <SobreMiSchema />
       <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
-      <h1 className="text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
 
       {/* Section 1: Mi Misión */}
       <section className="flex flex-col md:flex-row items-center gap-8 mb-12">
         <div className="md:w-1/2">
-          <h2 className="text-3xl font-semibold mb-4 text-[#343d2a]">Mi Misión: Un Hogar Consciente y Saludable</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-[#343d2a]">Mi Misión: Un Hogar Consciente y Saludable</h2>
           <p className="mb-4 text-[#343d2a]">
             Soy Pau, ingeniera comercial, coach de vida sin tóxicos, mamá y esposa. A lo largo de mi vida he descubierto que la verdadera riqueza está en la salud, y que cada decisión que tomamos en nuestro hogar impacta directamente en el bienestar de nuestra familia. Mi pasión es ayudar a las personas a vivir más conscientes, eliminando los tóxicos que silenciosamente afectan nuestro cuerpo, y creando hábitos que nos permitan disfrutar de una vida más plena, energética y saludable.
           </p>
@@ -41,7 +41,7 @@ export default function SobreMi() {
       {/* Section 2: Mejora tu salud y calidad de vida */}
       <section className="flex flex-col md:flex-row items-center gap-8 mb-12">
         <div className="md:w-1/2">
-          <h2 className="text-3xl font-semibold mb-4 text-[#343d2a]">Mejora tu salud y calidad de vida sin medicina</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-[#343d2a]">Mejora tu salud y calidad de vida sin medicina</h2>
           <p className="mb-4 text-[#343d2a]">
             Te ayudo a encontrar soluciones en tu salud fuera de consultorios y recetas médicas, entendiendo tu cuerpo, sus reacciones y como poder sanarlo de forma natural e integral libre de toxinas.
           </p>

@@ -61,7 +61,7 @@ const Podcast = () => {
               />
             </div>
             <div className="md:w-2/3 text-center md:text-left">
-              <h1 className="text-4xl font-bold mb-4 text-[#343d2a]">
+              <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-[#343d2a]">
                 De Tóxica a Sin Tóxicos
               </h1>
               <p className="text-lg mb-6 text-[#343d2a]">

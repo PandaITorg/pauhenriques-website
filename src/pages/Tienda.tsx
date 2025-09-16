@@ -27,7 +27,7 @@ export default function Tienda() {
       <TiendaSchema />
       <div className="min-h-screen flex items-center justify-center px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
       <div className="bg-white p-8 rounded-lg shadow-lg text-center max-w-md w-full">
-        <h1 className="text-4xl font-bold mb-4 text-[#343d2a]">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-[#343d2a]">
           ¡Próximamente: Nuestra Tienda en Línea!
         </h1>
         <p className="text-lg mb-6 text-[#343d2a]">
