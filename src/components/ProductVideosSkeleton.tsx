@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 const ProductVideosSkeleton = () => (
   <section className="bg-background py-20">
