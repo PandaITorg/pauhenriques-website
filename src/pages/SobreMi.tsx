@@ -3,15 +3,6 @@ import pauSobreMi2 from '../assets/pau-sobre-mi-2.jpg';
 import { FaInstagram, FaPodcast } from 'react-icons/fa';
 import SobreMiSchema from "../components/SobreMiSchema";
 
-export const metadata = {
-  title: "Sobre Mí | Pau Henriques - Mi Historia de Sanación y Bienestar",
-  description:
-    "Conoce mi historia con la psoriasis y cómo transformé mi vida a través de una alimentación saludable y un estilo de vida sin tóxicos. Te ayudo a sanar tu cuerpo de forma natural.",
-  alternates: {
-    canonical: "https://www.pauhenriques.com/sobre-mi",
-  },
-};
-
 export default function SobreMi() {
   return (
     <>
@@ -19,18 +10,15 @@ export default function SobreMi() {
       <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
       <h1 className="text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
 
-      {/* Section 1: Transformando vidas */}
+      {/* Section 1: Mi Misión */}
       <section className="flex flex-col md:flex-row items-center gap-8 mb-12">
         <div className="md:w-1/2">
-          <h2 className="text-3xl font-semibold mb-4 text-[#343d2a]">Transformando vidas a través del conocimiento</h2>
+          <h2 className="text-3xl font-semibold mb-4 text-[#343d2a]">Mi Misión: Un Hogar Consciente y Saludable</h2>
           <p className="mb-4 text-[#343d2a]">
-            Transformar tu vida sin consumir medicinas puede parecer un desafío, pero con el uso de sartenes de acero quirúrgico, es posible lograr una alimentación saludable y libre de tóxicos. Estas sartenes están diseñadas para cocinar sin necesidad de añadir aceites o grasas, lo que permite preparar comidas más ligeras y nutritivas. Además, el acero quirúrgico es un material seguro que no libera sustancias nocivas al calentarse, a diferencia de otros tipos de utensilios de cocina.
-          </p>
-          <p className="mb-4 text-[#343d2a]">
-            Al adoptar una dieta basada en alimentos frescos y cocinados en sartenes de acero quirúrgico, puedes reducir significativamente la ingesta de aditivos y conservantes que a menudo se encuentran en los alimentos procesados. Esto no solo mejora tu salud física, sino que también puede tener un impacto positivo en tu bienestar mental y emocional. Cocinar con estos utensilios te permite disfrutar de los sabores naturales de los alimentos, promoviendo una relación más consciente y saludable con la comida.
+            Soy Pau, ingeniera comercial, coach de vida sin tóxicos, mamá y esposa. A lo largo de mi vida he descubierto que la verdadera riqueza está en la salud, y que cada decisión que tomamos en nuestro hogar impacta directamente en el bienestar de nuestra familia. Mi pasión es ayudar a las personas a vivir más conscientes, eliminando los tóxicos que silenciosamente afectan nuestro cuerpo, y creando hábitos que nos permitan disfrutar de una vida más plena, energética y saludable.
           </p>
           <p className="text-[#343d2a]">
-            Finalmente, el uso de sartenes de acero quirúrgico puede ser una inversión a largo plazo en tu salud. Estos utensilios son duraderos y fáciles de limpiar, lo que facilita mantener una cocina libre de contaminantes. Al enfocarte en una alimentación natural y libre de tóxicos, puedes experimentar una mejora en tu energía, digestión y en general, en tu calidad de vida. ¡Transformar tu vida nunca ha sido tan sencillo y delicioso!
+            Hoy desarrollo mi misión junto a Carico, una marca que representa innovación, respaldo científico y confianza. Trabajo con sus tecnologías patentadas porque creo profundamente en brindar soluciones reales: agua pura, alimentos cocinados sin liberar metales ni disruptores endocrinos, espacios libres de contaminación y descanso reparador. Lo que hago no es vender productos, es compartir un estilo de vida que yo misma vivo en casa, porque estoy convencida de que cuando invertimos en salud, invertimos en lo más valioso que tenemos: nuestra familia y nuestro futuro.
           </p>
         </div>
         <div className="md:w-1/2 flex justify-center">
@@ -39,6 +27,7 @@ export default function SobreMi() {
               className="w-full max-w-md rounded-lg"
               muted
               autoPlay
+              loop
               src="https://res.cloudinary.com/dro8ckpco/video/upload/v1757636446/premiomapa_klw5lo.mp4"
               aria-describedby="video-description"
             >
