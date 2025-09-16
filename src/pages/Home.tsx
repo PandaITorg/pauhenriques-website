@@ -142,8 +142,8 @@ export default function Home() {
   return (
     <>
       <HomeSchema />
-      <div className="overflow-x-hidden">
-      <section className="relative min-h-[calc(100vh-5rem)] flex items-end">
+      <div className="overflow-x-hidden h-full">
+      <section className="relative h-full flex items-end">
         {/* Background elements */}
         <div className="absolute inset-0 animated-gradient-bg z-0"></div>
 
@@ -203,7 +203,7 @@ export default function Home() {
         <div className="relative container mx-auto px-4 z-40 flex flex-col md:flex-row md:items-center md:justify-between">
           {/* Text column */}
           <div className="w-full md:w-1/2 text-center md:text-left flex-grow pt-8 pb-8 md:pb-12">
-            <h1 className="text-5xl md:text-7xl font-bold text-text-main font-mono text-shadow-dark">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold text-text-main font-mono text-shadow-dark">
               {/* Mobile View */}
               <div className="md:hidden">
                 <span className="whitespace-nowrap">
@@ -254,7 +254,7 @@ export default function Home() {
               </div>
             </h1>
             <p
-              className="text-xl lg:text-2xl leading-relaxed text-secondary mt-6 max-w-lg mx-auto md:mx-0 opacity-0 text-shadow-light"
+              className="text-lg sm:text-xl lg:text-2xl leading-relaxed text-secondary mt-6 max-w-lg mx-auto md:mx-0 opacity-0 text-shadow-light"
               style={{ animation: "fadeInUp 1s 2.7s ease-out forwards" }}
             >
               Ingeniera comercial experta en salud integral con certificaciones
@@ -296,7 +296,7 @@ export default function Home() {
             <img
               src={PauImage}
               alt="Pau Henriques"
-              className="w-full h-auto max-w-xs md:max-w-none opacity-0"
+              className="w-full h-auto max-w-[15rem] sm:max-w-xs md:max-w-none opacity-0"
               style={{ animation: "fadeInUp 1s 0.2s ease-out forwards" }}
             />
           </div>
