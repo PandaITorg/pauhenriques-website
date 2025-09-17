@@ -7,17 +7,17 @@ export default function SobreMi() {
   return (
     <>
       <SobreMiSchema />
-      <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a]">
+      <div className="px-12 py-8 bg-[#a4ac85] text-[#343d2a]">
       <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
 
       {/* Section 1: Mi Misión */}
       <section className="flex flex-col md:flex-row items-center gap-8 mb-12">
         <div className="md:w-1/2">
           <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-[#343d2a]">Mi Misión: Un Hogar Consciente y Saludable</h2>
-          <p className="mb-4 text-[#343d2a]">
+          <p className="mb-4 text-[#343d2a] text-justify">
             Soy Pau, ingeniera comercial, coach de vida sin tóxicos, mamá y esposa. A lo largo de mi vida he descubierto que la verdadera riqueza está en la salud, y que cada decisión que tomamos en nuestro hogar impacta directamente en el bienestar de nuestra familia. Mi pasión es ayudar a las personas a vivir más conscientes, eliminando los tóxicos que silenciosamente afectan nuestro cuerpo, y creando hábitos que nos permitan disfrutar de una vida más plena, energética y saludable.
           </p>
-          <p className="text-[#343d2a]">
+          <p className="text-[#343d2a] text-justify">
             Hoy desarrollo mi misión junto a Carico, una marca que representa innovación, respaldo científico y confianza. Trabajo con sus tecnologías patentadas porque creo profundamente en brindar soluciones reales: agua pura, alimentos cocinados sin liberar metales ni disruptores endocrinos, espacios libres de contaminación y descanso reparador. Lo que hago no es vender productos, es compartir un estilo de vida que yo misma vivo en casa, porque estoy convencida de que cuando invertimos en salud, invertimos en lo más valioso que tenemos: nuestra familia y nuestro futuro.
           </p>
         </div>
@@ -40,7 +40,7 @@ export default function SobreMi() {
 
       {/* Section 2: Mejora tu salud y calidad de vida */}
       <section className="flex flex-col md:flex-row items-center gap-8 mb-12">
-        <div className="md:w-1/2">
+        <div className="md:w-1/2 flex flex-col items-center text-center">
           <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-[#343d2a]">Mejora tu salud y calidad de vida sin medicina</h2>
           <p className="mb-4 text-[#343d2a]">
             Te ayudo a encontrar soluciones en tu salud fuera de consultorios y recetas médicas, entendiendo tu cuerpo, sus reacciones y como poder sanarlo de forma natural e integral libre de toxinas.
@@ -59,7 +59,7 @@ export default function SobreMi() {
             ¿Quieres inspiración diaria y consejos de salud? Sígueme en Instagram o explora productos para tu bienestar.
           </p>
           <a
-            href="https://www.instagram.com/pauhenriques/"
+            href="https://www.instagram.com/pau_henriques/"
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[#a68a63] hover:bg-[#562f10] text-white font-bold py-2 px-4 rounded-full mb-4 transition-colors duration-300 inline-flex items-center justify-center w-56"
