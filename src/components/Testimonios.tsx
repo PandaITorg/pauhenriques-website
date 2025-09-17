@@ -245,7 +245,8 @@ const Testimonios: React.FC = () => {
           ))}
         </div>
         {/* Gradient overlay to hide abrupt edges */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-background via-transparent to-background"></div>
+        <div className="absolute inset-y-0 left-0 pointer-events-none bg-gradient-to-r from-background to-transparent w-1/4 md:w-1/6"></div>
+        <div className="absolute inset-y-0 right-0 pointer-events-none bg-gradient-to-l from-background to-transparent w-1/4 md:w-1/6"></div>
       </div>
     </section>
   );
