@@ -39,6 +39,22 @@
 
   /* Texto para fondos claros */
   --color-text-inverted: #343d2a;
+
+  --color-bosque-profundo-50: #d3f2b1;
+  --color-bosque-profundo-100: #c1dea2;
+  --color-bosque-profundo-200: #9cb382;
+  --color-bosque-profundo-300: #778a63;
+  --color-bosque-profundo-400: #556346;
+  --color-bosque-profundo-500: #343d2a;
+  --color-bosque-profundo-600: #2b3322;
+  --color-bosque-profundo-700: #21281a;
+  --color-bosque-profundo-800: #181d12;
+  --color-bosque-profundo-900: #0e120a;
+  --color-bosque-profundo-950: #060804;
+}
+
+html {
+  background-color: var(--color-background);
 }
 
 body {
@@ -73,7 +89,6 @@ body {
 .fall-in {
   animation: fall-in 0.8s ease-out forwards;
 }
-
 
 @keyframes blink {
   from,
@@ -204,8 +219,6 @@ body {
   text-shadow: 2px 2px 4px var(--color-background);
 }
 
-
-
 .text-shadow-light {
   text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
@@ -261,7 +274,7 @@ body {
 
 .branch-svg {
   width: 100%;
-  filter: drop-shadow(5px 5px 10px rgba(0,0,0,0.3));
+  filter: drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.3));
   animation: subtle-move 10s ease-in-out infinite;
 }
 
@@ -281,7 +294,7 @@ body {
 }
 
 .testimonial-branch-container.right .testimonial-card {
-    left: 45%;
+  left: 45%;
 }
 
 .testimonial-branch-container.retract .testimonial-card {
@@ -290,38 +303,71 @@ body {
 
 /* Keyframes */
 @keyframes grow-branch {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(-2%); }
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(-2%);
+  }
 }
 
 @keyframes retract-branch {
-  from { transform: translateX(-2%); }
-  to { transform: translateX(-110%); }
+  from {
+    transform: translateX(-2%);
+  }
+  to {
+    transform: translateX(-110%);
+  }
 }
 
 @keyframes grow-branch-right {
-  from { transform: translateX(110%); }
-  to { transform: translateX(2%); }
+  from {
+    transform: translateX(110%);
+  }
+  to {
+    transform: translateX(2%);
+  }
 }
 
 @keyframes retract-branch-right {
-  from { transform: translateX(2%); }
-  to { transform: translateX(110%); }
+  from {
+    transform: translateX(110%);
+  }
+  to {
+    transform: translateX(110%);
+  }
 }
 
 @keyframes sprout-card {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 @keyframes fade-out-card {
-  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
 }
 
 @keyframes subtle-move {
-  0%, 100% { transform: rotate(-0.5deg) translateY(-3px); }
-  50% { transform: rotate(0.5deg) translateY(3px); }
+  0%,
+  100% {
+    transform: rotate(-0.5deg) translateY(-3px);
+  }
+  50% {
+    transform: rotate(0.5deg) translateY(3px);
+  }
 }
 
 @keyframes flow-mist {
@@ -337,7 +383,9 @@ body {
   width: 60px;
   height: 60px;
   border: 6px solid var(--color-text-main); /* Light color for the border */
-  border-bottom-color: var(--color-primary); /* Primary color for the spinning part */
+  border-bottom-color: var(
+    --color-primary
+  ); /* Primary color for the spinning part */
   border-radius: 50%;
   display: inline-block;
   box-sizing: border-box;
@@ -353,3 +401,24 @@ body {
   }
 }
 
+@keyframes linear-gradient-animation-links {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+.animated-linear-gradient-links {
+  background: linear-gradient(
+    to bottom,
+    var(--color-bosque-profundo-500),
+    var(--color-bosque-profundo-600)
+  );
+  background-size: 100% 300%;
+  animation: linear-gradient-animation-links 15s ease infinite;
+}

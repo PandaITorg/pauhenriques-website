@@ -15,6 +15,7 @@ const PoliticaPrivacidad = React.lazy(
   () => import("./pages/PoliticaPrivacidad")
 );
 const TerminosServicio = React.lazy(() => import("./pages/TerminosServicio"));
+const LinkInBioPage = React.lazy(() => import("./pages/LinkInBioPage"));
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +47,10 @@ export const router = createBrowserRouter([
         element: <TerminosServicio />,
       },
     ],
+  },
+  {
+    path: "/links",
+    element: <LinkInBioPage />,
   },
 ]);
 
