@@ -110,12 +110,14 @@ export default function LinkInBioPage() {
 
         {/* Additional Links */}
         <div className="flex flex-col gap-4">
-          <Link
-            to="/"
+          <a
+            href="https://pauhenriques.com"
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-secondary text-text-dark font-bold py-3 px-8 rounded-full block transition-all duration-300 ease-in-out hover:brightness-110 hover:scale-105 active:scale-95 transform"
           >
             Visita mi sitio web
-          </Link>
+          </a>
           {/*
           <Link
             to="/tienda"

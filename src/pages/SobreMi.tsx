@@ -7,13 +7,13 @@ export default function SobreMi() {
   return (
     <>
       <SobreMiSchema />
-      <div className="px-12 py-8 bg-[#a4ac85] text-[#343d2a]">
+      <div className="px-20 py-8 bg-[#a4ac85] text-[#343d2a]">
       <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-[#343d2a]">Sobre Mí</h1>
 
       {/* Section 1: Mi Misión */}
       <section className="flex flex-col md:flex-row items-center gap-8 mb-12">
         <div className="md:w-1/2">
-          <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-[#343d2a]">Mi Misión: Un Hogar Consciente y Saludable</h2>
+          <h2 className="text-2xl sm:text-3xl font-semibold mb-4 text-[#343d2a] text-left">Mi Misión: Un Hogar Consciente y Saludable</h2>
           <p className="mb-4 text-[#343d2a] text-justify">
             Soy Pau, ingeniera comercial, coach de vida sin tóxicos, mamá y esposa. A lo largo de mi vida he descubierto que la verdadera riqueza está en la salud, y que cada decisión que tomamos en nuestro hogar impacta directamente en el bienestar de nuestra familia. Mi pasión es ayudar a las personas a vivir más conscientes, eliminando los tóxicos que silenciosamente afectan nuestro cuerpo, y creando hábitos que nos permitan disfrutar de una vida más plena, energética y saludable.
           </p>

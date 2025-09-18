@@ -416,9 +416,10 @@ body {
 .animated-linear-gradient-links {
   background: linear-gradient(
     to bottom,
+    var(--color-bosque-profundo-400),
     var(--color-bosque-profundo-500),
     var(--color-bosque-profundo-600)
   );
   background-size: 100% 300%;
-  animation: linear-gradient-animation-links 15s ease infinite;
+  animation: linear-gradient-animation-links 25s ease infinite;
 }
