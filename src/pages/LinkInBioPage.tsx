@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import { FaTiktok, FaWhatsapp, FaInstagram } from "react-icons/fa";
 import PauNoBg from "../assets/pau-no-bg.webp"; // For profile picture
 import PauHenriquesLightestGreen from "../assets/pauhenriques-lightest-green.png"; // For logo
