@@ -154,6 +154,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
   whatsappLink,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+
+  const handleImageLoad = (src: string) => {
+    setLoadedImages((prev) => new Set(prev).add(src));
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -167,14 +172,20 @@ const ProductCard: React.FC<ProductCardProps> = ({
     <div className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105">
       <div className="relative w-full h-48">
         {images.map((image, index) => (
-          <img
-            key={index}
-            src={image}
-            alt={`${title} - ${index + 1}`}
-            className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
-              index === currentImageIndex ? "opacity-100" : "opacity-0"
-            }`}
-          />
+          <React.Fragment key={index}>
+            {!loadedImages.has(image) && (
+              <div className="absolute top-0 left-0 w-full h-full bg-gray-300 animate-pulse"></div>
+            )}
+            <img
+              loading="lazy"
+              src={image}
+              alt={`${title} - ${index + 1}`}
+              onLoad={() => handleImageLoad(image)}
+              className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${
+                index === currentImageIndex ? "opacity-100" : "opacity-0"
+              }`}
+            />
+          </React.Fragment>
         ))}
       </div>
       <div className="p-4">
@@ -204,6 +215,13 @@ export default function Tienda() {
   const [isClosing, setIsClosing] = useState(false);
   const GOOGLE_APPS_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbw0sdRnBFNV_Q2iJkK6vqPS60nkviycka2rN5cQq2cVsRIlHUQdWGWERiLXW4ohpamjVw/exec"; // REPLACE THIS WITH YOUR DEPLOYED URL
+
+  useEffect(() => {
+    const emailSubmitted = localStorage.getItem("emailSubmitted");
+    if (emailSubmitted) {
+      setShowForm(false);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,6 +257,7 @@ export default function Tienda() {
       });
 
       setSubmitted(true);
+      localStorage.setItem("emailSubmitted", "true");
       setEmail("");
       setSubscribe(false);
     } catch (err) {
@@ -381,7 +400,7 @@ export default function Tienda() {
 
         {/* Product Cards Section */}
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-text-main mb-12 text-center">
+          <h2 className="text-4xl font-bold text-[#343d2a] mb-12 text-center">
             Nuestros Productos Destacados
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
