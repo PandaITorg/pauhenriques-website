@@ -25,8 +25,8 @@ export default function LinkInBioPage() {
       href: "https://api.whatsapp.com/send?phone=593991712532&text=Hola%20Pau%20quiero%20conocer%20m%C3%A1s%20sobre%20la%20clean%20machine,%20soy:%20%20",
     },
     {
-      text: "Linea de chuchillo de acero quirurjico",
-      href: "https://api.whatsapp.com/send?phone=593991712532&text=Hola%20Pau%20quiero%20conocer%20m%C3%A1s%20sobre%20la%20clean%20machine,%20soy:%20%20",
+      text: "Línea de chuchillo de acero quirurjico",
+      href: "https://api.whatsapp.com/send?phone=593991712532&text=Hola%20Pau%20quiero%20conocer%20m%C3%A1s%20sobre%20la%l%C3%ADnea%de%cuchillos%de%acero%Quirurgico,%20soy:%20%20",
     },
     {
       text: "El Juicer",
