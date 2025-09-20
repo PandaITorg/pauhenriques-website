@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import logo from "../assets/pauhenriques-lightest-green.png";
-import { FaWhatsapp, FaBars, FaTimes } from "react-icons/fa";
+import { FaBars, FaTimes } from "react-icons/fa";
+import DesktopNav from "./header/DesktopNav";
+import MobileMenu from "./header/MobileMenu";
 
-export default function Header() {
+// Este componente representa la barra de navegación principal de la aplicación.
+const Header = () => {
+  // Estado para controlar si el menú móvil está abierto o cerrado.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // Lista de enlaces de navegación.
   const navLinks = [
     { href: "/podcast", text: "Podcast" },
     { href: "/tienda", text: "Tienda" },
@@ -15,41 +20,17 @@ export default function Header() {
   return (
     <header className="bg-background shadow-md h-20 sticky top-0 z-[51]">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
-        {/* Logo */}
+        {/* Logotipo del sitio */}
         <div>
           <Link to="/">
             <img src={logo} alt="Pau Henriques Logo" className="h-16" />
           </Link>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <ul className="hidden md:flex items-center space-x-6">
-          {navLinks.map((link) => (
-            <li key={link.href}>
-              <Link
-                to={link.href}
-                className="text-text-main transform transition-all duration-300 hover:text-primary hover:scale-105"
-              >
-                {link.text}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* Navegación para pantallas de escritorio */}
+        <DesktopNav navLinks={navLinks} />
 
-        {/* CTA for Desktop */}
-        <div className="hidden md:flex">
-          <a
-            href="https://wa.me/593991712532"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-primary text-white px-6 py-2 rounded-full flex items-center space-x-2 transform transition-all duration-300 hover:scale-105"
-          >
-            <span>Contáctame</span>
-            <FaWhatsapp />
-          </a>
-        </div>
-
-        {/* Mobile Menu Button */}
+        {/* Botón para abrir/cerrar el menú móvil */}
         <div className="md:hidden">
           <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? (
@@ -61,35 +42,14 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-background shadow-lg absolute top-20 left-0 w-full">
-          <ul className="flex flex-col items-center space-y-4 py-4">
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <Link
-                  to={link.href}
-                  className="text-text-main transform transition-all duration-300 hover:text-primary hover:scale-105"
-                  onClick={() => setIsMenuOpen(false)} // Close menu on click
-                >
-                  {link.text}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <a
-                href="https://wa.me/593991712532"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-primary text-white px-6 py-2 rounded-full flex items-center space-x-2 transform transition-all duration-300 hover:scale-105"
-              >
-                <span>Contáctame</span>
-                <FaWhatsapp />
-              </a>
-            </li>
-          </ul>
-        </div>
-      )}
+      {/* Menú para pantallas móviles */}
+      <MobileMenu
+        navLinks={navLinks}
+        isOpen={isMenuOpen}
+        setIsOpen={setIsMenuOpen}
+      />
     </header>
   );
-}
+};
+
+export default Header;

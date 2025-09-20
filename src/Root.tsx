@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from "react";
 import { RouterProvider } from "react-router";
-import { router } from "./main";
+import { router } from "./router";
 
 const Root = () => {
   return (
