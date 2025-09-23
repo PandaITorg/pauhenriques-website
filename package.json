@@ -1,7 +1,7 @@
 {
   "name": "pauhenriques-website",
   "private": true,
-  "version": "1.2.2",
+  "version": "1.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
+    "country-state-city": "^3.2.1",
     "react": "^19.1.1",
+    "react-country-region-selector": "^4.0.2",
     "react-dom": "^19.1.1",
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",
+    "react-phone-number-input": "^3.4.12",
     "react-router": "^7.8.2",
     "tailwindcss": "^4.1.13"
   },

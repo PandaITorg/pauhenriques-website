@@ -14,6 +14,9 @@ const TerminosServicio = React.lazy(
   () => import("../views/TerminosServicio")
 );
 const LinkInBioPage = React.lazy(() => import("../views/LinkInBioPage"));
+const ProgramaAfiliados = React.lazy(
+  () => import("../views/ProgramaAfiliados")
+);
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +38,10 @@ export const router = createBrowserRouter([
       {
         path: "sobre-mi",
         element: <SobreMi />,
+      },
+      {
+        path: "programa-afiliados",
+        element: <ProgramaAfiliados />,
       },
       {
         path: "politica-privacidad",

@@ -15,6 +15,7 @@ const Header = () => {
     { href: "/podcast", text: "Podcast" },
     { href: "/tienda", text: "Tienda" },
     { href: "/sobre-mi", text: "Sobre Mí" },
+    { href: "/programa-afiliados", text: "Afiliados" },
   ];
 
   return (

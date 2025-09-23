@@ -36,6 +36,14 @@ const Nav = () => {
             Sobre Mí
           </Link>
         </li>
+        <li>
+          <Link
+            to="/programa-afiliados"
+            className="hover:text-primary transition-colors"
+          >
+            Afiliados
+          </Link>
+        </li>
       </ul>
     </div>
   );
