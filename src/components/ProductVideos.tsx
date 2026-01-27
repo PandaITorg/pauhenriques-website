@@ -39,7 +39,7 @@ const videoData: VideoItem[] = [
       "https://res.cloudinary.com/dro8ckpco/video/upload/v1757608463/%EF%B8%8FSi_tus_sart%C3%A9nes_se_ven_as%C3%AD_o_as%C3%ADTe_van_a_causar_grandes_problemas_hormonales_%EF%B8%8FSartenes_de_t_bepzre.mp4",
     title: "Ollas de Acero Quirúrgico",
     description:
-      "Deja de preocuparte por los tóxicos. Nuestras ollas de acero quirúrgico 316 te permiten cocinar de manera segura, preservando el sabor y los nutrientes de tus alimentos sin liberar químicos.",
+      "Deja de preocuparte por los tóxicos. Nuestras ollas de acero quirúrgico 3 - 16 únicas con titanio te permiten cocinar de manera segura, preservando el sabor y los nutrientes de tus alimentos sin liberar químicos.",
     ctas: [
       {
         text: "Cocina con Acero Quirúrgico 3 - 16",
@@ -52,7 +52,7 @@ const videoData: VideoItem[] = [
       "https://res.cloudinary.com/dro8ckpco/video/upload/v1757608462/Sigues_comprando_botellones_%EF%B8%8F_Caros_pesados_sin_minerales_y_expuestos_al_sol.La_realidad_ghybiy.mp4",
     title: "Purificador de Agua Carico",
     description:
-      "El agua es vida, y la tuya debe ser pura. Olvídate de los botellones y disfruta de agua alcalina, libre de cloro y contaminantes, directamente desde tu grifo.",
+      "El agua es vida, y la tuya debe ser pura. Olvídate de los botellones y disfruta de agua alcalina, libre de químicos, metales pesados, bacterias y contaminantes, directamente desde tu grifo.",
     ctas: [
       {
         text: "Bebe sin tóxicos",
@@ -63,9 +63,9 @@ const videoData: VideoItem[] = [
   {
     videoUrl:
       "https://res.cloudinary.com/dro8ckpco/video/upload/v1757608461/El_moho_es_un_enemigo_silencioso_en_tu_hogar_No_solo_mancha_las_paredes-_sus_esporas_viajan_z6eqbi.mp4",
-    title: "Purificación Total del Hogar",
+    title: "Sistema de limpieza y desinfecciones",
     description:
-      "Crea un santuario en tu hogar. Nuestro sistema de purificación de aire elimina virus, bacterias y moho, mientras la Clean Machine desinfecta tus superficies y alimentos.",
+      "Elimina el uso de químicos de limpieza tóxicos y deshazte de tu trapeador. Tenemos el sistema de limpieza más avanzado y revolucionario que aspira y limpia con vapor a un nuevo nivel.",
     ctas: [
       {
         text: "Clean Machine",
@@ -78,7 +78,7 @@ const videoData: VideoItem[] = [
       "https://res.cloudinary.com/dro8ckpco/video/upload/v1757613259/El_uso_de_mascarilla_es_una_medida_efectiva_pero_no_infalible_Puede_reducir_el_riesgo_de_contagio_ekpvxz.mp4",
     title: "Purificador de Aire Carico",
     description:
-      "Más allá de las mascarillas, la verdadera protección está en el aire que respiras en casa. Nuestro filtro de aire de grado médico elimina el 99.9% de virus, bacterias y alérgenos.",
+      "Más allá de las mascarillas, la verdadera protección está en el aire que respiras en casa. Nuestro filtro de aire de grado médico elimina el 99.9% de virus, bacterias, alérgenos y químicos nocivos que están en el aire.",
     ctas: [
       {
         text: "Respira aire limpio",
@@ -91,7 +91,7 @@ const videoData: VideoItem[] = [
       "https://res.cloudinary.com/dro8ckpco/video/upload/v1757608460/%EF%B8%8FEn_Carico_creemos_que_tu_brillo_empieza_desde_adentro.Con_el_Extractor_de_Jugos_Carico_prepara_f6gg0o.mp4",
     title: "El Juicer Carico",
     description:
-      "Tu brillo empieza desde adentro. Con nuestro extractor de jugos de prensado en frío, obtén la máxima nutrición de tus frutas y verduras, conservando todas sus vitaminas y enzimas.",
+      "Tu brillo empieza desde adentro. Con nuestro extractor de jugos verdes fortalece tu sistema inmunológico mejorando como te ves y como te sientes.",
     ctas: [
       {
         text: "Descubre el Juicer",
