@@ -1,6 +1,6 @@
 import { FaSpotify, FaApple } from "react-icons/fa";
 import podcastCover from "@/assets/de-toxica-a-sin-toxicos.jpg";
-import PodcastSchema from "@/components/PodcastSchema";
+import PodcastSchema from "@/components/schemas/PodcastSchema";
 import type { Metadata } from "next";
 import Image from "next/image";
 
@@ -49,7 +49,6 @@ export default function Podcast() {
   return (
     <>
       <PodcastSchema episodes={episodes} />
-
       <div className="px-4 py-8 bg-[#a4ac85] text-[#343d2a] min-h-screen">
         <div className="container mx-auto px-4">
           <section className="flex flex-col md:flex-row items-center justify-center gap-8 mb-12 p-6 bg-white rounded-lg shadow-lg">

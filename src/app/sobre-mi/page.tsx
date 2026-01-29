@@ -1,7 +1,7 @@
 import pauSobreMi1 from '@/assets/pau-sobre-mi-1.jpg';
 import pauSobreMi2 from '@/assets/pau-sobre-mi-2.jpg';
 import { FaInstagram, FaPodcast } from 'react-icons/fa';
-import SobreMiSchema from "@/components/SobreMiSchema";
+import SobreMiSchema from "@/components/schemas/SobreMiSchema";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
