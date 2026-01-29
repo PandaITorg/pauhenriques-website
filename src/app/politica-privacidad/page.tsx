@@ -33,8 +33,7 @@ export default function PoliticaPrivacidad() {
               para nosotros. Esta Política de Privacidad describe cómo María
               Paula Henriques ("nosotros", "nuestro") recopila, usa, comparte y
               protege tu información personal cuando visitas nuestro sitio web y
-              utilizas nuestros servicios, que operan a través de la plataforma
-              de e-commerce Shopify.
+              utilizas nuestros servicios.
             </p>
           </section>
 
@@ -56,15 +55,15 @@ export default function PoliticaPrivacidad() {
               <li>
                 <strong>Información de Pago:</strong> Los datos de tus tarjetas
                 de crédito/débito son procesados directamente por pasarelas de
-                pago seguras integradas con Shopify. No almacenamos esta
+                pago seguras (como Stripe). No almacenamos esta
                 información en nuestros servidores.
               </li>
               <li>
                 <strong>Información del Dispositivo y Uso:</strong> A través de
-                Shopify y herramientas como Google Analytics, recopilamos
-                información sobre tu dispositivo y cómo interactúas con nuestro
-                sitio web (dirección IP, tipo de navegador, páginas visitadas,
-                tiempo de visita).
+                herramientas como Google Analytics, recopilamos información
+                sobre tu dispositivo y cómo interactúas con nuestro sitio web
+                (dirección IP, tipo de navegador, páginas visitadas, tiempo de
+                visita).
               </li>
               <li>
                 <strong>Cookies y Tecnologías Similares:</strong> Utilizamos
@@ -112,14 +111,9 @@ export default function PoliticaPrivacidad() {
             </p>
             <ul className="list-disc list-inside space-y-2">
               <li>
-                <strong>Shopify:</strong> Nuestro sitio web está alojado en
-                Shopify Inc. Ellos nos proporcionan la plataforma de comercio
-                electrónico en línea que nos permite venderte nuestros productos
-                y servicios.
-              </li>
-              <li>
                 <strong>Proveedores de Servicios:</strong> Empresas que nos
-                ayudan con el procesamiento de pagos, envíos, marketing y
+                ayudan con el procesamiento de pagos (como Stripe), envíos,
+                alojamiento de base de datos y servidor (Firebase), y
                 análisis de datos (como Google Analytics).
               </li>
               <li>
