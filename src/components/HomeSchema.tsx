@@ -6,7 +6,7 @@ const HomeSchema: React.FC = () => {
     '@type': 'Organization',
     'name': 'Pau Henriques',
     'url': 'https://www.pauhenriques.com/',
-    'logo': 'https://www.pauhenriques.com/PandaIT-imagotipo-horizontal.svg', // Assuming this is the logo path
+    'logo': 'https://www.pauhenriques.com/assets/logo-pauhenriques.svg',
     'sameAs': [
       'https://www.instagram.com/pau_henriques/',
       'https://open.spotify.com/show/6eMZqxyHUtW46yJd0Et4uw', // Podcast
