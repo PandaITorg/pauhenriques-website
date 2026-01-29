@@ -10,10 +10,10 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "^16.1.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "next": "^14.2.3",
+    "react": "^18.3.1",
     "react-country-region-selector": "^4.0.2",
+    "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",
     "react-phone-number-input": "^3.4.12",

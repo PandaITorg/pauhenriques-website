@@ -27,9 +27,10 @@ const PodcastSchema: React.FC<PodcastSchemaProps> = ({ episodes }) => {
   }));
 
   return (
-    <script type="application/ld+json">
-      {JSON.stringify(schemas)}
-    </script>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }}
+    />
   );
 };
 

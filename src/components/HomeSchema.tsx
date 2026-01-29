@@ -10,7 +10,6 @@ const HomeSchema: React.FC = () => {
     'sameAs': [
       'https://www.instagram.com/pau_henriques/',
       'https://open.spotify.com/show/6eMZqxyHUtW46yJd0Et4uw', // Podcast
-      // Add other social media links if available
     ],
     'contactPoint': {
       '@type': 'ContactPoint',
@@ -33,12 +32,14 @@ const HomeSchema: React.FC = () => {
 
   return (
     <>
-      <script type="application/ld+json">
-        {JSON.stringify(organizationSchema)}
-      </script>
-      <script type="application/ld+json">
-        {JSON.stringify(websiteSchema)}
-      </script>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
     </>
   );
 };
