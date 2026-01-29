@@ -27,7 +27,7 @@ const Header = () => {
         {/* Logotipo del sitio */}
         <div className="flex items-center">
           <Link href="/">
-            <Image src={logo} alt="Pau Henriques Logo" height={64} className="h-16 w-auto" priority />
+            <Image src={logo} alt="Pau Henriques Logo" className="h-16 w-auto" priority />
           </Link>
         </div>
 
