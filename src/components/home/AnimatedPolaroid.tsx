@@ -1,8 +1,11 @@
+"use client";
+
 import { useInView } from "react-intersection-observer";
-import branch from "../../assets/branch.svg";
+import branch from "@/assets/branch.svg";
+import Image, { StaticImageData } from "next/image";
 
 interface AnimatedPolaroidProps {
-  src: string;
+  src: string | StaticImageData;
   alt: string;
   rotation: string;
 }
@@ -18,13 +21,13 @@ const AnimatedPolaroid = ({ src, alt, rotation }: AnimatedPolaroidProps) => {
       ref={ref}
       className={`relative w-64 mx-auto ${inView ? "fall-in" : "opacity-0"}`}
     >
-      <img
+      <Image
         src={branch}
         alt="branch"
         className="absolute -top-10 -left-10 w-24 h-24 transform -rotate-45"
       />
       <div className={`polaroid ${rotation}`}>
-        <img src={src} alt={alt} className="w-full h-auto" />
+        <Image src={src} alt={alt} className="w-full h-auto" />
       </div>
     </div>
   );

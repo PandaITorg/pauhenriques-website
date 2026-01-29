@@ -1,29 +1,33 @@
 import { FaInstagram, FaWhatsapp } from "react-icons/fa";
-import PauImage from "../../assets/pau-no-bg.webp";
-import marcoSuperior from "../../assets/marco-superior.svg";
-import marcoInferior from "../../assets/marco-inferior.svg";
-import marcoDerecho from "../../assets/marco-derecho.svg";
+import PauImage from "@/assets/pau-no-bg.webp";
+import marcoSuperior from "@/assets/marco-superior.svg";
+import marcoInferior from "@/assets/marco-inferior.svg";
+import marcoDerecho from "@/assets/marco-derecho.svg";
 import MistDivider from "./MistDivider";
+import Image from "next/image";
 
 const Hero = () => {
   return (
     <section className="relative h-full flex items-end">
       <div className="absolute inset-0 animated-gradient-bg z-0"></div>
 
-      <img
+      <Image
         src={marcoSuperior}
         alt="Marco superior"
         className="absolute top-0 left-0 w-full h-auto z-10 pointer-events-none"
+        priority
       />
-      <img
+      <Image
         src={marcoInferior}
         alt="Marco inferior"
         className="absolute bottom-0 left-0 w-full h-auto z-10 pointer-events-none"
+        priority
       />
-      <img
+      <Image
         src={marcoDerecho}
         alt="Marco derecho"
         className="absolute top-0 right-0 h-full w-auto z-0 pointer-events-none opacity-75"
+        priority
       />
 
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
@@ -156,11 +160,12 @@ const Hero = () => {
         </div>
 
         <div className="w-full md:w-1/2 flex justify-center md:justify-start items-end">
-          <img
+          <Image
             src={PauImage}
             alt="Pau Henriques"
             className="w-full h-auto max-w-[15rem] sm:max-w-xs md:max-w-none opacity-0"
             style={{ animation: "fadeInUp 1s 0.2s ease-out forwards" }}
+            priority
           />
         </div>
       </div>

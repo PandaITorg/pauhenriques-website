@@ -1,7 +1,10 @@
+"use client";
+
 import { useInView } from "react-intersection-observer";
-import { Link } from "react-router";
-import podcastImage from "../../assets/de-toxica-a-sin-toxicos.jpg";
+import Link from "next/link";
+import podcastImage from "@/assets/de-toxica-a-sin-toxicos.jpg";
 import MistDivider from "./MistDivider";
+import Image from "next/image";
 
 const PodcastSection = () => {
   const { ref, inView } = useInView({
@@ -31,7 +34,7 @@ const PodcastSection = () => {
               gurus de temas de interés.
             </p>
             <Link
-              to="/podcast"
+              href="/podcast"
               className="inline-block bg-primary text-white font-bold py-3 px-8 rounded-full transition-all duration-300 ease-in-out hover:brightness-110 hover:scale-105 active:scale-95 transform"
             >
               Ver episodios
@@ -42,10 +45,11 @@ const PodcastSection = () => {
               inView ? "opacity-100 translate-x-0" : "opacity-0 translate-x-10"
             }`}
           >
-            <img
-              loading="lazy"
+            <Image
               src={podcastImage}
               alt="De Tóxica a Sin Tóxicos Podcast"
+              width={800}
+              height={800}
               className="rounded-lg shadow-2xl w-full h-auto object-cover"
             />
           </div>

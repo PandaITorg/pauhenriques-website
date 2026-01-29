@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import Link from "next/link";
 
 const Legal = () => {
   return (
@@ -9,7 +9,7 @@ const Legal = () => {
       <ul className="space-y-3">
         <li>
           <Link
-            to="/politica-privacidad"
+            href="/politica-privacidad"
             className="hover:text-primary transition-colors"
           >
             Política de Privacidad
@@ -17,7 +17,7 @@ const Legal = () => {
         </li>
         <li>
           <Link
-            to="/terminos-servicio"
+            href="/terminos-servicio"
             className="hover:text-primary transition-colors"
           >
             Términos de Servicio

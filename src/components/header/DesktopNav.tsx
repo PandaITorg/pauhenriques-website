@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import Link from "next/link";
 import CTAButton from "./CTAButton";
 
 interface NavLink {
@@ -17,7 +17,7 @@ const DesktopNav = ({ navLinks }: DesktopNavProps) => {
         {navLinks.map((link) => (
           <li key={link.href}>
             <Link
-              to={link.href}
+              href={link.href}
               className="text-text-main transform transition-all duration-300 hover:text-primary hover:scale-105"
             >
               {link.text}

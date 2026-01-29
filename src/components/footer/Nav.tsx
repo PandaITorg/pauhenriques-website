@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import Link from "next/link";
 
 const Nav = () => {
   return (
@@ -8,13 +8,13 @@ const Nav = () => {
       </h3>
       <ul className="space-y-3">
         <li>
-          <Link to="/" className="hover:text-primary transition-colors">
+          <Link href="/" className="hover:text-primary transition-colors">
             Inicio
           </Link>
         </li>
         <li>
           <Link
-            to="/tienda"
+            href="/tienda"
             className="hover:text-primary transition-colors"
           >
             Tienda
@@ -22,7 +22,7 @@ const Nav = () => {
         </li>
         <li>
           <Link
-            to="/podcast"
+            href="/podcast"
             className="hover:text-primary transition-colors"
           >
             Podcast
@@ -30,7 +30,7 @@ const Nav = () => {
         </li>
         <li>
           <Link
-            to="/sobre-mi"
+            href="/sobre-mi"
             className="hover:text-primary transition-colors"
           >
             Sobre Mí
@@ -38,7 +38,7 @@ const Nav = () => {
         </li>
         <li>
           <Link
-            to="/programa-afiliados"
+            href="/programa-afiliados"
             className="hover:text-primary transition-colors"
           >
             Afiliados

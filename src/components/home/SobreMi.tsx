@@ -1,5 +1,5 @@
-import sobreMiPauForrest from "../../assets/sobremi-Pau-Forrest.webp";
-import sobreMiJorgeYPau from "../../assets/sobre-mi-Jorge-y-Pau.webp";
+import sobreMiPauForrest from "@/assets/sobremi-Pau-Forrest.webp";
+import sobreMiJorgeYPau from "@/assets/sobre-mi-Jorge-y-Pau.webp";
 import AnimatedPolaroid from "./AnimatedPolaroid";
 import MistDivider from "./MistDivider";
 
