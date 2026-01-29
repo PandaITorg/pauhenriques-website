@@ -29,9 +29,9 @@ const episodes = [
       "EPISODIO #10: EL VENENO SILENCIOSO QUE TE ESTÁS COMIENDO TODOS LOS DÍAS",
     description:
       'Episodio 10 ! wow! Que emoción que compartas conmigo este espacio! En esta ocasión mi esposo me va a acompañar ya que es un tema un poco mmm "espeso" y necesitaba conversarlo o contárselo a alguien. Luego de mucha investigación tengo información que te va a convencer al 100% de ir a tu cocina y botar todas las sartenes y ollas de teflón que tengas para de una buena vez eliminarlo de tu vida. El Teflón nos envenena es un FACT! Cuéntame si fue clara o clarísima!',
-    spotifyLink: "https://open.spotify.com/episode/6eMZqxyHUtW46yJd0Et4uw",
+    spotifyLink: "https://open.spotify.com/episode/5R0eOglaAltHGjnenJHK1C",
     applePodcastLink:
-      "https://podcasts.apple.com/us/podcast/de-t%C3%B3xica-a-sin-t%C3%B3xicos/id1567244331",
+      "https://podcasts.apple.com/us/podcast/episodio-10-el-veneno-silencioso-que-te-est%C3%A1s/id1567244331?i=1000533922680",
   },
   {
     id: 3,
@@ -39,9 +39,9 @@ const episodes = [
       "EPISODIO # 9 : CONOCE LOS BIORRITMOS DE TU CUERPO Y APLÍCALOS A TU FAVOR!",
     description:
       "Hola , bienvenida/o nuevamente a este espacio, estoy feliz de compartirlo contigo . En este episodio te cuento sobre los biorritmos del cuerpo, cuántos tenemos y cómo utilizarlos a nuestro favor para : tener una mejor digestión , tener más energía y si nuestra meta es bajar de peso, bueno pues sí para bajarlo! Cuéntame si esta información para tí tiene lógica y si la implementas, cuéntame como te va! Sígueme en instagram como pau_henriques para más información sobre salud integral. Te espero por allá un abrazo Pau",
-    spotifyLink: "https://open.spotify.com/episode/6eMZqxyHUtW46yJd0Et4uw",
+    spotifyLink: "https://open.spotify.com/episode/0228CedbhkVhM6E9g4xG8C",
     applePodcastLink:
-      "https://podcasts.apple.com/us/podcast/de-t%C3%B3xica-a-sin-t%C3%B3xicos/id1567244331",
+      "https://podcasts.apple.com/us/podcast/episodio-9-conoce-los-biorritmos-de-tu-cuerpo-y/id1567244331?i=1000530979938",
   },
 ];
 
