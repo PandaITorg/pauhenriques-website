@@ -1,18 +1,21 @@
+"use client";
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Image from "next/image";
 
 // --- ASSETS ---
-import cinthyaImg from "../assets/cinthya - testimonio.jpeg";
-import danielaImg from "../assets/daniela - testimonio.jpeg";
-import marianaImg from "../assets/mariana - testimonio.jpg";
-import monicaImg from "../assets/monica - testimonio.jpeg";
-import sylvannaImg from "../assets/sylvanna - testimonio.jpeg";
+import cinthyaImg from "@/assets/cinthya - testimonio.jpeg";
+import danielaImg from "@/assets/daniela - testimonio.jpeg";
+import marianaImg from "@/assets/mariana - testimonio.jpg";
+import monicaImg from "@/assets/monica - testimonio.jpeg";
+import sylvannaImg from "@/assets/sylvanna - testimonio.jpeg";
 
 // --- DATA ---
 interface Testimonial {
   name: string;
   title: string;
   text: string;
-  image: string;
+  image: any;
   product: string;
 }
 
@@ -59,7 +62,7 @@ const blankTestimonial: Testimonial = {
   name: "",
   title: "",
   text: "",
-  image: "", // Or a placeholder image URL
+  image: null,
   product: "",
 };
 
@@ -88,9 +91,11 @@ const TestimonialCard = React.forwardRef<HTMLDivElement, { testimonial: Testimon
     ) : (
       <>
         <div className="flex items-center mb-4">
-          <img
+          <Image
             src={testimonial.image}
             alt={testimonial.name}
+            width={64}
+            height={64}
             className="w-16 h-16 rounded-full object-cover shadow-md mr-4"
           />
           <div>
@@ -112,6 +117,7 @@ const TestimonialCard = React.forwardRef<HTMLDivElement, { testimonial: Testimon
     )}
   </div>
 ));
+TestimonialCard.displayName = "TestimonialCard";
 
 // --- MAIN COMPONENT ---
 const Testimonios: React.FC = () => {

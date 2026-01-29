@@ -1,7 +1,10 @@
+"use client";
+
 import { useState } from "react";
-import { Link } from "react-router";
-import logo from "../assets/pauhenriques-lightest-green.png";
+import Link from "next/link";
+import logo from "@/assets/pauhenriques-lightest-green.png";
 import { FaBars, FaTimes } from "react-icons/fa";
+import Image from "next/image";
 import DesktopNav from "./header/DesktopNav";
 import MobileMenu from "./header/MobileMenu";
 
@@ -22,9 +25,9 @@ const Header = () => {
     <header className="bg-background shadow-md h-20 sticky top-0 z-[51]">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logotipo del sitio */}
-        <div>
-          <Link to="/">
-            <img src={logo} alt="Pau Henriques Logo" className="h-16" />
+        <div className="flex items-center">
+          <Link href="/">
+            <Image src={logo} alt="Pau Henriques Logo" height={64} className="h-16 w-auto" priority />
           </Link>
         </div>
 

@@ -1,4 +1,5 @@
-import PandaITLogo from "../../assets/PandaIT-imagotipo-horizontal.svg";
+import PandaITLogo from "@/assets/PandaIT-imagotipo-horizontal.svg";
+import Image from "next/image";
 
 const BottomBar = () => {
   const currentYear = new Date().getFullYear();
@@ -16,7 +17,7 @@ const BottomBar = () => {
           rel="noopener noreferrer"
           className="hover:opacity-80 transition-opacity"
         >
-          <img src={PandaITLogo} alt="Panda IT Logo" className="h-6" />
+          <Image src={PandaITLogo} alt="Panda IT Logo" height={24} className="h-6 w-auto" />
         </a>
       </div>
     </div>

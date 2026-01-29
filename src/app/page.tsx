@@ -1,0 +1,33 @@
+import Testimonios from "@/components/Testimonios";
+import ProductVideos from "@/components/ProductVideos";
+import HomeSchema from "@/components/HomeSchema";
+import Footer from "@/components/Footer";
+import Hero from "@/components/home/Hero";
+import SobreMi from "@/components/home/SobreMi";
+import PodcastSection from "@/components/home/PodcastSection";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos",
+  description:
+    "Transforma tu vida con Pau Henriques. Descubre cómo sanar tu cuerpo, vivir sin tóxicos y alcanzar un bienestar integral. Conoce mi historia, mi podcast y mis productos.",
+  alternates: {
+    canonical: "https://www.pauhenriques.com/",
+  },
+};
+
+export default function Home() {
+  return (
+    <>
+      <HomeSchema />
+      <div className="overflow-x-hidden h-full">
+        <Hero />
+        <SobreMi />
+        <ProductVideos />
+        <PodcastSection />
+        <Testimonios />
+        <Footer />
+      </div>
+    </>
+  );
+}

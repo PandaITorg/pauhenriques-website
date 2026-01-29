@@ -4,8 +4,7 @@
     pkgs.nodejs_20
   ];
   idx.extensions = [
-    "svelte.svelte-vscode"
-    "vue.volar"
+    "dbaeumer.vscode-eslint"
   ];
   idx.previews = {
     previews = {
@@ -13,7 +12,7 @@
         command = [
           "sh"
           "-c"
-          "npm install && npm run dev -- --port $PORT --host 0.0.0.0"
+          "npm install && npm run dev -- --port $PORT --hostname 0.0.0.0"
         ];
         manager = "web";
       };
