@@ -18,6 +18,21 @@ const HomeSchema: React.FC = () => {
     }
   };
 
+  const personSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    'name': 'Pau Henriques',
+    'url': 'https://www.pauhenriques.com/sobre-mi',
+    'image': 'https://www.pauhenriques.com/assets/pau-sobre-mi-1.jpg', // A high-quality headshot
+    'jobTitle': 'Coach de Salud y Bienestar',
+    'worksFor': {
+      '@type': 'Organization',
+      'name': 'Pau Henriques'
+    },
+    'description': 'Tras ser diagnosticada con Psoriasis, Pau Henriques emprendió un viaje para sanar su cuerpo desde adentro hacia afuera, adoptando un estilo de vida libre de tóxicos. Ahora, junto a su esposo, lidera la marca Carico en Ecuador, ayudando a otros a mejorar su salud y bienestar.',
+    'sameAs': organizationSchema.sameAs
+  };
+
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -35,6 +50,10 @@ const HomeSchema: React.FC = () => {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+       <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
       />
       <script
         type="application/ld+json"
