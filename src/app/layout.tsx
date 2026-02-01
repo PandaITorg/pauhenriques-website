@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import RootSchema from "@/components/schemas/RootSchema";
 
 export const metadata: Metadata = {
   title: "Pau Henriques | Vive sin tóxicos",
@@ -17,7 +18,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body style={{ backgroundColor: "#143109" }}>
+      <body>
+        <RootSchema />
         <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
