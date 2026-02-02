@@ -35,6 +35,7 @@ export default function PoliticaPrivacidad() {
               protege tu información personal cuando visitas nuestro sitio web y
               utilizas nuestros servicios.
             </p>
+            <p className="text-accent-yellow font-bold mt-4">PIPELINE TEST V1</p>
           </section>
 
           <section>
