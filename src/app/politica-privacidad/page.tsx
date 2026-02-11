@@ -164,6 +164,7 @@ export default function PoliticaPrivacidad() {
           todas las regulaciones aplicables en tu jurisdicción.
         </p>
       </div>
+      {/* clean */}
     </div>
   );
 }
