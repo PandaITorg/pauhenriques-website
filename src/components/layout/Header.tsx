@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import logo from "@/assets/pauhenriques-lightest-green.png";
 import { FaBars, FaTimes } from "react-icons/fa";
 import Image from "next/image";
-import DesktopNav from "./header/DesktopNav";
-import MobileMenu from "./header/MobileMenu";
 
-// Este componente representa la barra de navegación principal de la aplicación.
+// Importaciones usando el alias de ruta "@/" para máxima robustez
+import logo from "@/assets/pauhenriques-lightest-green.png";
+import DesktopNav from "@/components/layout/header/DesktopNav";
+import MobileMenu from "@/components/layout/header/MobileMenu";
+import CartIcon from "@/components/cart/CartIcon"; // Importación corregida
+
 const Header = () => {
-  // Estado para controlar si el menú móvil está abierto o cerrado.
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Lista de enlaces de navegación.
   const navLinks = [
     { href: "/podcast", text: "Podcast" },
     { href: "/tienda", text: "Tienda" },
@@ -31,18 +31,24 @@ const Header = () => {
           </Link>
         </div>
 
-        {/* Navegación para pantallas de escritorio */}
-        <DesktopNav navLinks={navLinks} />
+        {/* Contenedor para los elementos de la derecha */}
+        <div className="flex items-center space-x-5">
+          {/* Navegación para pantallas de escritorio */}
+          <DesktopNav navLinks={navLinks} />
 
-        {/* Botón para abrir/cerrar el menú móvil */}
-        <div className="md:hidden">
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? (
-              <FaTimes className="text-text-main h-6 w-6" />
-            ) : (
-              <FaBars className="text-text-main h-6 w-6" />
-            )}
-          </button>
+          {/* Ícono del Carrito (Visible en todas las pantallas) */}
+          <CartIcon />
+
+          {/* Botón para abrir/cerrar el menú móvil */}
+          <div className="md:hidden">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? (
+                <FaTimes className="text-text-main h-6 w-6" />
+              ) : (
+                <FaBars className="text-text-main h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
       </nav>
 

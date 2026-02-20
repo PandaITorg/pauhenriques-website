@@ -29,3 +29,8 @@ dist-ssr
 *.sw?
 .next/
 out/
+
+
+# Documentacion Nuvei y plan
+.nuvei
+.plan
