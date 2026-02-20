@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // Estas variables DEBEN ser cargadas desde tu archivo .env.local
@@ -21,6 +21,4 @@ if (!getApps().length) {
   app = getApps()[0]; // Si ya está inicializada, usa la instancia existente
 }
 
-const db = getFirestore(app);
-
-export { db };
+export const db = getFirestore(app);

@@ -3,17 +3,18 @@ import {
   query,
   where,
   getDocs,
-  getFirestore,
-  Firestore,
+  DocumentData,
+  QueryDocumentSnapshot,
 } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Product, ProductType } from "@/types/product";
 
 export class ProductService {
-  private db: Firestore;
+  private db: typeof db;
   private productsCollection: string;
 
-  constructor(firestore?: Firestore) {
-    this.db = firestore || getFirestore();
+  constructor(firestore?: typeof db) {
+    this.db = firestore || db;
     this.productsCollection = "productos";
   }
 
@@ -25,13 +26,13 @@ export class ProductService {
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        }) as Product,
-    );
+    return querySnapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+      } as Product;
+    });
   }
 
   async getAllProducts(): Promise<Product[]> {
@@ -41,13 +42,13 @@ export class ProductService {
     );
 
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        }) as Product,
-    );
+    return querySnapshot.docs.map((doc: any) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+      } as Product;
+    });
   }
 
   async getProductById(id: string): Promise<Product | null> {
