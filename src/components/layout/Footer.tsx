@@ -1,8 +1,8 @@
-import Logo from "./footer/Logo";
-import Nav from "./footer/Nav";
-import Legal from "./footer/Legal";
-import Social from "./footer/Social";
-import BottomBar from "./footer/BottomBar";
+import Logo from "@/components/layout/footer/Logo";
+import Nav from "@/components/layout/footer/Nav";
+import Legal from "@/components/layout/footer/Legal";
+import Social from "@/components/layout/footer/Social";
+import BottomBar from "@/components/layout/footer/BottomBar";
 
 // Este componente representa el pie de página principal de la aplicación.
 const Footer = () => {
