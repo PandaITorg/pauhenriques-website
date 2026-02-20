@@ -8,7 +8,8 @@ import {
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
-import { auth } from "@/lib/firebase/server-config";
+import { auth as adminAuth } from "@/lib/firebase-admin";
+import { cookies } from "next/headers";
 
 // Zod schema for cart operations
 const CartActionSchema = z.object({
@@ -19,9 +20,21 @@ const CartActionSchema = z.object({
 
 export async function manageCart(formData: FormData) {
   try {
-    // Validate user authentication
-    const user = await auth.currentUser;
-    if (!user) {
+    // Validate user authentication via session cookie (Server Action pattern)
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("__session")?.value;
+
+    if (!sessionCookie) {
+      return { error: "Unauthorized", status: 401 };
+    }
+
+    const decodedClaims = await adminAuth.verifySessionCookie(
+      sessionCookie,
+      true,
+    );
+    const uid = decodedClaims.uid;
+
+    if (!uid) {
       return { error: "Unauthorized", status: 401 };
     }
 
@@ -40,7 +53,7 @@ export async function manageCart(formData: FormData) {
 
     const { productId, quantity, action } = result.data;
     const db = getFirestore();
-    const userCartRef = doc(db, "user_carts", user.uid);
+    const userCartRef = doc(db, "user_carts", uid);
 
     switch (action) {
       case "add":

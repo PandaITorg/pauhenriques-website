@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
+import { getClientAuth, getClientGoogleProvider } from "@/lib/firebase-auth";
 import { createUserProfile } from "@/app/actions/auth";
 
 interface GoogleSignInButtonProps {
@@ -25,7 +25,10 @@ export default function GoogleSignInButton({
 
     try {
       // 1. Abrir popup de Google OAuth
-      const result = await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(
+        getClientAuth(),
+        getClientGoogleProvider(),
+      );
       const user = result.user;
 
       // 2. Obtener ID Token

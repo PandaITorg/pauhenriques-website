@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth as adminAuth } from "@/lib/firebase-admin";
 
+// Forzar renderizado dinámico — esta ruta no debe ejecutarse en build time
+export const dynamic = "force-dynamic";
+
 // POST /api/auth/session
 // Recibe el ID Token de Firebase y crea una session cookie httpOnly
 export async function POST(request: NextRequest) {

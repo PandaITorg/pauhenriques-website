@@ -1,5 +1,8 @@
 "use client";
 
+// Forzar renderizado dinámico — esta página usa Firebase Auth que requiere el browser
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -8,7 +11,7 @@ import {
   updateProfile,
   AuthError,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
@@ -126,7 +129,7 @@ export default function SignUpPage() {
     try {
       // 1. Crear usuario en Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(
-        auth,
+        getClientAuth(),
         formData.email,
         formData.password,
       );

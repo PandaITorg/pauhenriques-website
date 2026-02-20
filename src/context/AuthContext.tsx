@@ -8,12 +8,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import {
-  User,
-  onAuthStateChanged,
-  signOut as firebaseSignOut,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import type { User } from "firebase/auth";
 
 // ===== TYPES =====
 interface AuthContextType {
@@ -35,14 +30,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Escuchar cambios en el estado de autenticación de Firebase
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-    });
+    // Importar Firebase Auth dinámicamente solo en el cliente
+    // Esto evita errores de SSR durante el prerendering
+    let unsubscribe: (() => void) | undefined;
 
-    // Cleanup al desmontar
-    return () => unsubscribe();
+    const initAuth = async () => {
+      try {
+        const { getClientAuth } = await import("@/lib/firebase-auth");
+        const { onAuthStateChanged } = await import("firebase/auth");
+
+        unsubscribe = onAuthStateChanged(getClientAuth(), (firebaseUser) => {
+          setUser(firebaseUser);
+          setLoading(false);
+        });
+      } catch (error) {
+        console.error("Error al inicializar Firebase Auth:", error);
+        setLoading(false);
+      }
+    };
+
+    initAuth();
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Cerrar sesión: eliminar cookie del servidor + sign out de Firebase
@@ -51,7 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // 1. Eliminar la session cookie del servidor
       await fetch("/api/auth/logout", { method: "POST" });
       // 2. Sign out de Firebase client-side
-      await firebaseSignOut(auth);
+      const { getClientAuth } = await import("@/lib/firebase-auth");
+      const { signOut: firebaseSignOut } = await import("firebase/auth");
+      await firebaseSignOut(getClientAuth());
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }

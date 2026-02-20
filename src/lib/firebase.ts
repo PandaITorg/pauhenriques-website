@@ -1,7 +1,6 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 // Estas variables DEBEN ser cargadas desde tu archivo .env.local
@@ -15,7 +14,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
+let app: FirebaseApp;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
 } else {
@@ -23,10 +22,4 @@ if (!getApps().length) {
 }
 
 export const db = getFirestore(app);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-
-// Configurar el proveedor de Google para siempre mostrar el selector de cuenta
-googleProvider.setCustomParameters({
-  prompt: "select_account",
-});
+export { app as firebaseApp };

@@ -1,5 +1,8 @@
 "use client";
 
+// Forzar renderizado dinámico — esta página usa Firestore que requiere el browser
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductService } from "@/services/firestore/productService";

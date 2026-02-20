@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth as adminAuth } from "@/lib/firebase-admin";
 
+// Forzar renderizado dinámico — esta ruta no debe ejecutarse en build time
+export const dynamic = "force-dynamic";
+
 // POST /api/auth/logout
 // Revoca la session cookie y la elimina del cliente
 export async function POST(request: NextRequest) {

@@ -1,10 +1,13 @@
 "use client";
 
+// Forzar renderizado dinámico — esta página usa Firebase Auth que requiere el browser
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
@@ -90,7 +93,7 @@ export default function SignInPage() {
     try {
       // 1. Sign in con Firebase
       const userCredential = await signInWithEmailAndPassword(
-        auth,
+        getClientAuth(),
         formData.email,
         formData.password,
       );

@@ -1,0 +1,1219 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mockup Auth Pages — Pau Henriques (Final)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --color-primary: #a68a63;
+        --color-secondary: #666d4b;
+        --color-tertiary: #a4ac85;
+        --color-accent: #562f10;
+        --color-header-bg: #c1c4a7;
+        --color-background: #343d2a;
+        --color-input-bg: #414934;
+        --color-text-main: #c1c4a7;
+        --color-text-inverted: #343d2a;
+
+        /* ===== HYBRID DESIGN TOKENS ===== */
+        /* Fondo: gradiente cálido de Opción A */
+        --auth-bg-from: #a68a63;
+        --auth-bg-to: #c1c4a7;
+        /* Card: oscura de Opción B */
+        --auth-card-bg: rgba(52, 61, 42, 0.82);
+        --auth-card-border: rgba(166, 138, 99, 0.25);
+        /* Inputs: tonos cálidos del fondo A */
+        --auth-input-bg: rgba(166, 138, 99, 0.18);
+        --auth-input-border: rgba(166, 138, 99, 0.35);
+        --auth-input-focus-border: #a68a63;
+        --auth-input-text: #3a2e1e;
+        --auth-input-placeholder: rgba(58, 46, 30, 0.45);
+        /* Labels */
+        --auth-label-color: #6b4f2a;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: #1a1a1a;
+        color: var(--color-text-main);
+      }
+
+      /* NAV */
+      .mockup-nav {
+        background: #111;
+        padding: 12px 24px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        border-bottom: 1px solid #333;
+        flex-wrap: wrap;
+      }
+      .mockup-nav span {
+        color: #888;
+        font-size: 13px;
+        margin-right: 4px;
+      }
+      .mockup-btn {
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: 1px solid #444;
+        background: #222;
+        color: #ccc;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+      .mockup-btn:hover,
+      .mockup-btn.active {
+        background: var(--color-primary);
+        color: white;
+        border-color: var(--color-primary);
+      }
+
+      .page-wrapper {
+        display: none;
+      }
+      .page-wrapper.active {
+        display: block;
+      }
+
+      /* SITE HEADER */
+      .site-header {
+        background: var(--color-background);
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        border-bottom: 1px solid rgba(193, 196, 167, 0.1);
+        position: relative;
+        z-index: 10;
+      }
+      .site-logo {
+        font-family: "Dancing Script", cursive;
+        font-size: 22px;
+        color: var(--color-text-main);
+        font-weight: 700;
+      }
+      .site-nav {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+      }
+      .site-nav a {
+        color: var(--color-text-main);
+        text-decoration: none;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+      .btn-login-header {
+        padding: 8px 20px;
+        border: 1.5px solid var(--color-primary);
+        border-radius: 8px;
+        color: var(--color-primary);
+        background: transparent;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: "Inter", sans-serif;
+      }
+      .btn-login-header:hover {
+        background: var(--color-primary);
+        color: white;
+      }
+      .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--color-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        color: white;
+        cursor: pointer;
+        position: relative;
+      }
+      .user-dropdown {
+        position: absolute;
+        top: 44px;
+        right: 0;
+        background: var(--color-input-bg);
+        border: 1px solid rgba(193, 196, 167, 0.2);
+        border-radius: 10px;
+        padding: 8px 0;
+        min-width: 180px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      }
+      .user-dropdown a {
+        display: block;
+        padding: 10px 16px;
+        color: var(--color-text-main);
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .user-dropdown a:hover {
+        background: rgba(193, 196, 167, 0.1);
+      }
+      .user-dropdown .divider {
+        height: 1px;
+        background: rgba(193, 196, 167, 0.15);
+        margin: 4px 0;
+      }
+      .user-dropdown .logout {
+        color: #e57373;
+      }
+
+      /* ===== AUTH PAGE — HYBRID DESIGN ===== */
+      .auth-page {
+        min-height: calc(100vh - 72px);
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+        overflow: hidden;
+        /* FONDO OPCIÓN A: gradiente cálido */
+        background: radial-gradient(
+          ellipse at 60% 40%,
+          #b89a73 0%,
+          #c1c4a7 50%,
+          #a4ac85 100%
+        );
+      }
+
+      /* Shimmer rays (same as hero) */
+      .shimmer-ray {
+        position: absolute;
+        height: 200%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.6),
+          transparent
+        );
+        opacity: 0.06;
+        top: -50%;
+        animation: shimmer 20s linear infinite;
+        pointer-events: none;
+      }
+      @keyframes shimmer {
+        0% {
+          transform: translateY(-100%);
+        }
+        100% {
+          transform: translateY(100%);
+        }
+      }
+
+      /* Plant frame hints */
+      .plant-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(
+          to bottom,
+          rgba(85, 99, 70, 0.35),
+          transparent
+        );
+        pointer-events: none;
+        z-index: 1;
+      }
+      .plant-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(
+          to top,
+          rgba(85, 99, 70, 0.35),
+          transparent
+        );
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      /* ===== FORM CARD — DARK (Opción B style) ===== */
+      .auth-card {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 440px;
+        /* CARD OSCURA de Opción B */
+        background: var(--auth-card-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid var(--auth-card-border);
+        border-radius: 20px;
+        padding: 40px 36px;
+        box-shadow:
+          0 24px 64px rgba(0, 0, 0, 0.35),
+          0 0 0 1px rgba(166, 138, 99, 0.1);
+        animation: fadeInUp 0.6s ease-out forwards;
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .auth-logo {
+        text-align: center;
+        margin-bottom: 8px;
+      }
+      .auth-logo-text {
+        font-family: "Dancing Script", cursive;
+        font-size: 28px;
+        color: var(--color-primary);
+        font-weight: 700;
+      }
+      .auth-logo-sub {
+        font-size: 11px;
+        color: var(--color-tertiary);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+      .auth-divider-line {
+        height: 1px;
+        background: rgba(166, 138, 99, 0.2);
+        margin: 16px 0;
+      }
+      .auth-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--color-text-main);
+        text-align: center;
+        margin-top: 16px;
+        margin-bottom: 6px;
+      }
+      .auth-subtitle {
+        font-size: 13px;
+        color: rgba(193, 196, 167, 0.65);
+        text-align: center;
+        margin-bottom: 24px;
+        line-height: 1.5;
+      }
+
+      /* ===== FORM ELEMENTS — WARM TONES (color del fondo A) ===== */
+      .form-group {
+        margin-bottom: 14px;
+      }
+      .form-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        /* Label en tono cálido del fondo A */
+        color: #c4a882;
+        margin-bottom: 6px;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+      }
+      .form-input-wrapper {
+        position: relative;
+      }
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        /* INPUT BG: tono cálido del fondo A */
+        background: rgba(193, 160, 110, 0.18);
+        border: 1.5px solid rgba(166, 138, 99, 0.35);
+        border-radius: 10px;
+        /* Texto oscuro para contraste sobre fondo cálido */
+        color: var(--color-text-main);
+        font-size: 14px;
+        font-family: "Inter", sans-serif;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      .form-input:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(166, 138, 99, 0.2);
+        background: rgba(193, 160, 110, 0.25);
+      }
+      .form-input::placeholder {
+        color: rgba(193, 196, 167, 0.4);
+      }
+      .form-input.error {
+        border-color: #e57373;
+        box-shadow: 0 0 0 3px rgba(229, 115, 115, 0.12);
+        background: rgba(229, 115, 115, 0.08);
+      }
+      .form-input.success {
+        border-color: #a4ac85;
+        background: rgba(164, 172, 133, 0.15);
+      }
+      .form-input.with-icon {
+        padding-right: 44px;
+      }
+      .input-icon {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(193, 196, 167, 0.45);
+        cursor: pointer;
+        font-size: 15px;
+      }
+      .input-icon:hover {
+        color: var(--color-primary);
+      }
+      .form-error {
+        font-size: 11px;
+        color: #f48a8a;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      /* Password strength */
+      .password-strength {
+        margin-top: 8px;
+      }
+      .strength-bars {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 4px;
+      }
+      .strength-bar {
+        height: 3px;
+        flex: 1;
+        border-radius: 2px;
+        background: rgba(166, 138, 99, 0.15);
+      }
+      .strength-bar.strong {
+        background: #a4ac85;
+      }
+      .strength-bar.medium {
+        background: #c4a882;
+      }
+      .strength-label {
+        font-size: 11px;
+      }
+      .strength-label.strong {
+        color: #a4ac85;
+      }
+
+      /* Phone */
+      .phone-input-wrapper {
+        display: flex;
+        gap: 8px;
+      }
+      .phone-prefix {
+        width: 80px;
+        flex-shrink: 0;
+        padding: 12px 10px;
+        background: rgba(193, 160, 110, 0.18);
+        border: 1.5px solid rgba(166, 138, 99, 0.35);
+        border-radius: 10px;
+        color: var(--color-text-main);
+        font-size: 14px;
+        font-family: "Inter", sans-serif;
+        outline: none;
+        text-align: center;
+      }
+      .phone-number {
+        flex: 1;
+      }
+
+      /* Buttons */
+      .btn-primary {
+        width: 100%;
+        padding: 13px;
+        background: var(--color-primary);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 8px;
+        font-family: "Inter", sans-serif;
+      }
+      .btn-primary:hover {
+        background: #b89a73;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(166, 138, 99, 0.4);
+      }
+
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .auth-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0;
+      }
+      .auth-divider::before,
+      .auth-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgba(166, 138, 99, 0.2);
+      }
+      .auth-divider span {
+        font-size: 12px;
+        color: rgba(193, 196, 167, 0.45);
+        white-space: nowrap;
+      }
+
+      .btn-google {
+        width: 100%;
+        padding: 12px;
+        background: white;
+        color: #3c4043;
+        border: 1.5px solid #dadce0;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-family: "Inter", sans-serif;
+      }
+      .btn-google:hover {
+        background: #f8f9fa;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+      .google-icon {
+        width: 18px;
+        height: 18px;
+      }
+
+      .auth-footer {
+        text-align: center;
+        margin-top: 20px;
+        font-size: 13px;
+        color: rgba(193, 196, 167, 0.5);
+      }
+      .auth-footer a {
+        color: var(--color-primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .auth-footer a:hover {
+        text-decoration: underline;
+      }
+
+      .terms-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .terms-checkbox {
+        width: 16px;
+        height: 16px;
+        margin-top: 2px;
+        accent-color: var(--color-primary);
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+      .terms-text {
+        font-size: 12px;
+        color: rgba(193, 196, 167, 0.55);
+        line-height: 1.5;
+      }
+      .terms-text a {
+        color: var(--color-primary);
+        text-decoration: none;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .forgot-link {
+        text-align: right;
+        margin-top: -6px;
+        margin-bottom: 14px;
+      }
+      .forgot-link a {
+        font-size: 12px;
+        color: rgba(193, 196, 167, 0.5);
+        text-decoration: none;
+      }
+      .forgot-link a:hover {
+        color: var(--color-primary);
+      }
+
+      /* Success */
+      .success-card {
+        text-align: center;
+        padding: 20px 0;
+      }
+      .success-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(164, 172, 133, 0.2);
+        border: 2px solid #a4ac85;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 28px;
+      }
+      .success-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--color-text-main);
+        margin-bottom: 8px;
+      }
+      .success-text {
+        font-size: 13px;
+        color: rgba(193, 196, 167, 0.65);
+        line-height: 1.6;
+      }
+
+      /* Header demo */
+      .header-demo-section {
+        background: #111;
+        padding: 32px;
+        min-height: calc(100vh - 48px);
+      }
+      .header-demo-title {
+        color: #666;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 16px;
+        margin-top: 24px;
+      }
+      .header-demo-title:first-child {
+        margin-top: 0;
+      }
+      .header-demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .header-demo-label {
+        color: #555;
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+
+      .scroll-hint {
+        text-align: center;
+        padding: 10px;
+        color: #555;
+        font-size: 11px;
+        background: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mockup-nav">
+      <span>📐 Final:</span>
+      <button class="mockup-btn active" onclick="showPage('signin', this)">
+        Sign In
+      </button>
+      <button class="mockup-btn" onclick="showPage('signup', this)">
+        Sign Up
+      </button>
+      <button class="mockup-btn" onclick="showPage('header-states', this)">
+        Header States
+      </button>
+      <button class="mockup-btn" onclick="showPage('success', this)">
+        Post-Registro
+      </button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SIGN IN — HYBRID DESIGN -->
+    <!-- ============================================================ -->
+    <div class="page-wrapper active" id="page-signin">
+      <div class="site-header">
+        <div class="site-logo">Pau Henriques</div>
+        <div class="site-nav">
+          <a href="#">Podcast</a><a href="#">Tienda</a><a href="#">Sobre Mí</a
+          ><a href="#">Afiliados</a>
+          <button class="btn-login-header">Ingresar</button>
+        </div>
+      </div>
+
+      <div class="auth-page">
+        <!-- Shimmer rays -->
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+          "
+        >
+          <div
+            class="shimmer-ray"
+            style="
+              width: 24px;
+              left: 25%;
+              transform: rotate(-12deg);
+              animation-delay: 0s;
+            "
+          ></div>
+          <div
+            class="shimmer-ray"
+            style="
+              width: 32px;
+              left: 75%;
+              transform: rotate(-12deg);
+              animation-delay: 5s;
+            "
+          ></div>
+          <div
+            class="shimmer-ray"
+            style="
+              width: 16px;
+              left: 50%;
+              transform: rotate(12deg);
+              animation-delay: 2s;
+            "
+          ></div>
+          <div
+            class="shimmer-ray"
+            style="
+              width: 20px;
+              left: 33%;
+              transform: rotate(15deg);
+              animation-delay: 8s;
+            "
+          ></div>
+        </div>
+        <!-- Plant frame hints -->
+        <div class="plant-top"></div>
+        <div class="plant-bottom"></div>
+
+        <!-- DARK CARD on warm background -->
+        <div class="auth-card">
+          <div class="auth-logo">
+            <div class="auth-logo-text">Pau Henriques</div>
+            <div class="auth-logo-sub">Vive sin tóxicos</div>
+          </div>
+          <div class="auth-divider-line"></div>
+          <h1 class="auth-title">Bienvenida de vuelta</h1>
+          <p class="auth-subtitle">
+            Ingresa a tu cuenta para continuar con tu compra
+          </p>
+
+          <button class="btn-google">
+            <svg class="google-icon" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continuar con Google
+          </button>
+          <div class="auth-divider"><span>o ingresa con tu email</span></div>
+
+          <div class="form-group">
+            <label class="form-label">Correo electrónico</label>
+            <input type="email" class="form-input" placeholder="tu@email.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <div class="form-input-wrapper">
+              <input
+                type="password"
+                class="form-input with-icon"
+                placeholder="••••••••"
+              />
+              <span class="input-icon">👁</span>
+            </div>
+          </div>
+          <div class="forgot-link">
+            <a href="#">¿Olvidaste tu contraseña?</a>
+          </div>
+          <button class="btn-primary">Ingresar a mi cuenta</button>
+          <div class="auth-footer">
+            ¿No tienes cuenta? <a href="#">Regístrate aquí</a>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-hint">
+        Diseño final: Fondo cálido (Opción A) + Card oscura (Opción B) + Inputs
+        con tono cálido del fondo
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SIGN UP — HYBRID DESIGN -->
+    <!-- ============================================================ -->
+    <div class="page-wrapper" id="page-signup">
+      <div class="site-header">
+        <div class="site-logo">Pau Henriques</div>
+        <div class="site-nav">
+          <a href="#">Podcast</a><a href="#">Tienda</a><a href="#">Sobre Mí</a
+          ><a href="#">Afiliados</a>
+          <button class="btn-login-header">Ingresar</button>
+        </div>
+      </div>
+
+      <div class="auth-page">
+        <div
+          style="
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+          "
+        >
+          <div
+            class="shimmer-ray"
+            style="
+              width: 24px;
+              left: 25%;
+              transform: rotate(-12deg);
+              animation-delay: 0s;
+            "
+          ></div>
+          <div
+            class="shimmer-ray"
+            style="
+              width: 32px;
+              left: 75%;
+              transform: rotate(-12deg);
+              animation-delay: 5s;
+            "
+          ></div>
+        </div>
+        <div class="plant-top"></div>
+        <div class="plant-bottom"></div>
+
+        <div class="auth-card" style="max-width: 480px">
+          <div class="auth-logo">
+            <div class="auth-logo-text">Pau Henriques</div>
+            <div class="auth-logo-sub">Vive sin tóxicos</div>
+          </div>
+          <div class="auth-divider-line"></div>
+          <h1 class="auth-title">Crea tu cuenta</h1>
+          <p class="auth-subtitle">
+            Únete a nuestra comunidad y empieza tu camino hacia una vida sin
+            tóxicos
+          </p>
+
+          <button class="btn-google">
+            <svg class="google-icon" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Registrarse con Google
+          </button>
+          <div class="auth-divider">
+            <span>o crea tu cuenta con email</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input
+                type="text"
+                class="form-input success"
+                placeholder="María"
+                value="María"
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apellido</label>
+              <input type="text" class="form-input" placeholder="García" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Correo electrónico</label>
+            <input
+              type="email"
+              class="form-input error"
+              placeholder="tu@email.com"
+              value="email-invalido"
+            />
+            <div class="form-error">⚠ Ingresa un correo electrónico válido</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"
+              >Teléfono
+              <span
+                style="
+                  color: rgba(193, 196, 167, 0.35);
+                  font-weight: 400;
+                  text-transform: none;
+                  letter-spacing: 0;
+                "
+                >(opcional)</span
+              ></label
+            >
+            <div class="phone-input-wrapper">
+              <input type="text" class="form-input phone-prefix" value="+593" />
+              <input
+                type="tel"
+                class="form-input phone-number"
+                placeholder="99 123 4567"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <div class="form-input-wrapper">
+              <input
+                type="password"
+                class="form-input with-icon"
+                placeholder="Mínimo 8 caracteres"
+                value="MiPass1!"
+              />
+              <span class="input-icon">👁</span>
+            </div>
+            <div class="password-strength">
+              <div class="strength-bars">
+                <div class="strength-bar strong"></div>
+                <div class="strength-bar strong"></div>
+                <div class="strength-bar strong"></div>
+                <div class="strength-bar medium"></div>
+              </div>
+              <span class="strength-label strong">Contraseña fuerte ✓</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirmar contraseña</label>
+            <div class="form-input-wrapper">
+              <input
+                type="password"
+                class="form-input with-icon"
+                placeholder="Repite tu contraseña"
+              />
+              <span class="input-icon">👁</span>
+            </div>
+          </div>
+
+          <div class="terms-group">
+            <input type="checkbox" class="terms-checkbox" />
+            <span class="terms-text"
+              >Acepto los <a href="#">Términos de Servicio</a> y la
+              <a href="#">Política de Privacidad</a>. Entiendo que mis datos
+              serán tratados de forma segura.</span
+            >
+          </div>
+
+          <button class="btn-primary">Crear mi cuenta</button>
+          <div class="auth-footer">
+            ¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-hint">
+        Sign Up — Mismo diseño híbrido: fondo cálido + card oscura + inputs con
+        tono dorado
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- HEADER STATES -->
+    <!-- ============================================================ -->
+    <div class="page-wrapper" id="page-header-states">
+      <div class="header-demo-section">
+        <div class="header-demo-title">Estado del Header — Desktop</div>
+        <div class="header-demo-grid">
+          <div>
+            <div class="header-demo-label">
+              No autenticado → botón "Ingresar"
+            </div>
+            <div
+              class="site-header"
+              style="
+                position: relative;
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+              "
+            >
+              <div class="site-logo">Pau Henriques</div>
+              <div class="site-nav">
+                <a href="#">Podcast</a><a href="#">Tienda</a
+                ><a href="#">Sobre Mí</a><a href="#">Afiliados</a>
+                <button class="btn-login-header">Ingresar</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="header-demo-label">
+              Autenticado → avatar con inicial + dropdown
+            </div>
+            <div
+              class="site-header"
+              style="
+                position: relative;
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+              "
+            >
+              <div class="site-logo">Pau Henriques</div>
+              <div class="site-nav">
+                <a href="#">Podcast</a><a href="#">Tienda</a
+                ><a href="#">Sobre Mí</a><a href="#">Afiliados</a>
+                <div style="position: relative">
+                  <div class="user-avatar">M</div>
+                  <div class="user-dropdown">
+                    <div
+                      style="
+                        padding: 10px 16px 2px;
+                        font-size: 13px;
+                        color: var(--color-text-main);
+                        font-weight: 600;
+                      "
+                    >
+                      María García
+                    </div>
+                    <div
+                      style="
+                        padding: 0 16px 10px;
+                        font-size: 11px;
+                        color: rgba(193, 196, 167, 0.45);
+                      "
+                    >
+                      maria@email.com
+                    </div>
+                    <div class="divider"></div>
+                    <a href="#">👤 Mi cuenta</a>
+                    <a href="#">📦 Mis pedidos</a>
+                    <div class="divider"></div>
+                    <a href="#" class="logout">🚪 Cerrar sesión</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-demo-title" style="margin-top: 32px">
+          Estado del Header — Móvil
+        </div>
+        <div style="display: flex; gap: 16px; flex-wrap: wrap">
+          <div>
+            <div class="header-demo-label">Móvil — No autenticado</div>
+            <div
+              style="
+                width: 340px;
+                background: var(--color-background);
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  height: 60px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  padding: 0 16px;
+                "
+              >
+                <div class="site-logo" style="font-size: 18px">
+                  Pau Henriques
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px">
+                  <button
+                    class="btn-login-header"
+                    style="padding: 6px 14px; font-size: 12px"
+                  >
+                    Ingresar
+                  </button>
+                  <span
+                    style="
+                      font-size: 20px;
+                      color: var(--color-text-main);
+                      cursor: pointer;
+                    "
+                    >☰</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="header-demo-label">Móvil — Autenticado</div>
+            <div
+              style="
+                width: 340px;
+                background: var(--color-background);
+                border-radius: 12px;
+                border: 1px solid #2a2a2a;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  height: 60px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                  padding: 0 16px;
+                "
+              >
+                <div class="site-logo" style="font-size: 18px">
+                  Pau Henriques
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px">
+                  <div
+                    class="user-avatar"
+                    style="width: 32px; height: 32px; font-size: 12px"
+                  >
+                    M
+                  </div>
+                  <span
+                    style="
+                      font-size: 20px;
+                      color: var(--color-text-main);
+                      cursor: pointer;
+                    "
+                    >☰</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="header-demo-title" style="margin-top: 32px">
+          Botón con estado de carga
+        </div>
+        <div style="max-width: 440px">
+          <button class="btn-primary" style="margin-top: 0">
+            <div class="spinner"></div>
+            Verificando...
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- POST-REGISTRO SUCCESS -->
+    <!-- ============================================================ -->
+    <div class="page-wrapper" id="page-success">
+      <div class="site-header">
+        <div class="site-logo">Pau Henriques</div>
+        <div class="site-nav">
+          <a href="#">Podcast</a><a href="#">Tienda</a><a href="#">Sobre Mí</a>
+          <div style="position: relative"><div class="user-avatar">M</div></div>
+        </div>
+      </div>
+
+      <div class="auth-page">
+        <div class="plant-top"></div>
+        <div class="plant-bottom"></div>
+
+        <div class="auth-card">
+          <div class="success-card">
+            <div class="success-icon">✓</div>
+            <h2 class="success-title">¡Cuenta creada con éxito!</h2>
+            <p class="success-text">
+              Bienvenida,
+              <strong style="color: var(--color-primary)">María</strong
+              >.<br /><br />Tu cuenta ha sido creada. Ahora puedes explorar
+              nuestra tienda y realizar tus compras de forma segura.
+            </p>
+            <button class="btn-primary" style="margin-top: 24px">
+              Ir a la Tienda →
+            </button>
+            <div class="auth-footer" style="margin-top: 16px">
+              <a href="#">Volver al inicio</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-hint">
+        Post-registro — Header ya muestra el avatar del usuario autenticado
+      </div>
+    </div>
+
+    <script>
+      function showPage(page, btn) {
+        document
+          .querySelectorAll(".page-wrapper")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".mockup-btn")
+          .forEach((b) => b.classList.remove("active"));
+        document.getElementById("page-" + page).classList.add("active");
+        btn.classList.add("active");
+      }
+    </script>
+  </body>
+</html>
