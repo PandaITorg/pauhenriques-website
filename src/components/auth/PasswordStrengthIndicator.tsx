@@ -66,7 +66,7 @@ export default function PasswordStrengthIndicator({
         {[1, 2, 3, 4].map((bar) => (
           <div
             key={bar}
-            className={`h-[3px] flex-1 rounded-full transition-all duration-300 ${
+            className={`h-0.75 flex-1 rounded-full transition-all duration-300 ${
               bar <= strength.score
                 ? strength.color
                 : "bg-[rgba(166,138,99,0.15)]"

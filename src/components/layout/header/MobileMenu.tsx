@@ -44,7 +44,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         {user ? (
           <>
             <div className="flex items-center gap-3 py-1">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {user.displayName?.charAt(0).toUpperCase() ||
                   user.email?.charAt(0).toUpperCase() ||
                   "U"}

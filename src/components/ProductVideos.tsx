@@ -238,8 +238,8 @@ const ProductVideos: React.FC = () => {
             </div>
           </div>
 
-          <div className="w-full max-w-[240px] sm:max-w-sm flex flex-col items-center">
-            <div className="relative w-full h-[400px] md:h-[550px]">
+          <div className="w-full max-w-60 sm:max-w-sm flex flex-col items-center">
+            <div className="relative w-full h-100 md:h-137.5">
               <div
                 key={currentIndex}
                 className={`absolute inset-0 transition-all duration-500 ease-in-out transform animate-slide-in`}
@@ -247,15 +247,15 @@ const ProductVideos: React.FC = () => {
                   animationName: isCardAnimating
                     ? "none"
                     : slideDirection === "next"
-                    ? "slideInFromRight"
-                    : "slideInFromLeft",
+                      ? "slideInFromRight"
+                      : "slideInFromLeft",
                 }}
               >
                 <div
                   className={`w-full h-full transition-all duration-500 ease-in-out transform ${getCardAnimationClass()}`}
                 >
                   <div className="bg-white p-4 pb-16 shadow-2xl rounded-lg w-full h-full flex flex-col">
-                    <div className="w-full bg-black rounded-sm overflow-hidden flex-grow relative">
+                    <div className="w-full bg-black rounded-sm overflow-hidden grow relative">
                       <video
                         ref={videoRef}
                         src={currentVideo.videoUrl}

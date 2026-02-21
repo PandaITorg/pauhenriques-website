@@ -65,12 +65,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           );
         })}
       </div>
-      <div className="p-4 flex-grow flex flex-col">
+      <div className="p-4 grow flex flex-col">
         <h3 className="font-bold text-xl mb-2 text-[#343d2a]">
           {product.name}
         </h3>
         <p className="text-sm text-gray-500 mb-2 capitalize">{product.brand}</p>
-        <p className="text-gray-700 text-base mb-4 flex-grow">
+        <p className="text-gray-700 text-base mb-4 grow">
           {product.description}
         </p>
 
@@ -98,7 +98,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full mt-auto bg-[#a68a63] hover:bg-[#562f10] text-white font-bold py-2 px-4 rounded-md text-center transition-colors duration-300"
+            className="block w-full mt-auto bg-primary hover:bg-accent text-white font-bold py-2 px-4 rounded-md text-center transition-colors duration-300"
           >
             Preguntar por WhatsApp
           </a>
@@ -208,7 +208,7 @@ export default function Tienda() {
 
   if (loading) {
     return (
-      <p className="text-center min-h-screen bg-[#a4ac85] py-8">
+      <p className="text-center min-h-screen bg-tertiary py-8">
         Cargando productos...
       </p>
     );
@@ -216,7 +216,7 @@ export default function Tienda() {
 
   if (error) {
     return (
-      <p className="text-center text-red-500 min-h-screen bg-[#a4ac85] py-8">
+      <p className="text-center text-red-500 min-h-screen bg-tertiary py-8">
         {error}
       </p>
     );
@@ -225,11 +225,11 @@ export default function Tienda() {
   return (
     <>
       <TiendaSchema />
-      <div className="min-h-screen bg-[#a4ac85] text-[#343d2a] py-8 px-4">
+      <div className="min-h-screen bg-tertiary text-[#343d2a] py-8 px-4">
         {showForm && (
           <div
             className={`transition-all duration-500 ease-in-out overflow-hidden ${
-              isClosing ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
+              isClosing ? "max-h-0 opacity-0" : "max-h-125 opacity-100"
             }`}
           >
             {/* Formulario de suscripción aquí */}
