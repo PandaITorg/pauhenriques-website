@@ -173,20 +173,20 @@ export default function SignInPage() {
         src={marcoSuperior}
         alt=""
         aria-hidden="true"
-        className="absolute top-0 left-0 w-full h-auto z-[1] pointer-events-none opacity-50"
+        className="absolute top-0 left-0 w-full h-auto z-1 pointer-events-none opacity-50"
         priority
       />
       <Image
         src={marcoInferior}
         alt=""
         aria-hidden="true"
-        className="absolute bottom-0 left-0 w-full h-auto z-[1] pointer-events-none opacity-50"
+        className="absolute bottom-0 left-0 w-full h-auto z-1 pointer-events-none opacity-50"
         priority
       />
 
       {/* Form Card */}
       <div
-        className="relative z-[2] w-full max-w-[440px] rounded-2xl px-9 py-10"
+        className="relative z-2 w-full max-w-110 rounded-2xl px-9 py-10"
         style={{
           background: "rgba(52, 61, 42, 0.82)",
           backdropFilter: "blur(24px)",
@@ -224,7 +224,7 @@ export default function SignInPage() {
         />
 
         {/* Divider */}
-        <div className="flex items-center gap-3 my-[18px]">
+        <div className="flex items-center gap-3 my-4.5">
           <div className="flex-1 h-px bg-[rgba(166,138,99,0.2)]" />
           <span className="text-[12px] text-[rgba(193,196,167,0.4)] whitespace-nowrap">
             o ingresa con tu email

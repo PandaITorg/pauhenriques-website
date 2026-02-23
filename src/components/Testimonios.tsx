@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 
 // --- ASSETS ---
@@ -68,21 +68,28 @@ const blankTestimonial: Testimonial = {
 
 // --- HELPER FUNCTIONS ---
 const shuffleArray = (array: Testimonial[]) => {
-  let currentIndex = array.length, randomIndex;
+  let currentIndex = array.length,
+    randomIndex;
   const newArray = [...array];
   while (currentIndex !== 0) {
     randomIndex = Math.floor(Math.random() * currentIndex);
     currentIndex--;
-    [newArray[currentIndex], newArray[randomIndex]] = [newArray[randomIndex], newArray[currentIndex]];
+    [newArray[currentIndex], newArray[randomIndex]] = [
+      newArray[randomIndex],
+      newArray[currentIndex],
+    ];
   }
   return newArray;
 };
 
 // --- CARD COMPONENT ---
-const TestimonialCard = React.forwardRef<HTMLDivElement, { testimonial: Testimonial, isBlank?: boolean }>(({ testimonial, isBlank }, ref) => (
-  <div 
+const TestimonialCard = React.forwardRef<
+  HTMLDivElement,
+  { testimonial: Testimonial; isBlank?: boolean }
+>(({ testimonial, isBlank }, ref) => (
+  <div
     ref={ref}
-    className="bg-white rounded-xl shadow-lg p-6 flex-shrink-0 w-[18.75rem] md:w-[23.75rem] mx-4"
+    className="bg-white rounded-xl shadow-lg p-6 shrink-0 w-75 md:w-95 mx-4"
   >
     {isBlank ? (
       <div className="h-full flex items-center justify-center text-gray-400 italic">
@@ -106,13 +113,13 @@ const TestimonialCard = React.forwardRef<HTMLDivElement, { testimonial: Testimon
               <p className="text-sm text-gray-500">{testimonial.title}</p>
             )}
             {testimonial.product && (
-              <p className="text-xs text-gray-400 mt-1">{testimonial.product}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {testimonial.product}
+              </p>
             )}
           </div>
         </div>
-        <p className="text-base text-gray-600 italic">
-          “{testimonial.text}”
-        </p>
+        <p className="text-base text-gray-600 italic">“{testimonial.text}”</p>
       </>
     )}
   </div>
@@ -122,7 +129,7 @@ TestimonialCard.displayName = "TestimonialCard";
 // --- MAIN COMPONENT ---
 const Testimonios: React.FC = () => {
   const [visibleTestimonials, setVisibleTestimonials] = useState<Testimonial[]>(
-    []
+    [],
   );
   const scrollerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null); // Ref to measure a single card
@@ -251,8 +258,8 @@ const Testimonios: React.FC = () => {
           ))}
         </div>
         {/* Gradient overlay to hide abrupt edges */}
-        <div className="absolute inset-y-0 left-0 pointer-events-none bg-gradient-to-r from-background to-transparent w-1/4 md:w-1/6"></div>
-        <div className="absolute inset-y-0 right-0 pointer-events-none bg-gradient-to-l from-background to-transparent w-1/4 md:w-1/6"></div>
+        <div className="absolute inset-y-0 left-0 pointer-events-none bg-linear-to-r from-background to-transparent w-1/4 md:w-1/6"></div>
+        <div className="absolute inset-y-0 right-0 pointer-events-none bg-linear-to-l from-background to-transparent w-1/4 md:w-1/6"></div>
       </div>
     </section>
   );

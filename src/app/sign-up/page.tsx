@@ -225,20 +225,20 @@ export default function SignUpPage() {
         src={marcoSuperior}
         alt=""
         aria-hidden="true"
-        className="absolute top-0 left-0 w-full h-auto z-[1] pointer-events-none opacity-50"
+        className="absolute top-0 left-0 w-full h-auto z-1 pointer-events-none opacity-50"
         priority
       />
       <Image
         src={marcoInferior}
         alt=""
         aria-hidden="true"
-        className="absolute bottom-0 left-0 w-full h-auto z-[1] pointer-events-none opacity-50"
+        className="absolute bottom-0 left-0 w-full h-auto z-1 pointer-events-none opacity-50"
         priority
       />
 
       {/* Form Card */}
       <div
-        className="relative z-[2] w-full max-w-[480px] rounded-2xl px-9 py-10"
+        className="relative z-2 w-full max-w-120 rounded-2xl px-9 py-10"
         style={{
           background: "rgba(52, 61, 42, 0.82)",
           backdropFilter: "blur(24px)",
@@ -277,7 +277,7 @@ export default function SignUpPage() {
         />
 
         {/* Divider */}
-        <div className="flex items-center gap-3 my-[18px]">
+        <div className="flex items-center gap-3 my-4.5">
           <div className="flex-1 h-px bg-[rgba(166,138,99,0.2)]" />
           <span className="text-[12px] text-[rgba(193,196,167,0.4)] whitespace-nowrap">
             o crea tu cuenta con email
@@ -389,7 +389,7 @@ export default function SignUpPage() {
               </span>
             </label>
             <div className="flex gap-2">
-              <div className="flex items-center justify-center w-[80px] flex-shrink-0 px-2 py-3 rounded-xl text-[14px] text-text-main border-[1.5px] border-[rgba(166,138,99,0.35)] bg-[rgba(193,160,110,0.18)] text-center">
+              <div className="flex items-center justify-center w-20 shrink-0 px-2 py-3 rounded-xl text-[14px] text-text-main border-[1.5px] border-[rgba(166,138,99,0.35)] bg-[rgba(193,160,110,0.18)] text-center">
                 +593
               </div>
               <input
@@ -493,7 +493,7 @@ export default function SignUpPage() {
               id="acceptTerms"
               checked={formData.acceptTerms}
               onChange={handleChange}
-              className="w-4 h-4 mt-0.5 flex-shrink-0 accent-primary cursor-pointer"
+              className="w-4 h-4 mt-0.5 shrink-0 accent-primary cursor-pointer"
             />
             <label
               htmlFor="acceptTerms"
