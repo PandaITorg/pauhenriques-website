@@ -34,7 +34,10 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, onRemove }) => (
       <p className="font-semibold text-lg text-[#343d2a]">
         ${((item.price || 0) * item.quantity).toFixed(2)}
       </p>
-      <button onClick={() => onRemove(item.id)} className="text-red-500 hover:text-red-700 transition-colors">
+      <button
+        onClick={() => onRemove(item.id)}
+        className="text-red-500 hover:text-red-700 transition-colors"
+      >
         <FaTrash />
       </button>
     </div>
@@ -44,16 +47,22 @@ const CartItemRow: React.FC<CartItemRowProps> = ({ item, onRemove }) => (
 // --- COMPONENTE PRINCIPAL DE LA PÁGINA DE CHECKOUT ---
 const CheckoutPage = () => {
   const [isClient, setIsClient] = useState(false);
-  const { items, removeItem } = useCartStore((state) => ({
-    items: state.items,
-    removeItem: state.removeItem,
-  }));
+
+  // FIX: Use separate selectors instead of returning a new object `{}` from a single selector.
+  // Returning `{ items, removeItem }` from one selector creates a new object reference on every
+  // call, causing Zustand's useSyncExternalStore to detect a "change" and trigger an infinite
+  // re-render loop ("Maximum update depth exceeded").
+  const items = useCartStore((state) => state.items);
+  const removeItem = useCartStore((state) => state.removeItem);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const subtotal = items.reduce((total, item) => total + (item.price || 0) * item.quantity, 0);
+  const subtotal = items.reduce(
+    (total, item) => total + (item.price || 0) * item.quantity,
+    0,
+  );
 
   // Manejadores para el resultado de la tokenización
   const handleTokenSuccess = (token: string) => {
@@ -67,15 +76,24 @@ const CheckoutPage = () => {
   };
 
   if (!isClient) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p>Cargando carrito...</p></div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p>Cargando carrito...</p>
+      </div>
+    );
   }
 
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center text-center px-4">
-        <h1 className="text-3xl font-bold text-[#343d2a] mb-4">Tu carrito está vacío</h1>
-        <p className="text-gray-600 mb-8">Parece que aún no has agregado productos. ¡Explora nuestra tienda!</p>
-        <Link href="/tienda"
+        <h1 className="text-3xl font-bold text-[#343d2a] mb-4">
+          Tu carrito está vacío
+        </h1>
+        <p className="text-gray-600 mb-8">
+          Parece que aún no has agregado productos. ¡Explora nuestra tienda!
+        </p>
+        <Link
+          href="/tienda"
           className="bg-[#343d2a] hover:bg-[#5a6b4a] text-white font-bold py-3 px-6 rounded-md text-center transition-colors duration-300"
         >
           Ir a la Tienda
@@ -87,12 +105,15 @@ const CheckoutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="container mx-auto">
-        <h1 className="text-4xl font-bold text-center text-[#343d2a] mb-12">Resumen de Compra</h1>
+        <h1 className="text-4xl font-bold text-center text-[#343d2a] mb-12">
+          Resumen de Compra
+        </h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          
           {/* Columna Izquierda: Lista de Productos */}
           <div className="lg:col-span-2 bg-white p-8 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold text-[#343d2a] border-b pb-4 mb-6">Tus Productos</h2>
+            <h2 className="text-2xl font-semibold text-[#343d2a] border-b pb-4 mb-6">
+              Tus Productos
+            </h2>
             <div className="space-y-4">
               {items.map((item) => (
                 <CartItemRow key={item.id} item={item} onRemove={removeItem} />
@@ -102,8 +123,10 @@ const CheckoutPage = () => {
 
           {/* Columna Derecha: Resumen de Pago y Formulario */}
           <div className="lg:col-span-1 bg-white p-8 rounded-lg shadow-md h-fit sticky top-32">
-             <h2 className="text-2xl font-semibold text-[#343d2a] border-b pb-4 mb-6">Total a Pagar</h2>
-             <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-[#343d2a] border-b pb-4 mb-6">
+              Total a Pagar
+            </h2>
+            <div className="space-y-4">
               <div className="flex justify-between">
                 <p className="text-gray-600">Subtotal</p>
                 <p className="font-semibold">${subtotal.toFixed(2)}</p>
@@ -120,12 +143,11 @@ const CheckoutPage = () => {
 
             <div className="mt-8">
               {/* --- AQUÍ SE INTEGRA EL FORMULARIO DE PAGO DE NUVEI --- */}
-              <NuveiPaymentForm 
+              <NuveiPaymentForm
                 onTokenSuccess={handleTokenSuccess}
                 onTokenError={handleTokenError}
               />
             </div>
-
           </div>
         </div>
       </div>

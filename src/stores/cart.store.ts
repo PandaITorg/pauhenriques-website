@@ -1,16 +1,16 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { Product } from '@/types/product';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { Product, InfrrarrojoProduct } from "@/types/product";
 
 // Definimos el tipo para un item en el carrito, que extiende el producto y añade la cantidad
-export interface CartItem extends Product {
+export interface CartItem extends InfrrarrojoProduct {
   quantity: number;
 }
 
 // Definimos la interfaz del estado de nuestro store
 interface CartState {
   items: CartItem[];
-  addItem: (product: Product) => void;
+  addItem: (product: InfrrarrojoProduct) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
 }
@@ -24,15 +24,19 @@ export const useCartStore = create<CartState>()(
       // Acción para añadir un item al carrito
       addItem: (product) => {
         // REGLA DE NEGOCIO: Solo se pueden añadir al carrito productos de la marca 'wellme'
-        if (product.brand !== 'wellme') {
+        if (product.brand !== "wellme") {
           // En una app real, podrías mostrar una notificación al usuario.
           // Por ahora, solo lo prevenimos y lo mostramos en consola.
-          console.warn("Intento de agregar un producto no vendible (Carico) al carrito. Operación ignorada.");
+          console.warn(
+            "Intento de agregar un producto no vendible (Carico) al carrito. Operación ignorada.",
+          );
           return;
         }
 
         const currentItems = get().items;
-        const existingItem = currentItems.find((item) => item.id === product.id);
+        const existingItem = currentItems.find(
+          (item) => item.id === product.id,
+        );
 
         if (existingItem) {
           // Si el item ya existe, incrementamos su cantidad
@@ -40,7 +44,7 @@ export const useCartStore = create<CartState>()(
             items: currentItems.map((item) =>
               item.id === product.id
                 ? { ...item, quantity: item.quantity + 1 }
-                : item
+                : item,
             ),
           });
         } else {
@@ -60,7 +64,7 @@ export const useCartStore = create<CartState>()(
       clearCart: () => set({ items: [] }),
     }),
     {
-      name: 'pau-henriques-cart-storage', // Nombre único para el item en localStorage
-    }
-  )
+      name: "pau-henriques-cart-storage", // Nombre único para el item en localStorage
+    },
+  ),
 );
