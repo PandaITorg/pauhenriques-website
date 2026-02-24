@@ -1,7 +1,5 @@
 {
   "hosting": {
-    "public": "out",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "cleanUrls": true
+    "source": "apphosting"
   }
 }
