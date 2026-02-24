@@ -4,6 +4,8 @@
 
 Implementar el flujo completo de registro/login de usuarios para la tienda en línea, con Email+Password y Google Sign-In.
 
+> **Prerrequisito:** Antes de implementar este plan, asegúrate de haber configurado Google Sign-In en Firebase Console siguiendo **[`google-auth-setup.md`](google-auth-setup.md)**.
+
 ---
 
 ## 🎨 Diseño Visual (Mockup Description)

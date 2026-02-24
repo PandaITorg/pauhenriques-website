@@ -59,7 +59,7 @@ Donde se almacenan los valores reales de `FIREBASE_CLIENT_EMAIL` y `FIREBASE_PRI
 
 ### En Staging/Producción (Firebase App Hosting)
 
-1. **Crear secretos** en Cloud Secret Manager (ver `SETUP_SECRETS.md`)
+1. **Crear secretos** en Cloud Secret Manager (ver `setup-secrets.md`)
 2. **Otorgar acceso** a App Hosting
 3. Hacer `firebase deploy --only hosting`
 4. Firebase lee `apphosting.yaml`
@@ -125,27 +125,6 @@ Si el login funciona → variables cargadas correctamente.
 
 ---
 
-## 🔐 Configuración de Secretos (Paso a Paso)
-
-Ver archivo separado: **[`SETUP_SECRETS.md`](SETUP_SECRETS.md)**
-
-Resumen:
-
-```bash
-# 1. Crear secretos
-firebase apphosting:secrets:set firebase-client-email
-firebase apphosting:secrets:set firebase-private-key
-
-# 2. Otorgar acceso a App Hosting
-firebase apphosting:secrets:grantaccess --secret firebase-client-email
-firebase apphosting:secrets:grantaccess --secret firebase-private-key
-
-# 3. Deploy
-firebase deploy --only hosting
-```
-
----
-
 ## 🔄 Actualizar Secretos
 
 Para rotar la clave privada:
@@ -194,7 +173,7 @@ Error: Secret [firebase-client-email] not found
 
 - [Firebase App Hosting Secrets](https://firebase.google.com/docs/hosting/cloud-run/secrets)
 - [Cloud Secret Manager](https://cloud.google.com/secret-manager/docs)
-- [SETUP_SECRETS.md](SETUP_SECRETS.md) - Guía paso a paso
+- [setup-secrets.md](setup-secrets.md) - Guía paso a paso
 
 ---
 

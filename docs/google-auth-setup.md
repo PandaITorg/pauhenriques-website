@@ -26,23 +26,9 @@ El código para Google Sign-In **ya está completamente implementado**:
    - Tu dominio de producción (ej: `pauhenriques.com`)
 6. Guarda cambios
 
-<!-- ### 2. Variables de Entornoçç/ -->
+<!-- ### 2. Variables de Entorno -->
 
-Verifica que tu archivo `.env.local` tenga todas estas variables configuradas:
-
-```env
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=pau-henriques-web-v1.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=pau-henriques-web-v1
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=pau-henriques-web-v1.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
-NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
-FIREBASE_PROJECT_ID=pau-henriques-web-v1
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk-...@pau-henriques-web-v1.iam.gserviceaccount.com
-FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...
-```
-
-> **Nota:** Las variables `FIREBASE_*` son para el Admin SDK (server-side). Las `NEXT_PUBLIC_FIREBASE_*` son para el cliente.
+Para configurar las variables de entorno necesarias, consulta **[`firebase-app-hosting-env.md`](firebase-app-hosting-env.md)**.
 
 ### 3. Firestore Security Rules
 

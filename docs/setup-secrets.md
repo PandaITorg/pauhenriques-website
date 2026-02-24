@@ -13,6 +13,8 @@ Para maximizar la seguridad, las variables sensibles (`FIREBASE_CLIENT_EMAIL` y 
 
 ---
 
+> **Nota:** Este documento asume que ya entiendes cómo se usan las variables en App Hosting. Para eso, ver **[`firebase-app-hosting-env.md`](firebase-app-hosting-env.md)**.
+
 ## 🗂️ Estructura Actual
 
 ### `apphosting.yaml` (seguro para Git)
