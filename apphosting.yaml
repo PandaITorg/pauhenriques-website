@@ -1,0 +1,26 @@
+# Firebase App Hosting Configuration
+# https://firebase.google.com/docs/hosting/cloud-run/config
+#
+# IMPORTANTE: Variables sensibles usan Cloud Secret Manager
+# - Valores NO se suben a Git (solo referencias a secretos)
+# - Secretos se gestionan con: firebase apphosting:secrets:set
+
+runtime: "nodejs18"
+
+env:
+  variables:
+    # Firebase Client SDK (NEXT_PUBLIC_*) - Públicas, pueden ir directo
+    NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyCyDfV6yXA4-y2JSxniSdPU3RDwNTUEQEQ"
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "pau-henriques-web-v1.firebaseapp.com"
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: "pau-henriques-web-v1"
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "pau-henriques-web-v1.firebasestorage.app"
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "583869730474"
+    NEXT_PUBLIC_FIREBASE_APP_ID: "1:583869730474:web:35bd6a1364f4ebc1b0cad3"
+
+    # Firebase Admin SDK (Server-side) - SENSIBLES → usar Cloud Secret Manager
+    # Referencias a secretos (NO valores reales aquí)
+    FIREBASE_PROJECT_ID: "pau-henriques-web-v1" # No es sensible, puede ir directo
+    FIREBASE_CLIENT_EMAIL:
+      secret: "firebase-client-email"
+    FIREBASE_PRIVATE_KEY:
+      secret: "firebase-private-key"
