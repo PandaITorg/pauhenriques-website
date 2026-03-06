@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  // App Hosting requires a server-side application (not static export)
+  // Remove "output: export" to enable server components, API routes, and middleware
   images: {
     unoptimized: true,
   },

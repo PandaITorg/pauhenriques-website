@@ -1,219 +1,198 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import TiendaSchema from "@/components/schemas/TiendaSchema";
-import Image from "next/image";
+import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { productService } from "@/services/firestore/productService";
+import ProductCard from "@/components/tienda/ProductCard";
+import CategoryFilter from "@/components/tienda/CategoryFilter";
+import SearchBar from "@/components/tienda/SearchBar";
+import QuickViewDrawer from "@/components/tienda/QuickViewDrawer";
 
-// Conexión a Firebase y tipos
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query } from "firebase/firestore";
-import { Product } from "@/types/product";
+type Tab = "compra" | "catalogo";
 
-// Importamos el store del carrito
-import { useCartStore } from "@/stores/cart.store";
-
-// --- COMPONENTE DE TARJETA DE PRODUCTO ---
-interface ProductCardProps {
-  product: Product;
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isAdded, setIsAdded] = useState(false);
-  const addItemToCart = useCartStore((state) => state.addItem);
-
-  useEffect(() => {
-    if (product.images.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [product.images.length]);
-
-  const handleAddToCart = () => {
-    addItemToCart(product);
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 1500);
-  };
-
-  const whatsappLink = `https://api.whatsapp.com/send?phone=593991712532&text=Hola%20Pau,%20quiero%20conocer%20m%C3%A1s%20sobre%20el%20producto%20"${product.name}".`;
-
-  return (
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden transform transition-transform duration-300 hover:scale-105 flex flex-col">
-      <div className="relative w-full h-48">
-        {product.images.map((image, index) => {
-          // SOLUCIÓN: Limpiamos la URL de la imagen para remover comillas y espacios
-          const cleanedImage = image.replace(/"/g, '').trim();
-          
-          return (
-            <Image
-              key={index}
-              src={cleanedImage}
-              alt={`${product.name} - Imagen ${index + 1}`}
-              fill
-              className={`object-cover transition-opacity duration-1000 ease-in-out ${
-                index === currentImageIndex ? "opacity-100" : "opacity-0"
-              }`}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={index === 0}
-            />
-          );
-        })}
-      </div>
-      <div className="p-4 flex-grow flex flex-col">
-        <h3 className="font-bold text-xl mb-2 text-[#343d2a]">{product.name}</h3>
-        <p className="text-sm text-gray-500 mb-2 capitalize">{product.brand}</p>
-        <p className="text-gray-700 text-base mb-4 flex-grow">{product.description}</p>
-        
-        {product.brand === 'wellme' ? (
-          <div className="mt-auto">
-            {product.price && <p className="font-bold text-2xl text-[#343d2a] mb-3">${product.price.toFixed(2)}</p>}
-            <button
-              onClick={handleAddToCart}
-              disabled={isAdded}
-              className={`block w-full font-bold py-2 px-4 rounded-md text-center transition-all duration-300 ${
-                isAdded
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : "bg-[#343d2a] hover:bg-[#5a6b4a] text-white"
-              }`}
-            >
-              {isAdded ? "¡Añadido!" : "Agregar al Carrito"}
-            </button>
-          </div>
-        ) : (
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full mt-auto bg-[#a68a63] hover:bg-[#562f10] text-white font-bold py-2 px-4 rounded-md text-center transition-colors duration-300"
-          >
-            Preguntar por WhatsApp
-          </a>
-        )}
-      </div>
+const ProductSkeleton = () => (
+  <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col animate-pulse">
+    <div className="w-full aspect-square bg-gray-200" />
+    <div className="p-4 flex flex-col gap-3">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-full" />
+      <div className="h-3 bg-gray-200 rounded w-5/6" />
+      <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
+      <div className="h-10 bg-gray-200 rounded mt-auto" />
     </div>
-  );
-};
+  </div>
+);
 
-// --- COMPONENTE PRINCIPAL DE LA TIENDA ---
-export default function Tienda() {
+export default function TiendaClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [email, setEmail] = useState("");
-  const [subscribe, setSubscribe] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [formError, setFormError] = useState("");
-  const [isLoadingForm, setIsLoadingForm] = useState(false);
-  const [showForm, setShowForm] = useState(true);
-  const [isClosing, setIsClosing] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("compra");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [drawerProduct, setDrawerProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const productsQuery = query(collection(db, "products"));
-        const querySnapshot = await getDocs(productsQuery);
-        const productsData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as Product));
-        setProducts(productsData);
+        const all = await productService.getAllProducts();
+        setProducts(all);
         setError(null);
       } catch (err) {
         console.error("Error fetching products:", err);
-        setError("No se pudieron cargar los productos. Por favor, intenta de nuevo más tarde.");
+        setError("No se pudieron cargar los productos. Intenta de nuevo.");
       } finally {
         setLoading(false);
       }
     };
     fetchProducts();
   }, []);
-  
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const emailSubmitted = localStorage.getItem("emailSubmitted");
-      if (emailSubmitted) {
-        setShowForm(false);
-      }
-    }
+
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(""); 
+  const filteredProducts = products.filter((p) => {
+    if (activeTab === "compra" && !isInfrrarrojoProduct(p)) return false;
+    if (activeTab === "catalogo" && isInfrrarrojoProduct(p)) return false;
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setFormError("Por favor, introduce un correo electrónico válido.");
-      return;
+    if (selectedCategory) {
+      if (p.subCategory !== selectedCategory && p.category !== selectedCategory)
+        return false;
     }
 
-    setIsLoadingForm(true);
-    const GOOGLE_APPS_SCRIPT_URL ="https://script.google.com/macros/s/AKfycbw0sdRnBFNV_Q2iJkK6vqPS60nkviycka2rN5cQq2cVsRIlHUQdWGWERiLXW4ohpamjVw/exec";
-    
-    try {
-      await fetch(GOOGLE_APPS_SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: new URLSearchParams({ email: email, subscribe: subscribe.toString() }).toString(),
-      });
-
-      setSubmitted(true);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem("emailSubmitted", "true");
-      }
-      setEmail("");
-      setSubscribe(false);
-    } catch (err) {
-      console.error("Error submitting email:", err);
-      setFormError("Hubo un error al registrar tu correo. Inténtalo de nuevo más tarde.");
-    } finally {
-      setIsLoadingForm(false);
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      const matches =
+        p.name.toLowerCase().includes(lower) ||
+        p.description.toLowerCase().includes(lower) ||
+        p.brand.toLowerCase().includes(lower) ||
+        (p.tags && p.tags.some((t) => t.toLowerCase().includes(lower)));
+      if (!matches) return false;
     }
-  };
 
-  const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setShowForm(false);
-    }, 500); 
-  };
-
-  if (loading) {
-    return <p className="text-center min-h-screen bg-[#a4ac85] py-8">Cargando productos...</p>;
-  }
+    return true;
+  });
 
   if (error) {
-    return <p className="text-center text-red-500 min-h-screen bg-[#a4ac85] py-8">{error}</p>;
+    return (
+      <div className="min-h-screen bg-tertiary flex items-center justify-center px-5">
+        <p className="text-center text-red-700 bg-red-100 rounded-lg p-6 max-w-md">
+          {error}
+        </p>
+      </div>
+    );
   }
 
   return (
     <>
       <TiendaSchema />
-      <div className="min-h-screen bg-[#a4ac85] text-[#343d2a] py-8 px-4">
-        {showForm && (
-          <div className={`transition-all duration-500 ease-in-out overflow-hidden ${
-              isClosing ? "max-h-0 opacity-0" : "max-h-[500px] opacity-100"
-            }`}>
-            {/* Formulario de suscripción aquí */}
+      <div className="min-h-screen bg-gray-50 py-6 md:py-10 px-4 sm:px-6">
+        <div className="container mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-text-inverted mb-2">
+              Tienda Toxic Free
+            </h1>
+            <p className="text-text-inverted/60 text-sm md:text-base">
+              Productos para una vida mas saludable y libre de toxicos
+            </p>
           </div>
-        )}
 
-        <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-[#343d2a] mb-12 text-center">
-            Nuestros Productos
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          {/* Tabs */}
+          <div className="flex justify-center gap-2 mb-6">
+            <button
+              onClick={() => {
+                setActiveTab("compra");
+                setSelectedCategory(null);
+              }}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "compra"
+                  ? "bg-background text-white shadow-md"
+                  : "bg-white text-text-inverted/60 border border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              Compra Online
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("catalogo");
+                setSelectedCategory(null);
+              }}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "catalogo"
+                  ? "bg-primary text-white shadow-md"
+                  : "bg-white text-text-inverted/60 border border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              Catalogo Carico
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="flex justify-center mb-6">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+
+          {/* Category filter (mobile pills) */}
+          <div className="mb-6">
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+            />
+          </div>
+
+          {/* Main content */}
+          <div className="flex gap-8">
+            {/* Product grid */}
+            <div className="grow">
+              {loading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <ProductSkeleton key={i} />
+                  ))}
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-text-inverted/40 text-lg">
+                    No se encontraron productos
+                  </p>
+                  {(searchTerm || selectedCategory) && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm("");
+                        setSelectedCategory(null);
+                      }}
+                      className="mt-3 text-primary hover:text-accent text-sm font-medium underline"
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onQuickView={setDrawerProduct}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Quick View Drawer */}
+      <QuickViewDrawer
+        product={drawerProduct}
+        isOpen={!!drawerProduct}
+        onClose={() => setDrawerProduct(null)}
+      />
     </>
   );
 }

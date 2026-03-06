@@ -19,11 +19,12 @@ const AnimatedPolaroid = ({ src, alt, rotation }: AnimatedPolaroidProps) => {
   return (
     <div
       ref={ref}
-      className={`relative w-64 mx-auto ${inView ? "fall-in" : "opacity-0"}`}
+      className={`relative w-56 sm:w-64 md:w-72 mx-auto ${inView ? "fall-in" : "opacity-0"}`}
     >
       <Image
         src={branch}
-        alt="branch"
+        alt=""
+        aria-hidden="true"
         className="absolute -top-10 -left-10 w-24 h-24 transform -rotate-45"
       />
       <div className={`polaroid ${rotation}`}>

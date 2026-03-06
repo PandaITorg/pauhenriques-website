@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build)",
+      "Bash(npx kill-port 3000)",
+      "Bash(rm -rf .next)",
+      "Bash(npx next build)",
+      "Bash(npm run dev)"
+    ]
+  }
+}

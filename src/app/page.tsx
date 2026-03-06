@@ -4,6 +4,8 @@ import HomeSchema from "@/components/schemas/HomeSchema";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/home/Hero";
 import SobreMi from "@/components/home/SobreMi";
+import CategoryShowcase from "@/components/home/CategoryShowcase";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
 import PodcastSection from "@/components/home/PodcastSection";
 import type { Metadata } from "next";
 
@@ -20,10 +22,12 @@ export default function Home() {
   return (
     <>
       <HomeSchema />
-      <div className="overflow-x-hidden h-full">
+      <div className="overflow-x-hidden">
         <Hero />
         <SobreMi />
+        <CategoryShowcase />
         <ProductVideos />
+        <FeaturedProducts />
         <PodcastSection />
         <Testimonios />
         <Footer />

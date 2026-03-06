@@ -5,7 +5,7 @@ const BottomBar = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="mt-12 pt-8 border-t border-color-input-bg flex flex-col sm:flex-row justify-between items-center text-sm text-text-secondary">
+    <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-text-main/10 flex flex-col sm:flex-row justify-between items-center text-xs md:text-sm text-text-main/50 gap-3">
       <p className="mb-4 sm:mb-0">
         &copy; {currentYear} Pau Henriques. Todos los derechos reservados.
       </p>

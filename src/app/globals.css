@@ -14,7 +14,7 @@
   /* 2. Secundario (Enlaces/Encabezados) */
   --color-secondary: #666d4b;
 
-  /* 3. Terciario (Acento cálido) */
+  /* 3. Terciario (Acento calido) */
   --color-tertiary: #a4ac85;
 
   /* 4. Acento (Detalles/Bordes) */
@@ -22,22 +22,11 @@
 
   /* --- COLORES DE ESTADO Y NEUTROS --- */
 
-  /* Para notificaciones, alertas o información neutral. */
-  --color-info: #778da9; /* Azul Pizarra */
-
-  /* Fondo para el header */
+  --color-info: #778da9;
   --color-header-bg: #c1c4a7;
-
-  /* Fondo principal (Bosque profundo) */
   --color-background: #343d2a;
-
-  /* Fondo para inputs */
   --color-input-bg: #414934;
-
-  /* Texto principal (Contraste suave) */
   --color-text-main: #c1c4a7;
-
-  /* Texto para fondos claros */
   --color-text-inverted: #343d2a;
 
   --color-bosque-profundo-50: #d3f2b1;
@@ -58,10 +47,13 @@ html {
 }
 
 body {
-  /* Aplicando los colores base al body */
   @apply bg-background text-text-main;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* --- Reusable Components --- */
 
 .polaroid {
   background: #fff;
@@ -74,6 +66,52 @@ body {
 .polaroid:hover {
   transform: rotate(2deg) scale(1.05);
 }
+
+.text-shadow-dark {
+  text-shadow: 2px 2px 4px var(--color-background);
+}
+
+.text-shadow-light {
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.simple-spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid var(--color-text-main);
+  border-bottom-color: var(--color-primary);
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+/* --- Hero --- */
+
+.animated-gradient-bg {
+  background: radial-gradient(
+    circle,
+    var(--color-primary),
+    var(--color-header-bg)
+  );
+  background-size: 200% 200%;
+  animation: animated-gradient 20s ease infinite;
+}
+
+/* --- Links Page --- */
+
+.animated-linear-gradient-links {
+  background: linear-gradient(
+    to bottom,
+    var(--color-bosque-profundo-400),
+    var(--color-bosque-profundo-500),
+    var(--color-bosque-profundo-600)
+  );
+  background-size: 100% 300%;
+  animation: linear-gradient-animation-links 25s ease infinite;
+}
+
+/* --- Keyframes --- */
 
 @keyframes fall-in {
   from {
@@ -88,16 +126,6 @@ body {
 
 .fall-in {
   animation: fall-in 0.8s ease-out forwards;
-}
-
-@keyframes blink {
-  from,
-  to {
-    border-color: transparent;
-  }
-  50% {
-    border-color: var(--color-primary);
-  }
 }
 
 @keyframes fadeInUp {
@@ -120,89 +148,6 @@ body {
   }
 }
 
-@keyframes gentle-wind {
-  0%,
-  100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  50% {
-    transform: translateX(15px) rotate(5deg);
-  }
-}
-
-@keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    width: 100%;
-  }
-}
-
-@keyframes flow-across {
-  0% {
-    transform: translateX(-150px) rotate(-20deg);
-    opacity: 0;
-  }
-  10%,
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(1500px) rotate(60deg);
-    opacity: 0;
-  }
-}
-
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes pen-write {
-  from {
-    width: 0;
-    opacity: 0;
-  }
-  to {
-    width: 100%;
-    opacity: 1;
-  }
-}
-
-@keyframes typing-yo-soy {
-  from {
-    width: 0;
-  }
-  to {
-    width: 6ch;
-  } /* 6 characters for "Yo soy" */
-}
-
-@keyframes typing-yo-soy {
-  from {
-    width: 0;
-  }
-  to {
-    width: 7ch;
-  } /* 6 characters for "Yo soy" */
-}
-
-.animate-blink {
-  animation: blink 0.8s step-end infinite;
-}
-
-.animated-gradient-bg {
-  background: radial-gradient(
-    circle,
-    var(--color-primary),
-    var(--color-header-bg)
-  );
-  background-size: 200% 200%;
-  animation: animated-gradient 20s ease infinite;
-}
-
 @keyframes animated-gradient {
   0% {
     background-position: 0% 50%;
@@ -215,161 +160,6 @@ body {
   }
 }
 
-.text-shadow-dark {
-  text-shadow: 2px 2px 4px var(--color-background);
-}
-
-.text-shadow-light {
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
-}
-
-.hero-frame {
-  background-image: url("/plant-frame-placeholder.svg");
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-@media (max-width: 768px) {
-  .hero-frame {
-    background-image: url("/plant-frame-mobile-placeholder.svg");
-  }
-}
-
-/* --- Testimonial Branch Animations --- */
-.testimonial-branch-container {
-  position: absolute;
-  top: 10rem; /* Fixed position from top */
-  width: 80vw; /* Occupy 80% of viewport width */
-  max-width: 600px; /* Add a max-width for very large screens */
-  will-change: transform;
-}
-
-.testimonial-branch-container.left {
-  left: 0;
-  transform: translateX(-110%); /* Start off-screen */
-}
-
-.testimonial-branch-container.right {
-  right: 0;
-  transform: translateX(110%); /* Start off-screen */
-}
-
-/* Growth and Retraction */
-.testimonial-branch-container.grow {
-  animation: grow-branch 2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-.testimonial-branch-container.retract {
-  animation: retract-branch 2s cubic-bezier(0.64, 0, 0.78, 0) forwards;
-}
-
-.testimonial-branch-container.right.grow {
-  animation-name: grow-branch-right;
-}
-
-.testimonial-branch-container.right.retract {
-  animation-name: retract-branch-right;
-}
-
-.branch-svg {
-  width: 100%;
-  filter: drop-shadow(5px 5px 10px rgba(0, 0, 0, 0.3));
-  animation: subtle-move 10s ease-in-out infinite;
-}
-
-.testimonial-card {
-  position: absolute;
-  top: 45%;
-  left: 55%;
-  transform: translate(-50%, -50%) scale(0.5);
-  width: 280px;
-  padding: 1.5rem;
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  color: var(--color-text-inverted);
-  opacity: 0;
-  animation: sprout-card 1.5s ease-out 0.5s forwards;
-}
-
-.testimonial-branch-container.right .testimonial-card {
-  left: 45%;
-}
-
-.testimonial-branch-container.retract .testimonial-card {
-  animation: fade-out-card 0.8s ease-out forwards;
-}
-
-/* Keyframes */
-@keyframes grow-branch {
-  from {
-    transform: translateX(-110%);
-  }
-  to {
-    transform: translateX(-2%);
-  }
-}
-
-@keyframes retract-branch {
-  from {
-    transform: translateX(-2%);
-  }
-  to {
-    transform: translateX(-110%);
-  }
-}
-
-@keyframes grow-branch-right {
-  from {
-    transform: translateX(110%);
-  }
-  to {
-    transform: translateX(2%);
-  }
-}
-
-@keyframes retract-branch-right {
-  from {
-    transform: translateX(110%);
-  }
-  to {
-    transform: translateX(110%);
-  }
-}
-
-@keyframes sprout-card {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-
-@keyframes fade-out-card {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-}
-
-@keyframes subtle-move {
-  0%,
-  100% {
-    transform: rotate(-0.5deg) translateY(-3px);
-  }
-  50% {
-    transform: rotate(0.5deg) translateY(3px);
-  }
-}
-
 @keyframes flow-mist {
   0% {
     transform: translateX(0);
@@ -377,19 +167,6 @@ body {
   100% {
     transform: translateX(-50%);
   }
-}
-
-.simple-spinner {
-  width: 60px;
-  height: 60px;
-  border: 6px solid var(--color-text-main); /* Light color for the border */
-  border-bottom-color: var(
-    --color-primary
-  ); /* Primary color for the spinning part */
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
 }
 
 @keyframes rotation {
@@ -413,13 +190,12 @@ body {
   }
 }
 
-.animated-linear-gradient-links {
-  background: linear-gradient(
-    to bottom,
-    var(--color-bosque-profundo-400),
-    var(--color-bosque-profundo-500),
-    var(--color-bosque-profundo-600)
-  );
-  background-size: 100% 300%;
-  animation: linear-gradient-animation-links 25s ease infinite;
+@keyframes subtle-move {
+  0%,
+  100% {
+    transform: rotate(-0.5deg) translateY(-3px);
+  }
+  50% {
+    transform: rotate(0.5deg) translateY(3px);
+  }
 }

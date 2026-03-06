@@ -1,0 +1,27 @@
+# Firebase App Hosting Configuration
+# https://firebase.google.com/docs/app-hosting/configure
+
+runtime: "nodejs18"
+
+env:
+  # Firebase Client SDK (NEXT_PUBLIC_*) - Públicas
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyCyDfV6yXA4-y2JSxniSdPU3RDwNTUEQEQ"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "pau-henriques-web-v1.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "pau-henriques-web-v1"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "pau-henriques-web-v1.firebasestorage.app"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "583869730474"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:583869730474:web:35bd6a1364f4ebc1b0cad3"
+
+  # Firebase Admin SDK - SENSIBLES → Cloud Secret Manager
+  - variable: FIREBASE_PROJECT_ID
+    value: "pau-henriques-web-v1"
+  - variable: FIREBASE_CLIENT_EMAIL
+    secret: "firebase-client-email"
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: "firebase-private-key"

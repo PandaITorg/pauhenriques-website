@@ -1,6 +1,6 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 // Estas variables DEBEN ser cargadas desde tu archivo .env.local
@@ -14,13 +14,22 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-let app;
+let app: FirebaseApp;
 if (!getApps().length) {
+  console.log("[firebase] Initializing Firebase with config:", {
+    apiKey: firebaseConfig.apiKey ? "present" : "missing",
+    authDomain: firebaseConfig.authDomain,
+    projectId: firebaseConfig.projectId,
+    storageBucket: firebaseConfig.storageBucket,
+    messagingSenderId: firebaseConfig.messagingSenderId,
+    appId: firebaseConfig.appId,
+  });
   app = initializeApp(firebaseConfig);
+  console.log("[firebase] Firebase initialized successfully");
 } else {
   app = getApps()[0]; // Si ya está inicializada, usa la instancia existente
+  console.log("[firebase] Firebase app already initialized, reusing");
 }
 
-const db = getFirestore(app);
-
-export { db };
+export const db = getFirestore(app);
+export { app as firebaseApp };

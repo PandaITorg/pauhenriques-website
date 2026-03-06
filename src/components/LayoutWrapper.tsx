@@ -28,21 +28,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <Wrapper>
-      <div className={isHomePage ? "flex flex-col h-screen" : ""}>
-        <Header />
-        <div
-          className={
-            isHomePage
-              ? "flex-grow overflow-y-auto"
-              : "bg-[#a4ac85]"
-          }
-        >
-          <main className={isHomePage ? "h-full bg-[#a4ac85]" : ""}>
-            {children}
-          </main>
-        </div>
-        {!isHomePage && <Footer />}
-      </div>
+      <Header />
+      <main className={isHomePage ? "bg-tertiary" : "bg-tertiary"}>
+        {children}
+      </main>
+      {!isHomePage && <Footer />}
     </Wrapper>
   );
 }
