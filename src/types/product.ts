@@ -13,18 +13,24 @@ export interface BaseProduct {
   isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  // Extended fields from product catalog
+  material?: string | null;
+  color?: string | null;
+  weight?: string | null;
+  dimensions?: string | null;
+  voltage?: string | null;
+  power?: string | null;
+  warranty?: string | null;
+  manufacturer?: string | null;
+  parentCategory?: string;
+  subCategory?: string | null;
+  tags?: string[];
 }
 
 export interface InfrrarrojoProduct extends BaseProduct {
   productType: "Infrarrojo";
   price: number;
   stock: number;
-  weight?: number;
-  dimensions?: {
-    length: number;
-    width: number;
-    height: number;
-  };
   variants?: Array<{
     name: string;
     sku: string;

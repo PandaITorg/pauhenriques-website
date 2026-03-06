@@ -1,152 +1,80 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import TiendaSchema from "@/components/schemas/TiendaSchema";
-import Image from "next/image";
-
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query } from "firebase/firestore";
 import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { productService } from "@/services/firestore/productService";
+import ProductCard from "@/components/tienda/ProductCard";
+import CategoryFilter from "@/components/tienda/CategoryFilter";
+import SearchBar from "@/components/tienda/SearchBar";
+import QuickViewDrawer from "@/components/tienda/QuickViewDrawer";
 
-import { useCartStore } from "@/stores/cart.store";
-
-interface ProductCardProps {
-  product: Product;
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isAdded, setIsAdded] = useState(false);
-  const addItemToCart = useCartStore((state) => state.addItem);
-
-  useEffect(() => {
-    if (product.images.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex(
-          (prevIndex) => (prevIndex + 1) % product.images.length,
-        );
-      }, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [product.images.length]);
-
-  const handleAddToCart = () => {
-    if (isInfrrarrojoProduct(product)) {
-      addItemToCart(product);
-      setIsAdded(true);
-      setTimeout(() => setIsAdded(false), 1500);
-    }
-  };
-
-  const whatsappLink = `https://api.whatsapp.com/send?phone=593991712532&text=Hola%20Pau,%20quiero%20conocer%20m%C3%A1s%20sobre%20el%20producto%20"${product.name}".`;
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-shadow duration-300 hover:shadow-xl flex flex-col">
-      <div className="relative w-full aspect-square sm:aspect-4/3">
-        {product.images.map((image, index) => {
-          const cleanedImage = image.replace(/"/g, "").trim();
-          return (
-            <Image
-              key={index}
-              src={cleanedImage}
-              alt={`${product.name} - Imagen ${index + 1}`}
-              fill
-              className={`object-cover transition-opacity duration-1000 ease-in-out ${
-                index === currentImageIndex ? "opacity-100" : "opacity-0"
-              }`}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              priority={index === 0}
-            />
-          );
-        })}
-      </div>
-      <div className="p-4 sm:p-5 grow flex flex-col">
-        <h3 className="font-bold text-lg sm:text-xl mb-1 text-text-inverted">
-          {product.name}
-        </h3>
-        <p className="text-sm text-gray-500 mb-2 capitalize">{product.brand}</p>
-        <p className="text-gray-600 text-sm sm:text-base mb-4 grow leading-relaxed">
-          {product.description}
-        </p>
-
-        {isInfrrarrojoProduct(product) ? (
-          <div className="mt-auto">
-            {product.price && (
-              <p className="font-bold text-2xl text-text-inverted mb-3">
-                ${product.price.toFixed(2)}
-              </p>
-            )}
-            <button
-              onClick={handleAddToCart}
-              disabled={isAdded}
-              className={`block w-full font-bold py-3 px-4 rounded-lg text-center transition-all duration-300 ${
-                isAdded
-                  ? "bg-green-500 text-white cursor-not-allowed"
-                  : "bg-background hover:bg-bosque-profundo-400 text-white"
-              }`}
-            >
-              {isAdded ? "Anadido!" : "Agregar al Carrito"}
-            </button>
-          </div>
-        ) : (
-          <a
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full mt-auto bg-primary hover:bg-accent text-white font-bold py-3 px-4 rounded-lg text-center transition-colors duration-300"
-          >
-            Preguntar por WhatsApp
-          </a>
-        )}
-      </div>
-    </div>
-  );
-};
+type Tab = "compra" | "catalogo";
 
 const ProductSkeleton = () => (
-  <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col animate-pulse">
-    <div className="w-full aspect-square sm:aspect-4/3 bg-gray-200" />
-    <div className="p-4 sm:p-5 flex flex-col gap-3">
-      <div className="h-6 bg-gray-200 rounded w-3/4" />
-      <div className="h-4 bg-gray-200 rounded w-1/3" />
-      <div className="h-4 bg-gray-200 rounded w-full" />
-      <div className="h-4 bg-gray-200 rounded w-5/6" />
-      <div className="h-12 bg-gray-200 rounded mt-auto" />
+  <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col animate-pulse">
+    <div className="w-full aspect-square bg-gray-200" />
+    <div className="p-4 flex flex-col gap-3">
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+      <div className="h-3 bg-gray-200 rounded w-full" />
+      <div className="h-3 bg-gray-200 rounded w-5/6" />
+      <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
+      <div className="h-10 bg-gray-200 rounded mt-auto" />
     </div>
   </div>
 );
 
-export default function Tienda() {
+export default function TiendaClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("compra");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [drawerProduct, setDrawerProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const productsQuery = query(collection(db, "products"));
-        const querySnapshot = await getDocs(productsQuery);
-        const productsData = querySnapshot.docs.map(
-          (doc) =>
-            ({
-              id: doc.id,
-              ...doc.data(),
-            }) as Product,
-        );
-        setProducts(productsData);
+        const all = await productService.getAllProducts();
+        setProducts(all);
         setError(null);
       } catch (err) {
         console.error("Error fetching products:", err);
-        setError(
-          "No se pudieron cargar los productos. Por favor, intenta de nuevo mas tarde.",
-        );
+        setError("No se pudieron cargar los productos. Intenta de nuevo.");
       } finally {
         setLoading(false);
       }
     };
     fetchProducts();
   }, []);
+
+  const handleSearch = useCallback((term: string) => {
+    setSearchTerm(term);
+  }, []);
+
+  const filteredProducts = products.filter((p) => {
+    if (activeTab === "compra" && !isInfrrarrojoProduct(p)) return false;
+    if (activeTab === "catalogo" && isInfrrarrojoProduct(p)) return false;
+
+    if (selectedCategory) {
+      if (p.subCategory !== selectedCategory && p.category !== selectedCategory)
+        return false;
+    }
+
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      const matches =
+        p.name.toLowerCase().includes(lower) ||
+        p.description.toLowerCase().includes(lower) ||
+        p.brand.toLowerCase().includes(lower) ||
+        (p.tags && p.tags.some((t) => t.toLowerCase().includes(lower)));
+      if (!matches) return false;
+    }
+
+    return true;
+  });
 
   if (error) {
     return (
@@ -161,27 +89,110 @@ export default function Tienda() {
   return (
     <>
       <TiendaSchema />
-      <div className="min-h-screen bg-tertiary text-text-inverted py-8 md:py-12 px-5">
+      <div className="min-h-screen bg-gray-50 py-6 md:py-10 px-4 sm:px-6">
         <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-text-inverted mb-8 md:mb-12 text-center">
-            Nuestros Productos
-          </h2>
+          {/* Header */}
+          <div className="text-center mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-text-inverted mb-2">
+              Tienda Toxic Free
+            </h1>
+            <p className="text-text-inverted/60 text-sm md:text-base">
+              Productos para una vida mas saludable y libre de toxicos
+            </p>
+          </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <ProductSkeleton key={i} />
-              ))}
+          {/* Tabs */}
+          <div className="flex justify-center gap-2 mb-6">
+            <button
+              onClick={() => {
+                setActiveTab("compra");
+                setSelectedCategory(null);
+              }}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "compra"
+                  ? "bg-background text-white shadow-md"
+                  : "bg-white text-text-inverted/60 border border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              Compra Online
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("catalogo");
+                setSelectedCategory(null);
+              }}
+              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+                activeTab === "catalogo"
+                  ? "bg-primary text-white shadow-md"
+                  : "bg-white text-text-inverted/60 border border-gray-200 hover:border-gray-300"
+              }`}
+            >
+              Catalogo Carico
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="flex justify-center mb-6">
+            <SearchBar onSearch={handleSearch} />
+          </div>
+
+          {/* Category filter (mobile pills) */}
+          <div className="mb-6">
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+            />
+          </div>
+
+          {/* Main content */}
+          <div className="flex gap-8">
+            {/* Product grid */}
+            <div className="grow">
+              {loading ? (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <ProductSkeleton key={i} />
+                  ))}
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-text-inverted/40 text-lg">
+                    No se encontraron productos
+                  </p>
+                  {(searchTerm || selectedCategory) && (
+                    <button
+                      onClick={() => {
+                        setSearchTerm("");
+                        setSelectedCategory(null);
+                      }}
+                      className="mt-3 text-primary hover:text-accent text-sm font-medium underline"
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {filteredProducts.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onQuickView={setDrawerProduct}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-8">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Quick View Drawer */}
+      <QuickViewDrawer
+        product={drawerProduct}
+        isOpen={!!drawerProduct}
+        onClose={() => setDrawerProduct(null)}
+      />
     </>
   );
 }

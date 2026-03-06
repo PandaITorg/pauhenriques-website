@@ -14,8 +14,23 @@ export function getClientAuth(): Auth {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getAuth } = require("firebase/auth");
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { firebaseApp } = require("@/lib/firebase");
+    const firebaseModule = require("@/lib/firebase");
+    console.log("[firebase-auth] Required firebase module:", firebaseModule);
+    console.log(
+      "[firebase-auth] firebaseApp from module:",
+      firebaseModule.firebaseApp,
+    );
+    const { firebaseApp } = firebaseModule;
+
+    if (!firebaseApp) {
+      console.error("[firebase-auth] firebaseApp is null or undefined!");
+      throw new Error("Firebase app is not initialized");
+    }
+
     _auth = getAuth(firebaseApp) as Auth;
+    console.log("[firebase-auth] Auth created successfully:", _auth);
+  } else {
+    console.log("[firebase-auth] Reusing existing auth instance");
   }
   return _auth!;
 }
@@ -28,6 +43,9 @@ export function getClientGoogleProvider(): GoogleAuthProvider {
     (_googleProvider as GoogleAuthProvider).setCustomParameters({
       prompt: "select_account",
     });
+    console.log("[firebase-auth] GoogleProvider created with custom params");
+  } else {
+    console.log("[firebase-auth] GoogleProvider reused");
   }
   return _googleProvider!;
 }

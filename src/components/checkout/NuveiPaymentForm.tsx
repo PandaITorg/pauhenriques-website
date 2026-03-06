@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Declara la variable global Paymentez para que TypeScript no se queje
 declare global {
   interface Window {
     Paymentez: any;
@@ -12,48 +11,45 @@ declare global {
 interface NuveiPaymentFormProps {
   onTokenSuccess: (token: string) => void;
   onTokenError: (error: any) => void;
+  disabled?: boolean;
 }
 
 const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   onTokenSuccess,
   onTokenError,
+  disabled = false,
 }) => {
-  console.log("NuveiPaymentForm rendering");
   const [paymentez, setPaymentez] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const formCreatedRef = useRef(false);
-  console.log("formCreatedRef.current:", formCreatedRef.current);
 
-  // Efecto para cargar el SDK de Paymentez desde el CDN
   useEffect(() => {
-    console.log("Loading Paymentez SDK effect triggered");
     if (document.getElementById("paymentez-sdk")) return;
 
     const script = document.createElement("script");
     script.id = "paymentez-sdk";
     script.src =
-      "https://cdn.paymentez.com/ccapi/sdk/staging/v2/paymentez.min.js"; // Staging URL
+      "https://cdn.paymentez.com/ccapi/sdk/staging/v2/paymentez.min.js";
     script.async = true;
 
     script.onload = () => {
-      console.log("Paymentez SDK cargado.");
       const pz = new window.Paymentez({
-        client_app_code: process.env.NEXT_PUBLIC_Nuvei_CLIENT_APP_CODE,
-        client_app_key: process.env.NEXT_PUBLIC_Nuvei_CLIENT_APP_KEY,
+        client_app_code: process.env.NEXT_PUBLIC_NUVEI_CLIENT_APP_CODE,
+        client_app_key: process.env.NEXT_PUBLIC_NUVEI_CLIENT_APP_KEY,
         test_mode: true,
       });
       setPaymentez(pz);
     };
 
     script.onerror = () => {
-      console.error("Error al cargar Paymentez SDK.");
+      setError("No se pudo cargar el sistema de pagos. Recarga la pagina.");
     };
 
     document.body.appendChild(script);
   }, []);
 
-  // Efecto para crear el formulario una vez que el SDK está listo
   useEffect(() => {
-    console.log("Creating card form effect triggered");
     if (!paymentez || formCreatedRef.current) return;
 
     formCreatedRef.current = true;
@@ -77,8 +73,30 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // La lógica de tokenización se agregará en el siguiente paso (5.5)
-    console.log("Formulario enviado. Próximo paso: generar token.");
+    if (!paymentez || isLoading || disabled) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    paymentez.getToken(
+      document.getElementById("add-card-form"),
+      (response: any) => {
+        setIsLoading(false);
+        if (response.token) {
+          onTokenSuccess(response.token);
+        } else {
+          const errMsg = response.error?.description || "Error al procesar la tarjeta";
+          setError(errMsg);
+          onTokenError(response.error);
+        }
+      },
+      (err: any) => {
+        setIsLoading(false);
+        const errMsg = err?.description || "Error de conexion con el procesador de pagos";
+        setError(errMsg);
+        onTokenError(err);
+      },
+    );
   };
 
   return (
@@ -89,27 +107,27 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
         </label>
         <div
           id="card-holder-name-container"
-          className="p-3 border border-gray-300 rounded-md shadow-sm"
-        ></div>
+          className="p-3 border border-gray-300 rounded-lg shadow-sm"
+        />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Número de Tarjeta
+          Numero de Tarjeta
         </label>
         <div
           id="card-number-container"
-          className="p-3 border border-gray-300 rounded-md shadow-sm"
-        ></div>
+          className="p-3 border border-gray-300 rounded-lg shadow-sm"
+        />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Fecha de Expiración
+            Fecha de Expiracion
           </label>
           <div
             id="card-expiry-container"
-            className="p-3 border border-gray-300 rounded-md shadow-sm"
-          ></div>
+            className="p-3 border border-gray-300 rounded-lg shadow-sm"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -117,16 +135,21 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           </label>
           <div
             id="card-cvc-container"
-            className="p-3 border border-gray-300 rounded-md shadow-sm"
-          ></div>
+            className="p-3 border border-gray-300 rounded-lg shadow-sm"
+          />
         </div>
       </div>
-      <div id="payment-feedback" className="text-red-500 text-sm mt-2"></div>
+
+      {error && (
+        <p className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</p>
+      )}
+
       <button
         type="submit"
-        className="w-full bg-[#343d2a] hover:bg-[#5a6b4a] text-white font-bold py-3 px-4 rounded-md transition-colors duration-300 disabled:bg-gray-400"
+        disabled={isLoading || disabled || !paymentez}
+        className="w-full bg-background hover:bg-bosque-profundo-400 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
-        Pagar
+        {isLoading ? "Procesando..." : "Pagar"}
       </button>
     </form>
   );

@@ -24,11 +24,28 @@ export default function GoogleSignInButton({
     setLoading(true);
 
     try {
-      // 1. Abrir popup de Google OAuth
-      const result = await signInWithPopup(
-        getClientAuth(),
-        getClientGoogleProvider(),
+      // 1. Obtener instancias
+      const auth = getClientAuth();
+      const provider = getClientGoogleProvider();
+
+      console.log("[GoogleSignIn] Auth instance:", auth);
+      console.log("[GoogleSignIn] Provider instance:", provider);
+      console.log("[GoogleSignIn] Provider type:", typeof provider);
+      console.log(
+        "[GoogleSignIn] Provider constructor:",
+        provider?.constructor?.name,
       );
+
+      // 2. Validar que las instancias sean válidas
+      if (!auth) {
+        throw new Error("Auth instance is null or undefined");
+      }
+      if (!provider) {
+        throw new Error("GoogleProvider is null or undefined");
+      }
+
+      // 3. Abrir popup de Google OAuth
+      const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
       // 2. Obtener ID Token
@@ -67,6 +84,7 @@ export default function GoogleSignInButton({
       window.location.href = destination;
     } catch (error: unknown) {
       console.error("Error en Google Sign-In:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
 
       // Manejar errores específicos de Firebase
       let errorMessage =
@@ -84,6 +102,9 @@ export default function GoogleSignInButton({
         ) {
           errorMessage =
             "Ya existe una cuenta con este email. Intenta con email y contraseña.";
+        } else {
+          // Mostrar el código de error para debugging
+          errorMessage = `Error: ${firebaseError.code}`;
         }
       }
 
