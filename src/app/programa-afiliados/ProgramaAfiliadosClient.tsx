@@ -463,9 +463,9 @@ export default function ProgramaAfiliadosClient() {
   };
 
   return (
-    <div className="bg-tertiary text-text-inverted py-8 px-4">
+    <div className="bg-tertiary text-text-inverted py-6 md:py-8 px-5">
       <div
-        className="flex flex-col justify-end bg-cover bg-center text-text-main min-h-[75vh] p-8 relative"
+        className="flex flex-col justify-end bg-cover bg-center text-text-main min-h-[60vh] md:min-h-[75vh] p-5 md:p-8 relative rounded-xl overflow-hidden"
       >
         <Image
           src={equipoVentas}
@@ -474,12 +474,12 @@ export default function ProgramaAfiliadosClient() {
           className="object-cover"
           priority
         />
-        <div className="container mx-auto text-center bg-background p-8 rounded-lg relative z-10">
-          <h1 className="text-5xl font-bold mb-4">
-            Conviértete en Afiliado de Pau Henriques
+        <div className="container mx-auto text-center bg-background/95 backdrop-blur-sm p-6 md:p-8 rounded-xl relative z-10">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">
+            Conviertete en Afiliado de Pau Henriques
           </h1>
-          <p className="text-xl mb-8">
-            Promueve un estilo de vida saludable y sin tóxicos y obtén
+          <p className="text-base md:text-xl mb-6 md:mb-8">
+            Promueve un estilo de vida saludable y sin toxicos y obten
             comisiones por cada venta.
           </p>
           <button
@@ -491,13 +491,13 @@ export default function ProgramaAfiliadosClient() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-16">
-        <section className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-8 text-text-inverted">
-            ¿Cómo Funciona?
+      <div className="container mx-auto py-10 md:py-16">
+        <section className="text-center mb-12 md:mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-text-inverted">
+            Como Funciona?
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 bg-white rounded-lg shadow-md text-text-inverted">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
+            <div className="p-6 md:p-8 bg-white rounded-xl shadow-md text-text-inverted">
               <h3 className="text-2xl font-bold mb-4 text-primary">
                 1. Regístrate
               </h3>
@@ -795,9 +795,9 @@ export default function ProgramaAfiliadosClient() {
                       {formData.socials.map((social, index) => (
                         <div
                           key={index}
-                          className="flex items-center mb-2 gap-2"
+                          className="flex flex-col sm:flex-row items-start sm:items-center mb-3 gap-2"
                         >
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {socialPlatforms.map((p) => (
                               <button
                                 type="button"
@@ -806,13 +806,13 @@ export default function ProgramaAfiliadosClient() {
                                 onClick={() =>
                                   handleSocialChange(index, "platform", p.id)
                                 }
-                                className={`p-3 border rounded-lg transition-colors ${
+                                className={`p-2.5 border rounded-lg transition-colors ${
                                   social.platform === p.id
                                     ? "bg-primary text-white"
                                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                                 }`}
                               >
-                                <p.icon className="w-5 h-5" />
+                                <p.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                               </button>
                             ))}
                           </div>

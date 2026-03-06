@@ -15,19 +15,19 @@ const PodcastSection = () => {
   return (
     <section
       ref={ref}
-      className="bg-tertiary pt-16 pb-32 overflow-hidden relative"
+      className="bg-tertiary pt-12 pb-28 md:pt-16 md:pb-32 overflow-hidden relative"
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-5">
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <div
             className={`md:w-1/2 text-center md:text-left transition-all duration-1000 ${
               inView ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-10"
             }`}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-text-inverted mb-4">
-              De Tóxica a Sin Tóxicos
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-inverted mb-4">
+              De Toxica a Sin Toxicos
             </h2>
-            <p className="text-lg text-text-inverted mb-6">
+            <p className="text-base md:text-lg text-text-inverted/90 mb-6 leading-relaxed">
               En este espacio vamos a tocar temas sobre salud, bienestar y
               desarrollo personal de una forma muy real y vulnerable. Estaré
               acompañada algunas veces de mi esposo, invitados especiales y
@@ -50,7 +50,7 @@ const PodcastSection = () => {
               alt="De Tóxica a Sin Tóxicos Podcast"
               width={800}
               height={800}
-              className="rounded-lg shadow-2xl w-full h-auto object-cover"
+              className="rounded-lg shadow-2xl w-full max-w-sm md:max-w-none mx-auto h-auto object-cover"
             />
           </div>
         </div>

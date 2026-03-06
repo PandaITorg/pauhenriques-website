@@ -12,6 +12,7 @@ interface MobileMenuProps {
   setIsOpen: (isOpen: boolean) => void;
   user?: User | null;
   onSignOut?: () => Promise<void>;
+  currentPath: string;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -20,72 +21,80 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   setIsOpen,
   user,
   onSignOut,
+  currentPath,
 }) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="md:hidden absolute top-20 left-0 w-full bg-background shadow-lg z-50">
-      <div className="container mx-auto px-4 py-5 flex flex-col space-y-4">
-        {navLinks.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="text-text-main hover:text-[#5a6b4a] transition-colors text-lg"
-            onClick={() => setIsOpen(false)}
-          >
-            {link.text}
-          </Link>
-        ))}
+    <div
+      className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out bg-background ${
+        isOpen ? "max-h-[80vh] opacity-100 border-t border-text-main/10" : "max-h-0 opacity-0"
+      }`}
+    >
+      <div className="container mx-auto px-4 py-4 flex flex-col gap-1">
+        {navLinks.map((link) => {
+          const isActive = currentPath === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`py-3 px-4 rounded-lg text-lg font-medium transition-colors ${
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-text-main active:bg-primary/5"
+              }`}
+              onClick={() => setIsOpen(false)}
+            >
+              {link.text}
+            </Link>
+          );
+        })}
 
-        {/* Separador */}
-        <div className="h-px bg-[rgba(193,196,167,0.15)]" />
+        <div className="h-px bg-text-main/15 my-2" />
 
-        {/* Estado de autenticación en móvil */}
         {user ? (
           <>
-            <div className="flex items-center gap-3 py-1">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">
+            <div className="flex items-center gap-3 px-4 py-2">
+              <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {user.displayName?.charAt(0).toUpperCase() ||
                   user.email?.charAt(0).toUpperCase() ||
                   "U"}
               </div>
-              <div>
-                <p className="text-[13px] font-semibold text-text-main">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-text-main truncate">
                   {user.displayName || "Mi cuenta"}
                 </p>
-                <p className="text-[11px] text-[rgba(193,196,167,0.5)]">
+                <p className="text-xs text-text-main/50 truncate">
                   {user.email}
                 </p>
               </div>
             </div>
             <Link
               href="/mi-cuenta"
-              className="text-text-main hover:text-[#5a6b4a] transition-colors text-base flex items-center gap-2"
+              className="py-3 px-4 rounded-lg text-text-main active:bg-primary/5 transition-colors text-base"
               onClick={() => setIsOpen(false)}
             >
-              <span>👤</span> Mi cuenta
+              Mi cuenta
             </Link>
             <Link
               href="/mis-pedidos"
-              className="text-text-main hover:text-[#5a6b4a] transition-colors text-base flex items-center gap-2"
+              className="py-3 px-4 rounded-lg text-text-main active:bg-primary/5 transition-colors text-base"
               onClick={() => setIsOpen(false)}
             >
-              <span>📦</span> Mis pedidos
+              Mis pedidos
             </Link>
             <button
               onClick={async () => {
                 setIsOpen(false);
                 await onSignOut?.();
               }}
-              className="text-red-400 hover:text-red-300 transition-colors text-base flex items-center gap-2 text-left"
+              className="py-3 px-4 rounded-lg text-red-400 active:bg-red-400/5 transition-colors text-base text-left"
             >
-              <span>🚪</span> Cerrar sesión
+              Cerrar sesion
             </button>
           </>
         ) : (
           <Link
             href="/sign-in"
-            className="flex items-center justify-center px-5 py-2.5 border-[1.5px] border-primary rounded-lg text-primary text-[14px] font-medium transition-all duration-200 hover:bg-primary hover:text-white"
+            className="flex items-center justify-center mx-4 mt-2 py-3 border-[1.5px] border-primary rounded-lg text-primary text-base font-medium transition-all duration-200 active:bg-primary active:text-white"
             onClick={() => setIsOpen(false)}
           >
             Ingresar

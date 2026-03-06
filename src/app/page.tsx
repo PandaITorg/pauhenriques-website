@@ -20,7 +20,7 @@ export default function Home() {
   return (
     <>
       <HomeSchema />
-      <div className="overflow-x-hidden h-full">
+      <div className="overflow-x-hidden">
         <Hero />
         <SobreMi />
         <ProductVideos />

@@ -4,7 +4,7 @@
       
       const Logo = () => {
         return (
-          <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
+          <div className="col-span-2 md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
             <Link href="/" className="mb-4">
               <Image src={logo} alt="Pau Henriques Logo" height={56} style={{ width: 'auto' }} />
             </Link>

@@ -20,11 +20,11 @@ const Social = () => {
   ];
 
   return (
-    <div className="md:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
-      <h3 className="text-md font-semibold tracking-wider uppercase mb-4">
-        Conéctate
+    <div className="col-span-2 md:col-span-3 flex flex-col items-center md:items-start text-center md:text-left">
+      <h3 className="text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4">
+        Conectate
       </h3>
-      <div className="flex space-x-5">
+      <div className="flex gap-5">
         {socialLinks.map((social) => (
           <a
             key={social.ariaLabel}
