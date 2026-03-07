@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithPopup } from "firebase/auth";
-import { getClientAuth, getClientGoogleProvider } from "@/lib/firebase-auth";
+import { signInWithGoogle } from "@/lib/firebase-auth";
 import { createUserProfile } from "@/app/actions/auth";
 
 interface GoogleSignInButtonProps {
@@ -26,15 +25,8 @@ export default function GoogleSignInButton({
     setLoading(true);
 
     try {
-      const auth = getClientAuth();
-      const provider = getClientGoogleProvider();
-
-      if (!auth || !provider) {
-        throw new Error("Firebase auth not initialized");
-      }
-
       // 1. Abrir popup de Google OAuth
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithGoogle();
       const user = result.user;
 
       // 2. Obtener ID Token
