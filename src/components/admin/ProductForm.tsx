@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CATEGORIES, ALL_PARENT_CATEGORIES } from "@/constants/categories";
 import type { ProductType } from "@/types/product";
+import ImageUploader from "./ImageUploader";
 
 interface ProductFormData {
   name: string;
@@ -344,12 +345,14 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* Images placeholder - Phase 3 will add ImageUploader */}
+      {/* Images */}
       <div className="bg-white rounded-xl shadow-sm p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Imagenes</h2>
-        <p className="text-sm text-gray-500">
-          La gestion de imagenes estara disponible en la siguiente fase.
-        </p>
+        <ImageUploader
+          images={form.images}
+          onChange={(imgs) => set("images", imgs)}
+          productId={productId}
+        />
       </div>
 
       {/* Actions */}
