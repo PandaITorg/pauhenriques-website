@@ -1,32 +1,70 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { auth } from './src/lib/firebase-admin'; // RUTA CORREGIDA
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { auth } from "./src/lib/firebase-admin";
+
+const ADMIN_HOSTNAME = "admin.pauhenriques.com";
+
+async function verifySession(request: NextRequest) {
+  const sessionCookie = request.cookies.get("__session")?.value || "";
+  if (!sessionCookie || !auth) return null;
+  try {
+    return await auth.verifySessionCookie(sessionCookie, true);
+  } catch {
+    return null;
+  }
+}
 
 export async function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get('__session')?.value || '';
+  const { pathname } = request.nextUrl;
 
-  // Rutas que queremos proteger
-  if (request.nextUrl.pathname.startsWith('/checkout')) {
-    try {
-      // Verificar la cookie de sesión con Firebase Admin
-      await auth.verifySessionCookie(sessionCookie, true /** checkRevoked */);
-      // Si la cookie es válida, permitir el acceso
-      return NextResponse.next();
-    } catch (error) {
-      // Si la cookie es inválida o no existe, redirigir a la página de login
-      console.log('Middleware: Sesión inválida, redirigiendo a /sign-in');
-      const loginUrl = new URL('/sign-in', request.url);
-      // Opcional: añadir un parámetro para redirigir de vuelta tras el login
-      loginUrl.searchParams.set('redirect_uri', request.nextUrl.pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+  // Detect admin subdomain via X-Forwarded-Host or Host header
+  const host =
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "";
+  const isAdminHost = host.startsWith(ADMIN_HOSTNAME);
+
+  // If accessing via admin subdomain, rewrite to /admin routes
+  if (isAdminHost && !pathname.startsWith("/admin")) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/admin${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url);
   }
 
-  // Para todas las demás rutas, no hacer nada
+  // Protect /admin/* routes — require authenticated admin
+  if (pathname.startsWith("/admin")) {
+    const decoded = await verifySession(request);
+
+    if (!decoded) {
+      const loginUrl = new URL("/sign-in", request.url);
+      loginUrl.searchParams.set("redirect_uri", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // Check admin custom claim
+    if (!decoded.admin) {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    return NextResponse.next();
+  }
+
+  // Protect /checkout/* routes — require authenticated user
+  if (pathname.startsWith("/checkout")) {
+    const decoded = await verifySession(request);
+
+    if (!decoded) {
+      const loginUrl = new URL("/sign-in", request.url);
+      loginUrl.searchParams.set("redirect_uri", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next();
+  }
+
   return NextResponse.next();
 }
 
-// Especificamos las rutas que activarán este middleware
 export const config = {
-  matcher: ['/checkout/:path*'],
+  matcher: ["/checkout/:path*", "/admin/:path*"],
 };

@@ -1,0 +1,44 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth, dbAdmin } from "@/lib/firebase-admin";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  try {
+    const sessionCookie = request.cookies.get("__session")?.value;
+    if (!sessionCookie || !auth) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const decoded = await auth.verifySessionCookie(sessionCookie, true);
+    if (!decoded.admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (!dbAdmin) {
+      return NextResponse.json({ error: "DB not available" }, { status: 500 });
+    }
+
+    const [productsSnap, ordersSnap] = await Promise.all([
+      dbAdmin.collection("products").count().get(),
+      dbAdmin.collection("orders").count().get(),
+    ]);
+
+    // Recent orders: last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentSnap = await dbAdmin
+      .collection("orders")
+      .where("createdAt", ">=", sevenDaysAgo)
+      .count()
+      .get();
+
+    return NextResponse.json({
+      totalProducts: productsSnap.data().count,
+      totalOrders: ordersSnap.data().count,
+      recentOrders: recentSnap.data().count,
+    });
+  } catch {
+    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+  }
+}
