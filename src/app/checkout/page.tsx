@@ -6,13 +6,32 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCartStore, CartItem } from "@/stores/cart.store";
 import { useAuth } from "@/context/AuthContext";
-import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
+import {
+  FaTrash,
+  FaMinus,
+  FaPlus,
+  FaArrowLeft,
+  FaLock,
+  FaCreditCard,
+} from "react-icons/fa";
 import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
+import SavedAddresses from "@/components/checkout/SavedAddresses";
+import SavedCards from "@/components/checkout/SavedCards";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import { createOrder } from "@/services/firestore/orderService";
 import { ShippingAddress } from "@/types/order";
+import { SavedCard, getCardBrandName } from "@/types/card";
 
-type Step = "cart" | "shipping" | "payment";
+type Step = "cart" | "shipping" | "payment" | "confirm";
+
+const STEP_LABELS: Record<Step, string> = {
+  cart: "Carrito",
+  shipping: "Envio",
+  payment: "Pago",
+  confirm: "Confirmar",
+};
+
+const STEPS: Step[] = ["cart", "shipping", "payment", "confirm"];
 
 const CartItemRow = ({
   item,
@@ -82,15 +101,16 @@ export default function CheckoutPage() {
   const [step, setStep] = useState<Step>("cart");
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-  const [shipping, setShipping] = useState<ShippingAddress>({
-    fullName: "",
-    phone: "",
-    address: "",
-    city: "",
-    province: "",
-    postalCode: "",
-    country: "Ecuador",
-  });
+  const [shipping, setShipping] = useState<ShippingAddress | null>(null);
+
+  // Payment mode: "saved" uses a tokenized card, "new" uses the Nuvei form
+  const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
+  const [selectedCardToken, setSelectedCardToken] = useState<string | null>(
+    null,
+  );
+  const [selectedCardInfo, setSelectedCardInfo] = useState<SavedCard | null>(
+    null,
+  );
 
   const items = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -110,24 +130,42 @@ export default function CheckoutPage() {
   const shippingCost: number = 0; // TODO: Calculate based on address
   const total = subtotal + shippingCost;
 
-  const isShippingValid =
-    shipping.fullName &&
-    shipping.phone &&
-    shipping.address &&
-    shipping.city &&
-    shipping.province;
+  const currentStepIndex = STEPS.indexOf(step);
 
-  const handleTokenSuccess = async (token: string) => {
-    if (!user) {
-      setPaymentError("Debes iniciar sesion para completar la compra.");
-      return;
-    }
+  function canGoToStep(target: Step): boolean {
+    const targetIndex = STEPS.indexOf(target);
+    if (targetIndex <= currentStepIndex) return true;
+    if (target === "shipping" && items.length > 0) return true;
+    if (target === "payment" && shipping) return true;
+    if (
+      target === "confirm" &&
+      shipping &&
+      (selectedCardToken || paymentMode === "new")
+    )
+      return true;
+    return false;
+  }
+
+  // Called when the user tokenizes a new card via the Nuvei form
+  const handleTokenSuccess = (token: string) => {
+    setSelectedCardToken(token);
+    setPaymentMode("saved");
+    // Go to confirmation step
+    setStep("confirm");
+  };
+
+  const handleTokenError = (error: string) => {
+    setPaymentError(error || "Error al procesar la tarjeta.");
+  };
+
+  // Final charge with the selected token
+  async function handleConfirmPayment() {
+    if (!user || !shipping || !selectedCardToken) return;
 
     setProcessingPayment(true);
     setPaymentError(null);
 
     try {
-      // Create order first
       const orderItems = items.map((item) => ({
         productId: item.id,
         name: item.name,
@@ -143,15 +181,14 @@ export default function CheckoutPage() {
         shipping: shippingCost,
         total,
         shippingAddress: shipping,
-        paymentToken: token,
+        paymentToken: selectedCardToken,
       });
 
-      // Process payment
       const response = await fetch("/api/payment/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          token,
+          token: selectedCardToken,
           orderId,
           amount: total,
           description: `Orden ${orderId} - Pau Henriques`,
@@ -174,13 +211,7 @@ export default function CheckoutPage() {
     } finally {
       setProcessingPayment(false);
     }
-  };
-
-  const handleTokenError = (error: any) => {
-    setPaymentError(
-      error?.description || "Error al procesar la tarjeta.",
-    );
-  };
+  }
 
   if (!isClient) {
     return (
@@ -216,17 +247,16 @@ export default function CheckoutPage() {
 
         {/* Steps indicator */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {(["cart", "shipping", "payment"] as Step[]).map((s, i) => (
+          {STEPS.map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               <button
-                onClick={() => {
-                  if (s === "cart") setStep("cart");
-                  if (s === "shipping" && items.length > 0) setStep("shipping");
-                }}
+                onClick={() => canGoToStep(s) && setStep(s)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                   step === s
                     ? "bg-primary text-white"
-                    : "bg-gray-200 text-gray-500"
+                    : i < currentStepIndex
+                      ? "bg-primary/20 text-primary"
+                      : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {i + 1}
@@ -238,13 +268,9 @@ export default function CheckoutPage() {
                     : "text-gray-400"
                 }`}
               >
-                {s === "cart"
-                  ? "Carrito"
-                  : s === "shipping"
-                    ? "Envio"
-                    : "Pago"}
+                {STEP_LABELS[s]}
               </span>
-              {i < 2 && (
+              {i < STEPS.length - 1 && (
                 <div className="w-8 sm:w-12 h-px bg-gray-300 mx-1" />
               )}
             </div>
@@ -254,10 +280,12 @@ export default function CheckoutPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2">
+            {/* STEP 1: Cart */}
             {step === "cart" && (
               <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm">
                 <h2 className="text-lg font-bold text-text-inverted mb-4">
-                  Tu Carrito ({items.length} productos)
+                  Tu Carrito ({items.length}{" "}
+                  {items.length === 1 ? "producto" : "productos"})
                 </h2>
                 {items.map((item) => (
                   <CartItemRow
@@ -276,109 +304,42 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {/* STEP 2: Shipping */}
             {step === "shipping" && (
               <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm">
                 <h2 className="text-lg font-bold text-text-inverted mb-4">
-                  Datos de Envio
+                  Direccion de Envio
                 </h2>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nombre completo *
-                      </label>
-                      <input
-                        type="text"
-                        value={shipping.fullName}
-                        onChange={(e) =>
-                          setShipping({ ...shipping, fullName: e.target.value })
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Telefono *
-                      </label>
-                      <input
-                        type="tel"
-                        value={shipping.phone}
-                        onChange={(e) =>
-                          setShipping({ ...shipping, phone: e.target.value })
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
-                      />
-                    </div>
+
+                {user ? (
+                  <SavedAddresses
+                    onSelect={(addr) => setShipping(addr)}
+                    selectedAddress={shipping}
+                  />
+                ) : (
+                  <div className="bg-amber-50 text-amber-700 p-4 rounded-lg text-sm">
+                    Debes{" "}
+                    <Link
+                      href="/sign-in?redirect=/checkout"
+                      className="font-bold underline"
+                    >
+                      iniciar sesion
+                    </Link>{" "}
+                    para continuar.
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Direccion *
-                    </label>
-                    <input
-                      type="text"
-                      value={shipping.address}
-                      onChange={(e) =>
-                        setShipping({ ...shipping, address: e.target.value })
-                      }
-                      className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ciudad *
-                      </label>
-                      <input
-                        type="text"
-                        value={shipping.city}
-                        onChange={(e) =>
-                          setShipping({ ...shipping, city: e.target.value })
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Provincia *
-                      </label>
-                      <input
-                        type="text"
-                        value={shipping.province}
-                        onChange={(e) =>
-                          setShipping({ ...shipping, province: e.target.value })
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Codigo Postal
-                      </label>
-                      <input
-                        type="text"
-                        value={shipping.postalCode}
-                        onChange={(e) =>
-                          setShipping({
-                            ...shipping,
-                            postalCode: e.target.value,
-                          })
-                        }
-                        className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
-                      />
-                    </div>
-                  </div>
-                </div>
+                )}
 
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setStep("cart")}
-                    className="flex-1 border border-gray-300 text-text-inverted font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-center gap-2 flex-1 border border-gray-300 text-text-inverted font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
+                    <FaArrowLeft className="w-3 h-3" />
                     Volver
                   </button>
                   <button
                     onClick={() => setStep("payment")}
-                    disabled={!isShippingValid}
+                    disabled={!shipping}
                     className="flex-1 bg-background hover:bg-bosque-profundo-400 text-white font-bold py-3 rounded-lg transition-colors disabled:bg-gray-300"
                   >
                     Continuar al Pago
@@ -387,10 +348,11 @@ export default function CheckoutPage() {
               </div>
             )}
 
+            {/* STEP 3: Payment */}
             {step === "payment" && (
               <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm">
                 <h2 className="text-lg font-bold text-text-inverted mb-4">
-                  Datos de Pago
+                  Metodo de Pago
                 </h2>
 
                 {!user && (
@@ -412,20 +374,184 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <NuveiPaymentForm
-                  uid={user?.uid || ""}
-                  email={user?.email || ""}
-                  onTokenSuccess={handleTokenSuccess}
-                  onTokenError={handleTokenError}
-                  disabled={!user || processingPayment}
-                />
+                {user && paymentMode === "saved" && (
+                  <div className="space-y-4">
+                    <SavedCards
+                      onSelectCard={(card) => {
+                        setSelectedCardToken(card.token);
+                        setSelectedCardInfo(card);
+                      }}
+                      selectedToken={selectedCardToken}
+                      onAddNewCard={() => setPaymentMode("new")}
+                    />
+
+                    {selectedCardToken && (
+                      <button
+                        onClick={() => setStep("confirm")}
+                        className="w-full bg-background hover:bg-bosque-profundo-400 text-white font-bold py-3 rounded-lg transition-colors"
+                      >
+                        Revisar y Confirmar
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {user && paymentMode === "new" && (
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => setPaymentMode("saved")}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Volver a tarjetas guardadas
+                    </button>
+                    <NuveiPaymentForm
+                      uid={user.uid}
+                      email={user.email || ""}
+                      onTokenSuccess={handleTokenSuccess}
+                      onTokenError={handleTokenError}
+                      disabled={processingPayment}
+                    />
+                  </div>
+                )}
 
                 <button
                   onClick={() => setStep("shipping")}
-                  className="mt-4 w-full border border-gray-300 text-text-inverted font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="mt-4 w-full flex items-center justify-center gap-2 border border-gray-300 text-text-inverted font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
+                  <FaArrowLeft className="w-3 h-3" />
                   Volver
                 </button>
+              </div>
+            )}
+
+            {/* STEP 4: Confirmation */}
+            {step === "confirm" && (
+              <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm space-y-6">
+                <h2 className="text-lg font-bold text-text-inverted">
+                  Confirmar Pedido
+                </h2>
+
+                {/* Shipping summary */}
+                {shipping && (
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-sm text-text-inverted">
+                        Direccion de Envio
+                      </h3>
+                      <button
+                        onClick={() => setStep("shipping")}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Cambiar
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      {shipping.fullName}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {shipping.address}, {shipping.city}, {shipping.province}
+                    </p>
+                    <p className="text-sm text-gray-500">{shipping.phone}</p>
+                  </div>
+                )}
+
+                {/* Payment method summary */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-sm text-text-inverted">
+                      Metodo de Pago
+                    </h3>
+                    <button
+                      onClick={() => setStep("payment")}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Cambiar
+                    </button>
+                  </div>
+                  {selectedCardInfo ? (
+                    <div className="flex items-center gap-3">
+                      <FaCreditCard className="w-5 h-5 text-gray-500" />
+                      <div>
+                        <p className="text-sm text-gray-600">
+                          {getCardBrandName(selectedCardInfo.type)} ****
+                          {selectedCardInfo.number}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {selectedCardInfo.holder_name} · Exp{" "}
+                          {selectedCardInfo.expiry_month}/
+                          {selectedCardInfo.expiry_year}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600">
+                      Nueva tarjeta agregada
+                    </p>
+                  )}
+                </div>
+
+                {/* Items summary */}
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-sm text-text-inverted">
+                      Productos ({items.length})
+                    </h3>
+                    <button
+                      onClick={() => setStep("cart")}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between text-sm"
+                      >
+                        <span className="text-gray-600 truncate mr-2">
+                          {item.name} x{item.quantity}
+                        </span>
+                        <span className="font-medium text-text-inverted">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {paymentError && (
+                  <div className="bg-red-50 text-red-700 p-4 rounded-lg text-sm">
+                    {paymentError}
+                  </div>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep("payment")}
+                    className="flex items-center justify-center gap-2 flex-1 border border-gray-300 text-text-inverted font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <FaArrowLeft className="w-3 h-3" />
+                    Volver
+                  </button>
+                  <button
+                    onClick={handleConfirmPayment}
+                    disabled={processingPayment || !selectedCardToken}
+                    className="flex-1 flex items-center justify-center gap-2 bg-background hover:bg-bosque-profundo-400 text-white font-bold py-3 rounded-lg transition-colors disabled:bg-gray-400"
+                  >
+                    {processingPayment ? (
+                      <>
+                        <div className="simple-spinner w-4 h-4 border-white" />
+                        Procesando pago...
+                      </>
+                    ) : (
+                      <>
+                        <FaLock className="w-3.5 h-3.5" />
+                        Confirmar y Pagar ${total.toFixed(2)}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -457,7 +583,9 @@ export default function CheckoutPage() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Envio</span>
                   <span className="font-medium">
-                    {shippingCost === 0 ? "Gratis" : `$${shippingCost.toFixed(2)}`}
+                    {shippingCost === 0
+                      ? "Gratis"
+                      : `$${shippingCost.toFixed(2)}`}
                   </span>
                 </div>
                 <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-lg text-text-inverted">

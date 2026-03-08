@@ -104,8 +104,13 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           onTokenError(msg);
         }
       } else {
-        const msg =
-          response.card.message || "Error al procesar la tarjeta.";
+        const rawMsg = response.card.message || "";
+        const friendlyMessages: Record<string, string> = {
+          "Response by mock": "Tarjeta rechazada. Verifica los datos o usa otra tarjeta.",
+          "Card already added": "Esta tarjeta ya esta registrada. Puedes seleccionarla de tus tarjetas guardadas.",
+          "Card rejected": "Tarjeta rechazada por el banco emisor.",
+        };
+        const msg = friendlyMessages[rawMsg] || rawMsg || "Error al procesar la tarjeta.";
         setError(msg);
         onTokenError(msg);
       }
@@ -211,7 +216,7 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           disabled={isProcessing}
           className="w-full bg-background hover:bg-bosque-profundo-400 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {isProcessing ? "Procesando..." : "Pagar"}
+          {isProcessing ? "Verificando..." : "Agregar Tarjeta"}
         </button>
       )}
 
