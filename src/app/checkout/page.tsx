@@ -413,6 +413,8 @@ export default function CheckoutPage() {
                 )}
 
                 <NuveiPaymentForm
+                  uid={user?.uid || ""}
+                  email={user?.email || ""}
                   onTokenSuccess={handleTokenSuccess}
                   onTokenError={handleTokenError}
                   disabled={!user || processingPayment}
