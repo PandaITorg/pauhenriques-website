@@ -37,14 +37,14 @@ export default function EditarProductoPage() {
   if (error || !product) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-600">{error || "Producto no encontrado"}</p>
+        <p className="text-error">{error || "Producto no encontrado"}</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="text-2xl font-semibold text-text-main mb-6">
         Editar Producto
       </h1>
       <ProductForm

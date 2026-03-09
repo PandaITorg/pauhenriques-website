@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaBox, FaClipboardList, FaTachometerAlt, FaBars, FaTimes } from "react-icons/fa";
+import {
+  FaBox,
+  FaClipboardList,
+  FaTachometerAlt,
+  FaBars,
+  FaTimes,
+  FaExternalLinkAlt,
+} from "react-icons/fa";
 import { useState } from "react";
 
 const navItems = [
@@ -21,25 +28,39 @@ export default function AdminSidebar() {
   };
 
   const nav = (
-    <nav className="flex flex-col gap-1 p-4">
-      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-3">
+    <nav className="flex flex-col h-full p-4">
+      <div className="text-xs font-bold text-text-main/40 uppercase tracking-wider mb-4 px-3">
         Admin Panel
       </div>
-      {navItems.map((item) => (
+      <div className="flex flex-col gap-1">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={() => setOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive(item.href)
+                ? "bg-primary text-white"
+                : "text-text-main/60 hover:bg-surface-elevated hover:text-text-main"
+            }`}
+          >
+            <item.icon className="w-4 h-4" />
+            {item.label}
+          </Link>
+        ))}
+      </div>
+
+      {/* Divider + Ver sitio */}
+      <div className="mt-auto pt-4 border-t border-border-subtle">
         <Link
-          key={item.href}
-          href={item.href}
+          href="/"
           onClick={() => setOpen(false)}
-          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-            isActive(item.href)
-              ? "bg-primary text-white"
-              : "text-gray-600 hover:bg-gray-100"
-          }`}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-text-main/40 hover:text-text-main/60 transition-colors"
         >
-          <item.icon className="w-4 h-4" />
-          {item.label}
+          <FaExternalLinkAlt className="w-3.5 h-3.5" />
+          Ver sitio
         </Link>
-      ))}
+      </div>
     </nav>
   );
 
@@ -48,22 +69,26 @@ export default function AdminSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setOpen(!open)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-white shadow-md rounded-lg p-2.5"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-surface-card border border-border-subtle rounded-lg p-2.5 text-text-main/60"
       >
-        {open ? <FaTimes className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
+        {open ? (
+          <FaTimes className="w-5 h-5" />
+        ) : (
+          <FaBars className="w-5 h-5" />
+        )}
       </button>
 
       {/* Mobile overlay */}
       {open && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/40 z-40"
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           onClick={() => setOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-60 bg-white border-r border-gray-200 z-40 transition-transform lg:translate-x-0 ${
+        className={`fixed lg:static top-0 left-0 h-full w-60 bg-surface-card border-r border-border-subtle z-40 transition-transform lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

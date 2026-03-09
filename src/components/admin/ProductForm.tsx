@@ -81,7 +81,6 @@ export default function ProductForm({
     setError(null);
 
     try {
-      // Build payload based on product type
       const payload: Record<string, unknown> = {
         name: form.name,
         description: form.description,
@@ -134,21 +133,21 @@ export default function ProductForm({
   };
 
   const inputClass =
-    "w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+    "w-full p-2.5 bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
+  const labelClass = "block text-sm font-medium text-text-main/60 mb-1";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 text-red-700 p-4 rounded-lg text-sm">
+        <div className="bg-error/10 text-error p-4 rounded-lg text-sm">
           {error}
         </div>
       )}
 
       {/* Basic info */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
-          Informacion Basica
+      <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-text-main mb-4">
+          Información Básica
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="sm:col-span-2">
@@ -162,7 +161,7 @@ export default function ProductForm({
             />
           </div>
           <div className="sm:col-span-2">
-            <label className={labelClass}>Descripcion *</label>
+            <label className={labelClass}>Descripción *</label>
             <textarea
               required
               rows={3}
@@ -193,7 +192,7 @@ export default function ProductForm({
               className={inputClass}
             >
               <option value="Infrarrojo">Infrarrojo (Venta Online)</option>
-              <option value="Carico">Carico (Catalogo)</option>
+              <option value="Carico">Carico (Catálogo)</option>
             </select>
           </div>
           <div>
@@ -211,9 +210,9 @@ export default function ProductForm({
               id="isActive"
               checked={form.isActive}
               onChange={(e) => set("isActive", e.target.checked)}
-              className="w-4 h-4"
+              className="w-4 h-4 accent-primary rounded"
             />
-            <label htmlFor="isActive" className="text-sm text-gray-700">
+            <label htmlFor="isActive" className="text-sm text-text-main/60">
               Producto activo
             </label>
           </div>
@@ -221,11 +220,13 @@ export default function ProductForm({
       </div>
 
       {/* Categories */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Categorias</h2>
+      <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-text-main mb-4">
+          Categorías
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Categoria Principal</label>
+            <label className={labelClass}>Categoría Principal</label>
             <select
               value={form.parentCategory}
               onChange={(e) => {
@@ -243,7 +244,7 @@ export default function ProductForm({
             </select>
           </div>
           <div>
-            <label className={labelClass}>Subcategoria</label>
+            <label className={labelClass}>Subcategoría</label>
             <select
               value={form.subCategory}
               onChange={(e) => set("subCategory", e.target.value)}
@@ -263,8 +264,8 @@ export default function ProductForm({
 
       {/* Pricing (Infrarrojo only) */}
       {form.productType === "Infrarrojo" && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
+        <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-text-main mb-4">
             Precio y Stock
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -297,8 +298,8 @@ export default function ProductForm({
 
       {/* Consultation (Carico only) */}
       {form.productType === "Carico" && (
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
+        <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
+          <h2 className="text-lg font-semibold text-text-main mb-4">
             Datos de Consulta
           </h2>
           <div>
@@ -316,8 +317,8 @@ export default function ProductForm({
       )}
 
       {/* Specs */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-text-main mb-4">
           Especificaciones
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -329,7 +330,7 @@ export default function ProductForm({
               ["dimensions", "Dimensiones"],
               ["voltage", "Voltaje"],
               ["power", "Potencia"],
-              ["warranty", "Garantia"],
+              ["warranty", "Garantía"],
             ] as const
           ).map(([field, label]) => (
             <div key={field}>
@@ -346,8 +347,10 @@ export default function ProductForm({
       </div>
 
       {/* Images */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Imagenes</h2>
+      <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
+        <h2 className="text-lg font-semibold text-text-main mb-4">
+          Imágenes
+        </h2>
         <ImageUploader
           images={form.images}
           onChange={(imgs) => set("images", imgs)}
@@ -360,14 +363,14 @@ export default function ProductForm({
         <button
           type="button"
           onClick={() => router.push("/admin/productos")}
-          className="flex-1 border border-gray-300 text-gray-700 font-medium py-3 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-lg hover:bg-surface-elevated transition-colors"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-lg transition-colors disabled:opacity-50"
+          className="flex-1 bg-primary hover:bg-primary-hover text-white font-bold py-3 rounded-lg transition-colors disabled:bg-surface-elevated disabled:text-text-main/30"
         >
           {saving
             ? "Guardando..."

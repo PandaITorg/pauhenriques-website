@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { FaPlus, FaEdit, FaTrash, FaImage } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaImage, FaSearch } from "react-icons/fa";
 
 interface ProductRow {
   id: string;
@@ -20,6 +20,8 @@ export default function AdminProductosPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
 
   const fetchProducts = async () => {
     try {
@@ -38,10 +40,18 @@ export default function AdminProductosPage() {
     fetchProducts();
   }, []);
 
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      const matchSearch =
+        !search || p.name.toLowerCase().includes(search.toLowerCase());
+      const matchType = !typeFilter || p.productType === typeFilter;
+      return matchSearch && matchType;
+    });
+  }, [products, search, typeFilter]);
+
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`¿Eliminar "${name}"? Esta accion no se puede deshacer.`)) {
+    if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`))
       return;
-    }
     setDeleting(id);
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
@@ -57,65 +67,93 @@ export default function AdminProductosPage() {
     }
   };
 
+  const inputClass =
+    "bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
+        <h1 className="text-2xl font-semibold text-text-main">Productos</h1>
         <Link
           href="/admin/productos/nuevo"
-          className="flex items-center gap-2 bg-primary text-white font-medium px-4 py-2.5 rounded-lg hover:bg-primary/90 transition-colors text-sm"
+          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-medium px-4 py-2.5 rounded-lg transition-colors text-sm"
         >
           <FaPlus className="w-3.5 h-3.5" />
           Nuevo Producto
         </Link>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="relative flex-1">
+          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
+          <input
+            type="text"
+            placeholder="Buscar producto..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`${inputClass} w-full pl-9 pr-3 py-2.5`}
+          />
+        </div>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className={`${inputClass} px-3 py-2.5 min-w-40`}
+        >
+          <option value="">Todos los tipos</option>
+          <option value="Infrarrojo">Infrarrojo</option>
+          <option value="Carico">Carico</option>
+        </select>
+      </div>
+
+      <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
             <div className="simple-spinner mx-auto" />
           </div>
-        ) : products.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            No hay productos. Crea el primero.
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-text-main/50">
+            {products.length === 0
+              ? "No hay productos. Crea el primero."
+              : "No se encontraron productos con ese filtro."}
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
+                <tr className="border-b border-border-subtle bg-surface-elevated">
                   <th className="w-14 p-4"></th>
-                  <th className="text-left p-4 font-medium text-gray-500">
+                  <th className="text-left p-4 font-medium text-text-main/50">
                     Nombre
                   </th>
-                  <th className="text-left p-4 font-medium text-gray-500">
+                  <th className="text-left p-4 font-medium text-text-main/50">
                     Marca
                   </th>
-                  <th className="text-left p-4 font-medium text-gray-500">
+                  <th className="text-left p-4 font-medium text-text-main/50">
                     Tipo
                   </th>
-                  <th className="text-right p-4 font-medium text-gray-500">
+                  <th className="text-right p-4 font-medium text-text-main/50">
                     Precio
                   </th>
-                  <th className="text-right p-4 font-medium text-gray-500">
+                  <th className="text-right p-4 font-medium text-text-main/50">
                     Stock
                   </th>
-                  <th className="text-center p-4 font-medium text-gray-500">
+                  <th className="text-center p-4 font-medium text-text-main/50">
                     Estado
                   </th>
-                  <th className="text-right p-4 font-medium text-gray-500">
+                  <th className="text-right p-4 font-medium text-text-main/50">
                     Acciones
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {products.map((p) => (
+                {filtered.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-b border-gray-50 hover:bg-gray-50"
+                    className="border-b border-border-subtle hover:bg-surface-elevated transition-colors"
                   >
                     <td className="p-4">
-                      <div className="w-10 h-10 relative rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                      <div className="w-10 h-10 relative rounded-lg overflow-hidden bg-surface-elevated shrink-0">
                         {p.images && p.images.length > 0 ? (
                           <Image
                             src={p.images[0]}
@@ -126,34 +164,36 @@ export default function AdminProductosPage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <FaImage className="w-4 h-4 text-gray-300" />
+                            <FaImage className="w-4 h-4 text-text-main/20" />
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="p-4 font-medium text-gray-900">{p.name}</td>
-                    <td className="p-4 text-gray-600">{p.brand}</td>
+                    <td className="p-4 font-medium text-text-main">
+                      {p.name}
+                    </td>
+                    <td className="p-4 text-text-main/60">{p.brand}</td>
                     <td className="p-4">
                       <span
                         className={`text-xs font-medium px-2 py-1 rounded-full ${
                           p.productType === "Infrarrojo"
-                            ? "bg-blue-50 text-blue-700"
-                            : "bg-purple-50 text-purple-700"
+                            ? "bg-primary/15 text-primary"
+                            : "bg-warm-700/20 text-warm-300"
                         }`}
                       >
                         {p.productType}
                       </span>
                     </td>
-                    <td className="p-4 text-right text-gray-600">
+                    <td className="p-4 text-right text-text-main/60">
                       {p.price != null ? `$${p.price.toFixed(2)}` : "—"}
                     </td>
-                    <td className="p-4 text-right text-gray-600">
+                    <td className="p-4 text-right text-text-main/60">
                       {p.stock != null ? p.stock : "—"}
                     </td>
                     <td className="p-4 text-center">
                       <span
                         className={`w-2.5 h-2.5 rounded-full inline-block ${
-                          p.isActive ? "bg-green-500" : "bg-gray-300"
+                          p.isActive ? "bg-success" : "bg-text-main/30"
                         }`}
                       />
                     </td>
@@ -161,14 +201,14 @@ export default function AdminProductosPage() {
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/admin/productos/${p.id}/editar`}
-                          className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                          className="p-2 text-text-main/30 hover:text-primary transition-colors"
                         >
                           <FaEdit className="w-4 h-4" />
                         </Link>
                         <button
                           onClick={() => handleDelete(p.id, p.name)}
                           disabled={deleting === p.id}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                          className="p-2 text-text-main/30 hover:text-error transition-colors disabled:opacity-50"
                         >
                           <FaTrash className="w-3.5 h-3.5" />
                         </button>

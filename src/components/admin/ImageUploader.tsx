@@ -13,7 +13,6 @@ function compressImage(file: File): Promise<File> {
     img.onload = () => {
       let { width, height } = img;
 
-      // Only resize if larger than MAX_DIMENSION
       if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
         if (width > height) {
           height = Math.round((height * MAX_DIMENSION) / width);
@@ -77,7 +76,7 @@ export default function ImageUploader({
         try {
           processed = await compressImage(fileArray[i]);
         } catch {
-          processed = fileArray[i]; // Fallback to original if compression fails
+          processed = fileArray[i];
         }
 
         const formData = new FormData();
@@ -103,7 +102,6 @@ export default function ImageUploader({
       }
       setUploading(false);
       setUploadProgress("");
-      // Reset input so the same files can be re-selected
       if (inputRef.current) inputRef.current.value = "";
     },
     [images, onChange, productId],
@@ -120,7 +118,6 @@ export default function ImageUploader({
 
   const handleRemove = async (index: number) => {
     const url = images[index];
-    // Delete from storage
     try {
       await fetch("/api/admin/upload", {
         method: "DELETE",
@@ -154,7 +151,7 @@ export default function ImageUploader({
         className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
           dragOver
             ? "border-primary bg-primary/5"
-            : "border-gray-300 hover:border-gray-400"
+            : "border-border-default hover:border-primary bg-surface-elevated"
         }`}
       >
         <input
@@ -168,15 +165,15 @@ export default function ImageUploader({
         {uploading ? (
           <FaSpinner className="w-8 h-8 text-primary mx-auto animate-spin" />
         ) : (
-          <FaCloudUploadAlt className="w-8 h-8 text-gray-400 mx-auto" />
+          <FaCloudUploadAlt className="w-8 h-8 text-text-main/30 mx-auto" />
         )}
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-text-main/50">
           {uploading
             ? `Subiendo ${uploadProgress}...`
-            : "Arrastra imagenes aqui o haz clic para seleccionar"}
+            : "Arrastra imágenes aquí o haz clic para seleccionar"}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
-          JPG, PNG, WebP o AVIF. Se comprimen a WebP 1200px automaticamente.
+        <p className="text-xs text-text-main/30 mt-1">
+          JPG, PNG, WebP o AVIF. Se comprimen a WebP 1200px automáticamente.
         </p>
       </div>
 
@@ -196,7 +193,7 @@ export default function ImageUploader({
               <button
                 type="button"
                 onClick={() => handleRemove(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-1 right-1 bg-error text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <FaTimes className="w-3 h-3" />
               </button>
@@ -206,7 +203,7 @@ export default function ImageUploader({
                   <button
                     type="button"
                     onClick={() => handleReorder(index, index - 1)}
-                    className="bg-black/60 text-white text-xs px-1.5 py-0.5 rounded"
+                    className="bg-black/70 text-white text-xs px-1.5 py-0.5 rounded"
                   >
                     ←
                   </button>
@@ -215,7 +212,7 @@ export default function ImageUploader({
                   <button
                     type="button"
                     onClick={() => handleReorder(index, index + 1)}
-                    className="bg-black/60 text-white text-xs px-1.5 py-0.5 rounded"
+                    className="bg-black/70 text-white text-xs px-1.5 py-0.5 rounded"
                   >
                     →
                   </button>
