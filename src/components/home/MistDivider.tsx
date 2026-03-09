@@ -1,5 +1,17 @@
-const MistDivider = () => (
-  <div className="absolute bottom-0 left-0 w-full h-48 z-50 pointer-events-none -mb-1">
+interface MistDividerProps {
+  fillPrimary?: string;
+  fillSecondary?: string;
+  flip?: boolean;
+}
+
+const MistDivider = ({
+  fillPrimary = "#343d2a",
+  fillSecondary = "#414934",
+  flip = false,
+}: MistDividerProps) => (
+  <div
+    className={`absolute ${flip ? "top-0 -mt-1 rotate-180" : "bottom-0 -mb-1"} left-0 w-full h-48 z-50 pointer-events-none`}
+  >
     <div
       className="absolute inset-0"
       style={{
@@ -14,9 +26,9 @@ const MistDivider = () => (
       >
         <path
           d="M0 100 C 400 150, 600 100, 1000 100 S 1600 50, 2000 100 L 2000 150 L 0 150 Z"
-          fill="#343d2a"
+          fill={fillPrimary}
           opacity="0.8"
-        ></path>
+        />
       </svg>
     </div>
     <div
@@ -33,9 +45,9 @@ const MistDivider = () => (
       >
         <path
           d="M0 100 C 350 50, 650 100, 1000 100 S 1700 150, 2000 100 L 2000 150 L 0 150 Z"
-          fill="#414934"
+          fill={fillSecondary}
           opacity="0.6"
-        ></path>
+        />
       </svg>
     </div>
   </div>

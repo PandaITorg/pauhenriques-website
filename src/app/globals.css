@@ -1,8 +1,14 @@
-@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+
+/* --- Font utility classes --- */
 
 .font-dancing-script {
   font-family: "Dancing Script", cursive;
+}
+
+.font-cormorant {
+  font-family: "Cormorant Garamond", Georgia, serif;
 }
 
 @theme {
@@ -10,6 +16,8 @@
 
   /* 1. Primario (Botones/Acciones) */
   --color-primary: #a68a63;
+  --color-primary-hover: #b89a73;
+  --color-primary-muted: rgba(166, 138, 99, 0.15);
 
   /* 2. Secundario (Enlaces/Encabezados) */
   --color-secondary: #666d4b;
@@ -20,14 +28,53 @@
   /* 4. Acento (Detalles/Bordes) */
   --color-accent: #562f10;
 
-  /* --- COLORES DE ESTADO Y NEUTROS --- */
+  /* --- COLORES DE ESTADO --- */
 
+  --color-success: #6b9a5b;
+  --color-success-light: rgba(107, 154, 91, 0.10);
+  --color-error: #c75c4a;
+  --color-error-light: rgba(199, 92, 74, 0.10);
+  --color-warning: #c9a84c;
+  --color-warning-light: rgba(201, 168, 76, 0.10);
   --color-info: #778da9;
+  --color-whatsapp: #25d366;
+
+  /* --- SUPERFICIES Y FONDOS --- */
+
   --color-header-bg: #c1c4a7;
   --color-background: #343d2a;
+  --color-surface-card: #3d4a30;
+  --color-surface-elevated: #475536;
   --color-input-bg: #414934;
+  --color-overlay: rgba(14, 18, 10, 0.60);
+
+  /* Escala calida — tonos madera/caramelo */
+  --color-warm-950: #2a2014;
+  --color-warm-900: #3d2e1c;
+  --color-warm-800: #4f3c25;
+  --color-warm-700: #634d32;
+  --color-warm-600: #7a6240;
+  --color-warm-500: #a68a63;
+  --color-warm-400: #b89a73;
+  --color-warm-300: #ccb592;
+  --color-warm-200: #ddd0b8;
+  --color-warm-100: #eee6d9;
+  --color-warm-50: #f7f3ed;
+  --color-surface-warm: #3d3426;
+  --color-border-warm: rgba(166, 138, 99, 0.20);
+
+  /* --- TEXTO --- */
+
   --color-text-main: #c1c4a7;
   --color-text-inverted: #343d2a;
+
+  /* --- BORDES --- */
+
+  --color-border-subtle: rgba(193, 196, 167, 0.12);
+  --color-border-default: rgba(193, 196, 167, 0.20);
+  --color-border-strong: rgba(193, 196, 167, 0.35);
+
+  /* --- ESCALA BOSQUE PROFUNDO --- */
 
   --color-bosque-profundo-50: #d3f2b1;
   --color-bosque-profundo-100: #c1dea2;
@@ -40,6 +87,12 @@
   --color-bosque-profundo-800: #181d12;
   --color-bosque-profundo-900: #0e120a;
   --color-bosque-profundo-950: #060804;
+
+  /* --- SOMBRAS (optimizadas para fondo oscuro) --- */
+
+  --shadow-glow-primary: 0 0 20px rgba(166, 138, 99, 0.25);
+  --shadow-glow-success: 0 0 16px rgba(107, 154, 91, 0.20);
+  --shadow-inner-input: inset 0 2px 4px rgba(6, 8, 4, 0.30);
 }
 
 html {
@@ -48,7 +101,7 @@ html {
 
 body {
   @apply bg-background text-text-main;
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Inter", system-ui, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -89,13 +142,16 @@ body {
 /* --- Hero --- */
 
 .animated-gradient-bg {
-  background: radial-gradient(
-    circle,
-    var(--color-primary),
-    var(--color-header-bg)
-  );
+  background:
+    radial-gradient(
+      ellipse at 15% 80%,
+      var(--color-warm-600) 0%,
+      var(--color-warm-800) 30%,
+      var(--color-background) 65%,
+      var(--color-bosque-profundo-600) 100%
+    );
   background-size: 200% 200%;
-  animation: animated-gradient 20s ease infinite;
+  animation: animated-gradient 15s ease infinite;
 }
 
 /* --- Links Page --- */
@@ -136,6 +192,28 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -197,5 +275,15 @@ body {
   }
   50% {
     transform: rotate(0.5deg) translateY(3px);
+  }
+}
+
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }

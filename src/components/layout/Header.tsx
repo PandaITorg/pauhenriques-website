@@ -56,7 +56,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-background/95 backdrop-blur-md shadow-md sticky top-0 z-50">
+    <header className="bg-background/95 backdrop-blur-md shadow-md sticky top-0 z-50 border-b border-border-subtle">
       <nav className="container mx-auto px-4 py-3 flex justify-between items-center h-16 md:h-20">
         <Link href="/" className="shrink-0">
           <Image
@@ -96,8 +96,8 @@ const Header = () => {
                   </button>
 
                   {isDropdownOpen && (
-                    <div className="absolute right-0 top-11 w-52 bg-input-bg border border-[rgba(193,196,167,0.2)] rounded-xl py-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
-                      <div className="px-4 py-2 border-b border-[rgba(193,196,167,0.12)]">
+                    <div className="absolute right-0 top-11 w-52 bg-input-bg border border-border-default rounded-xl py-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)]">
+                      <div className="px-4 py-2 border-b border-border-subtle">
                         <p className="text-[13px] font-semibold text-text-main truncate">
                           {user.displayName || "Mi cuenta"}
                         </p>
@@ -119,7 +119,7 @@ const Header = () => {
                       >
                         Mis pedidos
                       </Link>
-                      <div className="h-px bg-[rgba(193,196,167,0.12)] my-1" />
+                      <div className="h-px bg-border-subtle my-1" />
                       <button
                         onClick={handleSignOut}
                         className="w-full flex items-center gap-2 px-4 py-2.5 text-[14px] text-red-400 hover:bg-[rgba(229,115,115,0.08)] transition-colors text-left"
