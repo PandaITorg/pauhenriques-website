@@ -18,6 +18,12 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
     value: "1:583869730474:web:35bd6a1364f4ebc1b0cad3"
 
+  # Nuvei Payment Gateway - Client (NEXT_PUBLIC_*)
+  - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_CODE
+    value: "NUVEISTG-EC-CLIENT"
+  - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_KEY
+    value: "rvpKAv2tc49x6YL38fvtv5jJxRRiPs"
+
   # Firebase Admin SDK - SENSIBLES → Cloud Secret Manager
   - variable: FIREBASE_PROJECT_ID
     value: "pau-henriques-web-v1"
@@ -25,3 +31,9 @@ env:
     secret: "firebase-client-email"
   - variable: FIREBASE_PRIVATE_KEY
     secret: "firebase-private-key"
+
+  # Nuvei Payment Gateway - Server → Cloud Secret Manager
+  - variable: NUVEI_SERVER_APP_CODE
+    secret: "nuvei-server-app-code"
+  - variable: NUVEI_SERVER_APP_KEY
+    secret: "nuvei-server-app-key"
