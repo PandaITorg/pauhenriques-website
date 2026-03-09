@@ -62,7 +62,7 @@ export default function Podcast() {
           <div className="relative max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-16 md:pt-20 md:pb-24">
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-14">
               {/* Cover art */}
-              <div className="w-full max-w-[280px] md:max-w-xs shrink-0">
+              <div className="w-full max-w-70 md:max-w-xs shrink-0">
                 <div className="relative group">
                   <div className="rounded-2xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:-rotate-1 group-hover:scale-[1.02]">
                     <Image
