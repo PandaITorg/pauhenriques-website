@@ -11,9 +11,7 @@ import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
-import Image from "next/image";
-import marcoSuperior from "@/assets/marco-superior.svg";
-import marcoInferior from "@/assets/marco-inferior.svg";
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 
 // ===== ZOD SCHEMA =====
 const SignInSchema = z.object({
@@ -38,6 +36,13 @@ function getFirebaseErrorMessage(code: string): string {
   return messages[code] || "Error al iniciar sesión. Intenta de nuevo.";
 }
 
+const inputBase =
+  "w-full pl-10 pr-4 py-3 bg-input-bg border rounded-xl text-sm text-text-main placeholder:text-text-main/35 outline-none transition-all duration-200";
+const inputNormal =
+  "border-border-default focus:border-primary focus:ring-2 focus:ring-primary/20";
+const inputError =
+  "border-error shadow-[0_0_0_3px_rgba(199,92,74,0.12)] bg-error-light";
+
 // ===== PAGE COMPONENT =====
 export default function SignInPage() {
   const router = useRouter();
@@ -54,6 +59,7 @@ export default function SignInPage() {
   const [globalError, setGlobalError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // Si ya está autenticado, redirigir
   useEffect(() => {
@@ -130,95 +136,38 @@ export default function SignInPage() {
   // Mostrar loading mientras verifica auth
   if (authLoading) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          background:
-            "radial-gradient(ellipse at 60% 40%, #b89a73 0%, #c1c4a7 50%, #a4ac85 100%)",
-        }}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="simple-spinner" />
       </div>
     );
   }
 
   return (
-    <main
-      className="min-h-screen relative flex items-center justify-center px-4 py-10 overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(ellipse at 60% 40%, #b89a73 0%, #c1c4a7 50%, #a4ac85 100%)",
-      }}
-    >
-      {/* Shimmer rays */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {[
-          { width: "24px", left: "25%", rotate: "-12deg", delay: "0s" },
-          { width: "32px", left: "75%", rotate: "-12deg", delay: "5s" },
-          { width: "16px", left: "50%", rotate: "12deg", delay: "2s" },
-          { width: "20px", left: "33%", rotate: "15deg", delay: "8s" },
-        ].map((ray, i) => (
-          <div
-            key={i}
-            className="absolute h-[200%] -top-1/2 opacity-[0.05]"
-            style={{
-              width: ray.width,
-              left: ray.left,
-              transform: `rotate(${ray.rotate})`,
-              background: "linear-gradient(to bottom, white, transparent)",
-              animation: `shimmer 20s linear infinite`,
-              animationDelay: ray.delay,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Plant frame SVGs */}
-      <Image
-        src={marcoSuperior}
-        alt=""
-        aria-hidden="true"
-        className="absolute top-0 left-0 w-full h-auto z-1 pointer-events-none opacity-50"
-        priority
-      />
-      <Image
-        src={marcoInferior}
-        alt=""
-        aria-hidden="true"
-        className="absolute bottom-0 left-0 w-full h-auto z-1 pointer-events-none opacity-50"
-        priority
-      />
+    <main className="min-h-screen relative flex items-center justify-center px-4 py-16 bg-background overflow-hidden">
+      {/* Subtle ambient glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/20 to-transparent" />
 
       {/* Form Card */}
-      <div
-        className="relative z-2 w-full max-w-110 rounded-2xl px-9 py-10"
-        style={{
-          background: "rgba(52, 61, 42, 0.82)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(166, 138, 99, 0.25)",
-          boxShadow:
-            "0 24px 64px rgba(0,0,0,0.35), 0 0 0 1px rgba(166,138,99,0.1)",
-          animation: "fadeInUp 0.6s ease-out forwards",
-        }}
-      >
+      <div className="relative z-10 w-full max-w-md rounded-2xl bg-surface-card border border-border-subtle p-8 sm:p-10 shadow-[0_24px_64px_rgba(0,0,0,0.25)]">
         {/* Logo */}
-        <div className="text-center mb-2">
-          <p className="font-dancing-script text-[28px] text-primary font-bold">
+        <div className="text-center mb-6">
+          <p className="font-dancing-script text-3xl text-primary font-bold">
             Pau Henriques
           </p>
-          <p className="text-[11px] text-tertiary tracking-[2px] uppercase mt-0.5">
+          <p className="text-[11px] text-tertiary tracking-[2px] uppercase mt-1">
             Vive sin tóxicos
           </p>
         </div>
 
-        <div className="h-px bg-[rgba(166,138,99,0.2)] my-4" />
+        {/* Divider */}
+        <div className="h-px bg-linear-to-r from-transparent via-border-default to-transparent mb-6" />
 
-        <h1 className="text-[22px] font-bold text-text-main text-center mt-4 mb-1.5">
+        <h1 className="text-xl font-semibold text-text-main text-center mb-1">
           Bienvenida de vuelta
         </h1>
-        <p className="text-[13px] text-[rgba(193,196,167,0.65)] text-center mb-6 leading-relaxed">
-          Ingresa a tu cuenta para continuar con tu compra
+        <p className="text-sm text-text-main/50 text-center mb-7 leading-relaxed">
+          Ingresa a tu cuenta para continuar
         </p>
 
         {/* Google Sign In */}
@@ -229,55 +178,64 @@ export default function SignInPage() {
         />
 
         {/* Divider */}
-        <div className="flex items-center gap-3 my-4.5">
-          <div className="flex-1 h-px bg-[rgba(166,138,99,0.2)]" />
-          <span className="text-[12px] text-[rgba(193,196,167,0.4)] whitespace-nowrap">
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-border-default" />
+          <span className="text-xs text-text-main/40 whitespace-nowrap">
             o ingresa con tu email
           </span>
-          <div className="flex-1 h-px bg-[rgba(166,138,99,0.2)]" />
+          <div className="flex-1 h-px bg-border-default" />
         </div>
 
         {/* Global Error */}
         {globalError && (
-          <div className="mb-4 px-4 py-3 rounded-xl bg-[rgba(229,115,115,0.12)] border border-[rgba(229,115,115,0.3)] text-[13px] text-red-300">
+          <div className="mb-5 px-4 py-3 rounded-xl bg-error-light border border-error/30 text-sm text-error flex items-center gap-2">
+            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-error" />
             {globalError}
+          </div>
+        )}
+
+        {/* Reset confirmation */}
+        {resetSent && (
+          <div className="mb-5 px-4 py-3 rounded-xl bg-success-light border border-success/30 text-sm text-success flex items-center gap-2">
+            <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-success" />
+            Se envió un enlace para restablecer tu contraseña.
           </div>
         )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} noValidate>
           {/* Email */}
-          <div className="mb-3.5">
-            <label className="block text-[11px] font-semibold text-[#c4a882] uppercase tracking-[0.8px] mb-1.5">
+          <div className="mb-4">
+            <label className="block text-xs font-medium text-text-main/70 uppercase tracking-wider mb-1.5">
               Correo electrónico
             </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="tu@email.com"
-              autoComplete="email"
-              className={`w-full px-4 py-3 rounded-xl text-[14px] text-text-main outline-none transition-all duration-200 ${
-                errors.email
-                  ? "border-[1.5px] border-red-400 shadow-[0_0_0_3px_rgba(229,115,115,0.12)] bg-[rgba(229,115,115,0.08)]"
-                  : "border-[1.5px] border-[rgba(166,138,99,0.35)] bg-[rgba(193,160,110,0.18)] focus:border-primary focus:shadow-[0_0_0_3px_rgba(166,138,99,0.2)] focus:bg-[rgba(193,160,110,0.25)]"
-              }`}
-              style={{ fontFamily: "inherit" }}
-            />
+            <div className="relative">
+              <FaEnvelope className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="tu@email.com"
+                autoComplete="email"
+                className={`${inputBase} ${errors.email ? inputError : inputNormal}`}
+              />
+            </div>
             {errors.email && (
-              <p className="mt-1.5 text-[11px] text-red-400 flex items-center gap-1">
-                ⚠ {errors.email}
+              <p className="mt-1.5 text-xs text-error flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-error shrink-0" />
+                {errors.email}
               </p>
             )}
           </div>
 
           {/* Password */}
-          <div className="mb-3.5">
-            <label className="block text-[11px] font-semibold text-[#c4a882] uppercase tracking-[0.8px] mb-1.5">
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-text-main/70 uppercase tracking-wider mb-1.5">
               Contraseña
             </label>
             <div className="relative">
+              <FaLock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
@@ -285,33 +243,33 @@ export default function SignInPage() {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className={`w-full px-4 py-3 pr-11 rounded-xl text-[14px] text-text-main outline-none transition-all duration-200 ${
-                  errors.password
-                    ? "border-[1.5px] border-red-400 shadow-[0_0_0_3px_rgba(229,115,115,0.12)] bg-[rgba(229,115,115,0.08)]"
-                    : "border-[1.5px] border-[rgba(166,138,99,0.35)] bg-[rgba(193,160,110,0.18)] focus:border-primary focus:shadow-[0_0_0_3px_rgba(166,138,99,0.2)] focus:bg-[rgba(193,160,110,0.25)]"
-                }`}
-                style={{ fontFamily: "inherit" }}
+                className={`${inputBase} !pr-11 ${errors.password ? inputError : inputNormal}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[rgba(193,196,167,0.4)] hover:text-primary transition-colors text-sm"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-main/30 hover:text-primary transition-colors"
                 aria-label={
                   showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
                 }
               >
-                {showPassword ? "🙈" : "👁"}
+                {showPassword ? (
+                  <FaEyeSlash className="w-4 h-4" />
+                ) : (
+                  <FaEye className="w-4 h-4" />
+                )}
               </button>
             </div>
             {errors.password && (
-              <p className="mt-1.5 text-[11px] text-red-400 flex items-center gap-1">
-                ⚠ {errors.password}
+              <p className="mt-1.5 text-xs text-error flex items-center gap-1.5">
+                <span className="w-1 h-1 rounded-full bg-error shrink-0" />
+                {errors.password}
               </p>
             )}
           </div>
 
           {/* Forgot password */}
-          <div className="text-right -mt-1 mb-3.5">
+          <div className="text-right mb-5">
             <button
               type="button"
               onClick={async () => {
@@ -322,12 +280,13 @@ export default function SignInPage() {
                 try {
                   await sendPasswordResetEmail(getClientAuth(), formData.email);
                   setGlobalError("");
-                  alert("Se envió un enlace para restablecer tu contraseña a " + formData.email);
+                  setResetSent(true);
+                  setTimeout(() => setResetSent(false), 5000);
                 } catch {
                   setGlobalError("Error al enviar el correo. Verifica tu email.");
                 }
               }}
-              className="text-[12px] text-[rgba(193,196,167,0.5)] hover:text-primary transition-colors"
+              className="text-xs text-text-main/45 hover:text-primary transition-colors"
             >
               ¿Olvidaste tu contraseña?
             </button>
@@ -337,7 +296,7 @@ export default function SignInPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 mt-2 bg-primary text-white rounded-xl text-[15px] font-semibold transition-all duration-200 hover:bg-[#b89a73] hover:-translate-y-px hover:shadow-[0_4px_16px_rgba(166,138,99,0.4)] disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-primary-hover hover:-translate-y-px hover:shadow-glow-primary disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? (
               <>
@@ -351,11 +310,11 @@ export default function SignInPage() {
         </form>
 
         {/* Footer */}
-        <p className="text-center mt-5 text-[13px] text-[rgba(193,196,167,0.5)]">
+        <p className="text-center mt-6 text-sm text-text-main/45">
           ¿No tienes cuenta?{" "}
           <Link
             href={`/sign-up${redirectUri !== "/tienda" ? `?redirect_uri=${redirectUri}` : ""}`}
-            className="text-primary font-medium hover:underline"
+            className="text-primary font-medium hover:text-primary-hover transition-colors"
           >
             Regístrate aquí
           </Link>

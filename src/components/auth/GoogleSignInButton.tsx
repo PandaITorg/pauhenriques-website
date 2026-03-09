@@ -100,11 +100,11 @@ export default function GoogleSignInButton({
       type="button"
       onClick={handleGoogleSignIn}
       disabled={loading}
-      className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white text-[#3c4043] border border-[#dadce0] rounded-xl font-medium text-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+      className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-surface-elevated text-text-main border border-border-default rounded-xl font-medium text-sm transition-all duration-200 hover:border-border-strong hover:bg-surface-elevated/80 disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {loading ? (
         <>
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-text-main/30 border-t-primary rounded-full animate-spin" />
           <span>Conectando con Google...</span>
         </>
       ) : (
