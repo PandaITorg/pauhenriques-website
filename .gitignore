@@ -24,13 +24,16 @@ dist-ssr
 .DS_Store
 *.suo
 *.ntvs*
-*.njsproj
+*.njsprojW
 *.sln
-*.sw?
+*.sw?W
 .next/
-out/
+out/W
 
 
 # Documentacion Nuvei y plan
 .nuvei
 .plan
+
+# Claude
+.claude

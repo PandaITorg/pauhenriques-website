@@ -4,6 +4,47 @@ import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { FaCloudUploadAlt, FaTimes, FaSpinner } from "react-icons/fa";
 
+const MAX_DIMENSION = 1200;
+const WEBP_QUALITY = 0.82;
+
+function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Only resize if larger than MAX_DIMENSION
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIMENSION) / width);
+          width = MAX_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_DIMENSION) / height);
+          height = MAX_DIMENSION;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return reject(new Error("Failed to compress image"));
+          const baseName = file.name.replace(/\.[^.]+$/, "");
+          resolve(new File([blob], `${baseName}.webp`, { type: "image/webp" }));
+        },
+        "image/webp",
+        WEBP_QUALITY,
+      );
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 interface ImageUploaderProps {
   images: string[];
   onChange: (images: string[]) => void;
@@ -16,6 +57,7 @@ export default function ImageUploader({
   productId,
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -26,10 +68,20 @@ export default function ImageUploader({
 
       setUploading(true);
       const newUrls: string[] = [];
+      const total = fileArray.length;
 
-      for (const file of fileArray) {
+      for (let i = 0; i < fileArray.length; i++) {
+        setUploadProgress(`${i + 1} de ${total}`);
+
+        let processed: File;
+        try {
+          processed = await compressImage(fileArray[i]);
+        } catch {
+          processed = fileArray[i]; // Fallback to original if compression fails
+        }
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", processed);
         if (productId) formData.append("productId", productId);
 
         try {
@@ -50,6 +102,9 @@ export default function ImageUploader({
         onChange([...images, ...newUrls]);
       }
       setUploading(false);
+      setUploadProgress("");
+      // Reset input so the same files can be re-selected
+      if (inputRef.current) inputRef.current.value = "";
     },
     [images, onChange, productId],
   );
@@ -117,11 +172,11 @@ export default function ImageUploader({
         )}
         <p className="mt-2 text-sm text-gray-500">
           {uploading
-            ? "Subiendo..."
+            ? `Subiendo ${uploadProgress}...`
             : "Arrastra imagenes aqui o haz clic para seleccionar"}
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          JPG, PNG, WebP o AVIF. Max 5MB por imagen.
+          JPG, PNG, WebP o AVIF. Se comprimen a WebP 1200px automaticamente.
         </p>
       </div>
 

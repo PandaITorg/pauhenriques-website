@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import Image from "next/image";
+import { FaPlus, FaEdit, FaTrash, FaImage } from "react-icons/fa";
 
 interface ProductRow {
   id: string;
@@ -11,6 +12,7 @@ interface ProductRow {
   productType: string;
   price?: number;
   stock?: number;
+  images?: string[];
   isActive: boolean;
 }
 
@@ -82,6 +84,7 @@ export default function AdminProductosPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="w-14 p-4"></th>
                   <th className="text-left p-4 font-medium text-gray-500">
                     Nombre
                   </th>
@@ -111,6 +114,23 @@ export default function AdminProductosPage() {
                     key={p.id}
                     className="border-b border-gray-50 hover:bg-gray-50"
                   >
+                    <td className="p-4">
+                      <div className="w-10 h-10 relative rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                        {p.images && p.images.length > 0 ? (
+                          <Image
+                            src={p.images[0]}
+                            alt={p.name}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <FaImage className="w-4 h-4 text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-4 font-medium text-gray-900">{p.name}</td>
                     <td className="p-4 text-gray-600">{p.brand}</td>
                     <td className="p-4">

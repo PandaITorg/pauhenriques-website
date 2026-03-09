@@ -49,8 +49,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protect /checkout/* routes — require authenticated user
-  if (pathname.startsWith("/checkout")) {
+  // Protect authenticated user routes
+  const protectedPaths = ["/checkout", "/mi-cuenta", "/mis-pedidos"];
+  if (protectedPaths.some((p) => pathname.startsWith(p))) {
     const decoded = await verifySession(request);
 
     if (!decoded) {
@@ -66,5 +67,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/checkout/:path*", "/admin/:path*"],
+  matcher: ["/checkout/:path*", "/admin/:path*", "/mi-cuenta", "/mis-pedidos"],
 };
