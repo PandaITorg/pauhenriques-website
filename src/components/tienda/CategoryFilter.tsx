@@ -8,12 +8,14 @@ interface CategoryFilterProps {
   selectedCategory: string | null;
   onCategorySelect: (category: string | null) => void;
   activeTab?: "compra" | "catalogo";
+  variant?: "mobile" | "desktop";
 }
 
 const CategoryFilter = ({
   selectedCategory,
   onCategorySelect,
   activeTab = "compra",
+  variant,
 }: CategoryFilterProps) => {
   const [expandedParent, setExpandedParent] = useState<string | null>(null);
 
@@ -37,7 +39,7 @@ const CategoryFilter = ({
   return (
     <>
       {/* Desktop: sidebar accordion */}
-      <aside className="hidden md:block w-56 shrink-0">
+      {variant !== "mobile" && <aside className="hidden md:block w-56 shrink-0">
         <h3 className="font-semibold text-xs uppercase tracking-wider text-text-main/45 mb-3">
           Categorías
         </h3>
@@ -87,10 +89,10 @@ const CategoryFilter = ({
             </div>
           </div>
         ))}
-      </aside>
+      </aside>}
 
       {/* Mobile: horizontal pills */}
-      <div className="md:hidden flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+      {variant !== "desktop" && <div className="md:hidden flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
         <button
           onClick={() => onCategorySelect(null)}
           className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
@@ -116,7 +118,7 @@ const CategoryFilter = ({
               {sub}
             </button>
           ))}
-      </div>
+      </div>}
     </>
   );
 };

@@ -16,6 +16,8 @@ import {
   FaShieldAlt,
   FaTruck,
   FaUndo,
+  FaCheckCircle,
+  FaTimesCircle,
 } from "react-icons/fa";
 import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
@@ -97,6 +99,8 @@ export default function CheckoutPage() {
   const [isClient, setIsClient] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingAddress | null>(null);
 
@@ -197,16 +201,30 @@ export default function CheckoutPage() {
       const data = await response.json();
 
       if (data.success) {
+        setProcessingPayment(false);
+        setPaymentSuccess(true);
         clearCart();
-        router.push(`/checkout/confirmacion?orderId=${orderId}`);
+        setTimeout(() => {
+          router.push(`/checkout/confirmacion?orderId=${orderId}`);
+        }, 1500);
       } else {
-        setPaymentError(data.error || "Error al procesar el pago.");
+        const errorMsg = data.error || "Error al procesar el pago.";
+        setProcessingPayment(false);
+        setPaymentFailed(errorMsg);
+        setTimeout(() => {
+          setPaymentFailed(null);
+          setPaymentError(errorMsg);
+        }, 2500);
       }
     } catch (err) {
       console.error("Payment error:", err);
-      setPaymentError("Error de conexión. Intenta de nuevo.");
-    } finally {
+      const errorMsg = "Error de conexión. Intenta de nuevo.";
       setProcessingPayment(false);
+      setPaymentFailed(errorMsg);
+      setTimeout(() => {
+        setPaymentFailed(null);
+        setPaymentError(errorMsg);
+      }, 2500);
     }
   }
 
@@ -214,6 +232,58 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="simple-spinner" />
+      </div>
+    );
+  }
+
+  if (paymentSuccess) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
+        <div className="animate-[scale-in_0.4s_ease-out]">
+          <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-5" />
+        </div>
+        <h1 className="font-cormorant text-2xl md:text-3xl font-semibold text-text-main mb-2">
+          Pago aprobado
+        </h1>
+        <p className="text-text-main/50 text-sm">
+          Redirigiendo a tu confirmación...
+        </p>
+        <div className="mt-6">
+          <div className="simple-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (paymentFailed) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
+        <div className="animate-[scale-in_0.4s_ease-out]">
+          <FaTimesCircle className="w-16 h-16 text-error mx-auto mb-5" />
+        </div>
+        <h1 className="font-cormorant text-2xl md:text-3xl font-semibold text-text-main mb-2">
+          Pago no procesado
+        </h1>
+        <p className="text-text-main/50 text-sm max-w-xs">
+          {paymentFailed}
+        </p>
+        <p className="text-text-main/30 text-xs mt-4">
+          Volviendo al checkout...
+        </p>
+      </div>
+    );
+  }
+
+  if (processingPayment) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
+        <div className="simple-spinner w-10! h-10! border-3! mb-5" />
+        <h2 className="font-cormorant text-xl font-semibold text-text-main mb-2">
+          Procesando tu pago
+        </h2>
+        <p className="text-text-main/50 text-sm max-w-xs">
+          No cierres esta página. Estamos verificando tu transacción con el banco...
+        </p>
       </div>
     );
   }
@@ -394,6 +464,17 @@ export default function CheckoutPage() {
                       disabled={processingPayment}
                     />
                   </div>
+                )}
+
+                {/* TODO: Remove after Nuvei testing */}
+                {process.env.NODE_ENV !== "production" && (
+                  <Link
+                    href="/checkout/test-nuvei"
+                    className="mt-4 flex items-center justify-center gap-2 text-xs text-warning/60 hover:text-warning border border-dashed border-warning/20 hover:border-warning/40 rounded-lg py-2 transition-colors"
+                  >
+                    <span>🧪</span>
+                    Simulador de flujo de pago Nuvei
+                  </Link>
                 )}
 
                 {/* Trust badges */}

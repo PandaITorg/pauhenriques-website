@@ -208,6 +208,7 @@ export default function TiendaClient() {
               selectedCategory={selectedCategory}
               onCategorySelect={setSelectedCategory}
               activeTab={activeTab}
+              variant="mobile"
             />
           </div>
 
@@ -218,6 +219,7 @@ export default function TiendaClient() {
               selectedCategory={selectedCategory}
               onCategorySelect={setSelectedCategory}
               activeTab={activeTab}
+              variant="desktop"
             />
 
             {/* Product grid */}
