@@ -3,49 +3,38 @@
 //
 // Las funciones son lazy para evitar inicialización durante SSR/prerendering
 
-import type { Auth } from "firebase/auth";
-import type { GoogleAuthProvider } from "firebase/auth";
+import type { Auth, UserCredential } from "firebase/auth";
 
 let _auth: Auth | null = null;
-let _googleProvider: GoogleAuthProvider | null = null;
+let _firebaseAuthModule: typeof import("firebase/auth") | null = null;
+
+function getFirebaseAuthModule() {
+  if (!_firebaseAuthModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    _firebaseAuthModule = require("firebase/auth");
+  }
+  return _firebaseAuthModule!;
+}
 
 export function getClientAuth(): Auth {
   if (!_auth) {
+    const { getAuth } = getFirebaseAuthModule();
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getAuth } = require("firebase/auth");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const firebaseModule = require("@/lib/firebase");
-    console.log("[firebase-auth] Required firebase module:", firebaseModule);
-    console.log(
-      "[firebase-auth] firebaseApp from module:",
-      firebaseModule.firebaseApp,
-    );
-    const { firebaseApp } = firebaseModule;
+    const { firebaseApp } = require("@/lib/firebase");
 
     if (!firebaseApp) {
-      console.error("[firebase-auth] firebaseApp is null or undefined!");
       throw new Error("Firebase app is not initialized");
     }
 
-    _auth = getAuth(firebaseApp) as Auth;
-    console.log("[firebase-auth] Auth created successfully:", _auth);
-  } else {
-    console.log("[firebase-auth] Reusing existing auth instance");
+    _auth = getAuth(firebaseApp);
   }
   return _auth!;
 }
 
-export function getClientGoogleProvider(): GoogleAuthProvider {
-  if (!_googleProvider) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { GoogleAuthProvider } = require("firebase/auth");
-    _googleProvider = new GoogleAuthProvider() as GoogleAuthProvider;
-    (_googleProvider as GoogleAuthProvider).setCustomParameters({
-      prompt: "select_account",
-    });
-    console.log("[firebase-auth] GoogleProvider created with custom params");
-  } else {
-    console.log("[firebase-auth] GoogleProvider reused");
-  }
-  return _googleProvider!;
+export function signInWithGoogle(): Promise<UserCredential> {
+  const mod = getFirebaseAuthModule();
+  const auth = getClientAuth();
+  const provider = new mod.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  return mod.signInWithPopup(auth, provider);
 }

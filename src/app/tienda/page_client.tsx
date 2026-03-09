@@ -1,34 +1,93 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { HiOutlineShoppingBag } from "react-icons/hi2";
+import { FaBookOpen } from "react-icons/fa";
 import TiendaSchema from "@/components/schemas/TiendaSchema";
 import { Product, isInfrrarrojoProduct } from "@/types/product";
 import { productService } from "@/services/firestore/productService";
-import ProductCard from "@/components/tienda/ProductCard";
+import CatalogoCard from "@/components/tienda/CatalogoCard";
+import CompraCard from "@/components/tienda/CompraCard";
 import CategoryFilter from "@/components/tienda/CategoryFilter";
 import SearchBar from "@/components/tienda/SearchBar";
 import QuickViewDrawer from "@/components/tienda/QuickViewDrawer";
 
 type Tab = "compra" | "catalogo";
 
-const ProductSkeleton = () => (
-  <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col animate-pulse">
-    <div className="w-full aspect-square bg-gray-200" />
+/* --- Skeleton variants --- */
+
+const CompraCardSkeleton = () => (
+  <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden flex flex-col animate-pulse">
+    <div className="w-full aspect-square bg-bosque-profundo-400/30" />
     <div className="p-4 flex flex-col gap-3">
-      <div className="h-4 bg-gray-200 rounded w-3/4" />
-      <div className="h-3 bg-gray-200 rounded w-full" />
-      <div className="h-3 bg-gray-200 rounded w-5/6" />
-      <div className="h-5 bg-gray-200 rounded w-1/3 mt-2" />
-      <div className="h-10 bg-gray-200 rounded mt-auto" />
+      <div className="h-3 bg-bosque-profundo-400/30 rounded w-1/3" />
+      <div className="h-4 bg-bosque-profundo-400/30 rounded w-3/4" />
+      <div className="h-3 bg-bosque-profundo-400/30 rounded w-full" />
+      <div className="h-6 bg-bosque-profundo-400/30 rounded w-1/3 mt-2" />
+      <div className="h-10 bg-bosque-profundo-400/30 rounded mt-2" />
     </div>
   </div>
 );
 
+const CatalogoCardSkeleton = () => (
+  <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden flex flex-col animate-pulse">
+    <div className="w-full aspect-3/4 bg-warm-800/40" />
+    <div className="p-4 flex flex-col gap-3">
+      <div className="h-3 bg-warm-800/40 rounded w-1/4" />
+      <div className="h-5 bg-warm-800/40 rounded w-3/4" />
+      <div className="h-3 bg-warm-800/40 rounded w-full" />
+      <div className="h-10 bg-warm-800/40 rounded mt-2" />
+    </div>
+  </div>
+);
+
+/* --- Empty state --- */
+
+const EmptyState = ({
+  searchTerm,
+  selectedCategory,
+  onClear,
+  isCatalogo,
+}: {
+  searchTerm: string;
+  selectedCategory: string | null;
+  onClear: () => void;
+  isCatalogo: boolean;
+}) => (
+  <div className="text-center py-20">
+    <div className={`w-16 h-16 rounded-full ${isCatalogo ? "bg-warm-800" : "bg-surface-card"} flex items-center justify-center mx-auto mb-4`}>
+      {isCatalogo ? (
+        <FaBookOpen className="w-6 h-6 text-warm-400" />
+      ) : (
+        <HiOutlineShoppingBag className="w-7 h-7 text-text-main/30" />
+      )}
+    </div>
+    <p className="text-text-main/50 text-lg mb-1">
+      No se encontraron productos
+    </p>
+    <p className="text-text-main/30 text-sm mb-4">
+      Intenta con otros términos o categorías
+    </p>
+    {(searchTerm || selectedCategory) && (
+      <button
+        onClick={onClear}
+        className="text-primary hover:text-primary-hover text-sm font-medium transition-colors"
+      >
+        Limpiar filtros
+      </button>
+    )}
+  </div>
+);
+
 export default function TiendaClient() {
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("compra");
+  const [activeTab, setActiveTab] = useState<Tab>(
+    searchParams.get("tab") === "catalogo" ? "catalogo" : "compra"
+  );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [drawerProduct, setDrawerProduct] = useState<Product | null>(null);
@@ -76,10 +135,12 @@ export default function TiendaClient() {
     return true;
   });
 
+  const isCatalogo = activeTab === "catalogo";
+
   if (error) {
     return (
-      <div className="min-h-screen bg-tertiary flex items-center justify-center px-5">
-        <p className="text-center text-red-700 bg-red-100 rounded-lg p-6 max-w-md">
+      <div className="min-h-screen bg-background flex items-center justify-center px-5">
+        <p className="text-center text-error bg-error-light rounded-xl p-6 max-w-md text-sm">
           {error}
         </p>
       </div>
@@ -89,15 +150,18 @@ export default function TiendaClient() {
   return (
     <>
       <TiendaSchema />
-      <div className="min-h-screen bg-gray-50 py-6 md:py-10 px-4 sm:px-6">
+      <div className="min-h-screen bg-background py-6 md:py-10 px-4 sm:px-6">
         <div className="container mx-auto">
           {/* Header */}
-          <div className="text-center mb-6 md:mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-text-inverted mb-2">
-              Tienda Toxic Free
+          <div className="text-center mb-8 md:mb-10">
+            <h1 className="font-cormorant text-3xl md:text-4xl font-semibold text-text-main mb-2">
+              Tienda{" "}
+              <span className="font-dancing-script text-primary text-[1.1em]">
+                Toxic Free
+              </span>
             </h1>
-            <p className="text-text-inverted/60 text-sm md:text-base">
-              Productos para una vida mas saludable y libre de toxicos
+            <p className="text-text-main/50 text-sm md:text-base">
+              Productos para una vida más saludable y libre de tóxicos
             </p>
           </div>
 
@@ -108,12 +172,13 @@ export default function TiendaClient() {
                 setActiveTab("compra");
                 setSelectedCategory(null);
               }}
-              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeTab === "compra"
-                  ? "bg-background text-white shadow-md"
-                  : "bg-white text-text-inverted/60 border border-gray-200 hover:border-gray-300"
+                  ? "bg-primary text-white shadow-md shadow-primary/20"
+                  : "bg-surface-card text-text-main/50 border border-border-subtle hover:border-border-default"
               }`}
             >
+              <HiOutlineShoppingBag className="w-4 h-4" />
               Compra Online
             </button>
             <button
@@ -121,13 +186,14 @@ export default function TiendaClient() {
                 setActiveTab("catalogo");
                 setSelectedCategory(null);
               }}
-              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
                 activeTab === "catalogo"
-                  ? "bg-primary text-white shadow-md"
-                  : "bg-white text-text-inverted/60 border border-gray-200 hover:border-gray-300"
+                  ? "bg-warm-700 text-warm-50 shadow-md shadow-warm-900/30"
+                  : "bg-surface-card text-text-main/50 border border-border-subtle hover:border-border-default"
               }`}
             >
-              Catalogo Carico
+              <FaBookOpen className="w-3.5 h-3.5" />
+              Catálogo Carico
             </button>
           </div>
 
@@ -141,45 +207,58 @@ export default function TiendaClient() {
             <CategoryFilter
               selectedCategory={selectedCategory}
               onCategorySelect={setSelectedCategory}
+              activeTab={activeTab}
             />
           </div>
 
           {/* Main content */}
           <div className="flex gap-8">
+            {/* Desktop sidebar — hidden on mobile (pills shown above instead) */}
+            <CategoryFilter
+              selectedCategory={selectedCategory}
+              onCategorySelect={setSelectedCategory}
+              activeTab={activeTab}
+            />
+
             {/* Product grid */}
             <div className="grow">
               {loading ? (
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <ProductSkeleton key={i} />
-                  ))}
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-16">
-                  <p className="text-text-inverted/40 text-lg">
-                    No se encontraron productos
-                  </p>
-                  {(searchTerm || selectedCategory) && (
-                    <button
-                      onClick={() => {
-                        setSearchTerm("");
-                        setSelectedCategory(null);
-                      }}
-                      className="mt-3 text-primary hover:text-accent text-sm font-medium underline"
-                    >
-                      Limpiar filtros
-                    </button>
+                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6`}>
+                  {Array.from({ length: 8 }).map((_, i) =>
+                    isCatalogo ? (
+                      <CatalogoCardSkeleton key={i} />
+                    ) : (
+                      <CompraCardSkeleton key={i} />
+                    )
                   )}
                 </div>
+              ) : filteredProducts.length === 0 ? (
+                <EmptyState
+                  searchTerm={searchTerm}
+                  selectedCategory={selectedCategory}
+                  onClear={() => {
+                    setSearchTerm("");
+                    setSelectedCategory(null);
+                  }}
+                  isCatalogo={isCatalogo}
+                />
               ) : (
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                  {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onQuickView={setDrawerProduct}
-                    />
-                  ))}
+                  {filteredProducts.map((product) =>
+                    isCatalogo ? (
+                      <CatalogoCard
+                        key={product.id}
+                        product={product}
+                        onQuickView={setDrawerProduct}
+                      />
+                    ) : (
+                      <CompraCard
+                        key={product.id}
+                        product={product}
+                        onQuickView={setDrawerProduct}
+                      />
+                    )
+                  )}
                 </div>
               )}
             </div>

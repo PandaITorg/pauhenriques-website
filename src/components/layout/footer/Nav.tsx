@@ -1,49 +1,29 @@
 import Link from "next/link";
 
 const Nav = () => {
+  const links = [
+    { href: "/", text: "Inicio" },
+    { href: "/tienda", text: "Tienda" },
+    { href: "/podcast", text: "Podcast" },
+    { href: "/sobre-mi", text: "Sobre Mi" },
+  ];
+
   return (
-    <div className="col-span-1 md:col-span-2 text-left">
-      <h3 className="text-sm font-semibold tracking-wider uppercase mb-3 md:mb-4">
-        Navegación
+    <div className="md:col-span-3 text-center md:text-left">
+      <h3 className="text-[11px] font-medium tracking-[0.15em] uppercase text-primary/60 mb-4">
+        Navegacion
       </h3>
-      <ul className="space-y-2 md:space-y-3 text-sm md:text-base">
-        <li>
-          <Link href="/" className="hover:text-primary transition-colors">
-            Inicio
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/tienda"
-            className="hover:text-primary transition-colors"
-          >
-            Tienda
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/podcast"
-            className="hover:text-primary transition-colors"
-          >
-            Podcast
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/sobre-mi"
-            className="hover:text-primary transition-colors"
-          >
-            Sobre Mí
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/programa-afiliados"
-            className="hover:text-primary transition-colors"
-          >
-            Afiliados
-          </Link>
-        </li>
+      <ul className="space-y-2.5">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm text-text-main/50 hover:text-primary transition-colors duration-300"
+            >
+              {link.text}
+            </Link>
+          </li>
+        ))}
       </ul>
     </div>
   );

@@ -7,11 +7,13 @@ import { CATEGORIES } from "@/constants/categories";
 interface CategoryFilterProps {
   selectedCategory: string | null;
   onCategorySelect: (category: string | null) => void;
+  activeTab?: "compra" | "catalogo";
 }
 
 const CategoryFilter = ({
   selectedCategory,
   onCategorySelect,
+  activeTab = "compra",
 }: CategoryFilterProps) => {
   const [expandedParent, setExpandedParent] = useState<string | null>(null);
 
@@ -21,19 +23,30 @@ const CategoryFilter = ({
 
   const isActive = (cat: string) => selectedCategory === cat;
 
+  // Tab-aware active color
+  const activePillClass =
+    activeTab === "catalogo"
+      ? "bg-warm-700 text-warm-50"
+      : "bg-primary text-white";
+
+  const activeSidebarClass =
+    activeTab === "catalogo"
+      ? "bg-warm-700/20 text-warm-300 font-semibold"
+      : "bg-primary-muted text-primary font-semibold";
+
   return (
     <>
       {/* Desktop: sidebar accordion */}
       <aside className="hidden md:block w-56 shrink-0">
-        <h3 className="font-bold text-sm uppercase tracking-wider text-text-inverted/60 mb-3">
-          Categorias
+        <h3 className="font-semibold text-xs uppercase tracking-wider text-text-main/45 mb-3">
+          Categorías
         </h3>
         <button
           onClick={() => onCategorySelect(null)}
           className={`w-full text-left px-3 py-2 rounded-lg text-sm mb-1 transition-colors ${
             !selectedCategory
-              ? "bg-primary/10 text-primary font-semibold"
-              : "text-text-inverted/70 hover:bg-gray-100"
+              ? activeSidebarClass
+              : "text-text-main/60 hover:bg-surface-card"
           }`}
         >
           Todas
@@ -43,7 +56,7 @@ const CategoryFilter = ({
           <div key={parent} className="mb-1">
             <button
               onClick={() => toggleParent(parent)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-text-inverted/80 hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium text-text-main/70 hover:bg-surface-card transition-colors"
             >
               {parent}
               <FaChevronDown
@@ -64,8 +77,8 @@ const CategoryFilter = ({
                   onClick={() => onCategorySelect(sub)}
                   className={`w-full text-left pl-7 pr-3 py-1.5 text-sm rounded-lg transition-colors ${
                     isActive(sub)
-                      ? "bg-primary/10 text-primary font-semibold"
-                      : "text-text-inverted/60 hover:bg-gray-50"
+                      ? activeSidebarClass
+                      : "text-text-main/50 hover:bg-surface-card hover:text-text-main/70"
                   }`}
                 >
                   {sub}
@@ -82,8 +95,8 @@ const CategoryFilter = ({
           onClick={() => onCategorySelect(null)}
           className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
             !selectedCategory
-              ? "bg-primary text-white"
-              : "bg-white text-text-inverted/70 border border-gray-200"
+              ? activePillClass
+              : "bg-surface-card text-text-main/60 border border-border-subtle"
           }`}
         >
           Todas
@@ -96,8 +109,8 @@ const CategoryFilter = ({
               onClick={() => onCategorySelect(sub)}
               className={`shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 isActive(sub)
-                  ? "bg-primary text-white"
-                  : "bg-white text-text-inverted/70 border border-gray-200"
+                  ? activePillClass
+                  : "bg-surface-card text-text-main/60 border border-border-subtle"
               }`}
             >
               {sub}

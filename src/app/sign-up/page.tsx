@@ -168,8 +168,13 @@ export default function SignUpPage() {
       // 6. Redirigir
       router.push(redirectUri);
     } catch (error: unknown) {
-      const authError = error as AuthError;
-      setGlobalError(getFirebaseErrorMessage(authError.code || ""));
+      if (error && typeof error === "object" && "code" in error) {
+        setGlobalError(getFirebaseErrorMessage((error as AuthError).code));
+      } else if (error instanceof Error) {
+        setGlobalError(error.message);
+      } else {
+        setGlobalError("Error al crear la cuenta. Intenta de nuevo.");
+      }
     } finally {
       setLoading(false);
     }

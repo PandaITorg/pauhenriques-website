@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithPopup } from "firebase/auth";
-import { getClientAuth, getClientGoogleProvider } from "@/lib/firebase-auth";
+import { useRouter } from "next/navigation";
+import { signInWithGoogle } from "@/lib/firebase-auth";
 import { createUserProfile } from "@/app/actions/auth";
 
 interface GoogleSignInButtonProps {
@@ -19,33 +19,14 @@ export default function GoogleSignInButton({
   onError,
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
 
     try {
-      // 1. Obtener instancias
-      const auth = getClientAuth();
-      const provider = getClientGoogleProvider();
-
-      console.log("[GoogleSignIn] Auth instance:", auth);
-      console.log("[GoogleSignIn] Provider instance:", provider);
-      console.log("[GoogleSignIn] Provider type:", typeof provider);
-      console.log(
-        "[GoogleSignIn] Provider constructor:",
-        provider?.constructor?.name,
-      );
-
-      // 2. Validar que las instancias sean válidas
-      if (!auth) {
-        throw new Error("Auth instance is null or undefined");
-      }
-      if (!provider) {
-        throw new Error("GoogleProvider is null or undefined");
-      }
-
-      // 3. Abrir popup de Google OAuth
-      const result = await signInWithPopup(auth, provider);
+      // 1. Abrir popup de Google OAuth
+      const result = await signInWithGoogle();
       const user = result.user;
 
       // 2. Obtener ID Token
@@ -81,11 +62,8 @@ export default function GoogleSignInButton({
       // 5. Redirigir
       onSuccess?.();
       const destination = redirectUri || "/tienda";
-      window.location.href = destination;
+      router.push(destination);
     } catch (error: unknown) {
-      console.error("Error en Google Sign-In:", error);
-      console.error("Error details:", JSON.stringify(error, null, 2));
-
       // Manejar errores específicos de Firebase
       let errorMessage =
         "Error al iniciar sesión con Google. Intenta de nuevo.";
@@ -93,7 +71,7 @@ export default function GoogleSignInButton({
       if (error && typeof error === "object" && "code" in error) {
         const firebaseError = error as { code: string };
         if (firebaseError.code === "auth/popup-closed-by-user") {
-          errorMessage = ""; // No mostrar error si el usuario cerró el popup
+          errorMessage = "";
         } else if (firebaseError.code === "auth/popup-blocked") {
           errorMessage =
             "El popup fue bloqueado. Permite popups para este sitio.";
@@ -103,9 +81,10 @@ export default function GoogleSignInButton({
           errorMessage =
             "Ya existe una cuenta con este email. Intenta con email y contraseña.";
         } else {
-          // Mostrar el código de error para debugging
           errorMessage = `Error: ${firebaseError.code}`;
         }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
       }
 
       if (errorMessage) {

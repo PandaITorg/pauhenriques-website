@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signInWithEmailAndPassword, AuthError } from "firebase/auth";
+import { signInWithEmailAndPassword, sendPasswordResetEmail, AuthError } from "firebase/auth";
 import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
@@ -115,8 +115,13 @@ export default function SignInPage() {
       // 4. Redirigir
       router.push(redirectUri);
     } catch (error: unknown) {
-      const authError = error as AuthError;
-      setGlobalError(getFirebaseErrorMessage(authError.code || ""));
+      if (error && typeof error === "object" && "code" in error) {
+        setGlobalError(getFirebaseErrorMessage((error as AuthError).code));
+      } else if (error instanceof Error) {
+        setGlobalError(error.message);
+      } else {
+        setGlobalError("Error al iniciar sesión. Intenta de nuevo.");
+      }
     } finally {
       setLoading(false);
     }
@@ -307,12 +312,25 @@ export default function SignInPage() {
 
           {/* Forgot password */}
           <div className="text-right -mt-1 mb-3.5">
-            <Link
-              href="/forgot-password"
+            <button
+              type="button"
+              onClick={async () => {
+                if (!formData.email) {
+                  setErrors({ email: "Ingresa tu email primero" });
+                  return;
+                }
+                try {
+                  await sendPasswordResetEmail(getClientAuth(), formData.email);
+                  setGlobalError("");
+                  alert("Se envió un enlace para restablecer tu contraseña a " + formData.email);
+                } catch {
+                  setGlobalError("Error al enviar el correo. Verifica tu email.");
+                }
+              }}
               className="text-[12px] text-[rgba(193,196,167,0.5)] hover:text-primary transition-colors"
             >
               ¿Olvidaste tu contraseña?
-            </Link>
+            </button>
           </div>
 
           {/* Submit */}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
+import { debitWithToken } from "@/lib/nuvei";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Usuario no coincide" }, { status: 403 });
     }
 
-    // Re-calculate total from order items in Firestore to prevent price tampering
+    // Re-validate order exists in Firestore to prevent price tampering
     if (dbAdmin) {
       const orderDoc = await dbAdmin.collection("orders").doc(orderId).get();
       if (!orderDoc.exists) {
@@ -50,60 +51,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Call Nuvei/Paymentez Debit API
-    const serverAppCode = process.env.NUVEI_SERVER_APP_CODE;
-    const serverAppKey = process.env.NUVEI_SERVER_APP_KEY;
-
-    if (!serverAppCode || !serverAppKey) {
-      return NextResponse.json(
-        { error: "Configuracion de pago no disponible" },
-        { status: 500 },
-      );
-    }
-
-    // Generate auth token for Nuvei server API
-    const timestamp = Math.floor(Date.now() / 1000);
-    const crypto = await import("crypto");
-    const uniqToken = crypto
-      .createHash("sha256")
-      .update(`${serverAppKey}${timestamp}`)
-      .digest("hex");
-    const authToken = Buffer.from(
-      `${serverAppCode};${timestamp};${uniqToken}`,
-    ).toString("base64");
-
-    // Nuvei Debit (charge) API - staging
-    const nuveiResponse = await fetch(
-      "https://ccapi-stg.paymentez.com/v2/transaction/debit/",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Auth-Token": authToken,
-        },
-        body: JSON.stringify({
-          user: {
-            id: userId,
-            email: userEmail,
-          },
-          order: {
-            amount: amount,
-            description: description,
-            dev_reference: orderId,
-            vat: 0,
-          },
-          card: {
-            token: token,
-          },
-        }),
-      },
-    );
-
-    const nuveiData = await nuveiResponse.json();
+    // Call Nuvei debit with token
+    const nuveiData = await debitWithToken({
+      userId,
+      userEmail,
+      amount,
+      description,
+      devReference: orderId,
+      cardToken: token,
+    });
 
     if (
       nuveiData.transaction &&
-      nuveiData.transaction.status === "success"
+      nuveiData.transaction.status === "success" &&
+      nuveiData.transaction.status_detail === 3
     ) {
       // Update order in Firestore
       if (dbAdmin) {
@@ -130,7 +91,10 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(
         {
-          error: nuveiData.transaction?.message || "Pago rechazado",
+          error:
+            nuveiData.transaction?.message ||
+            nuveiData.error?.description ||
+            "Pago rechazado",
           detail: nuveiData,
         },
         { status: 400 },
