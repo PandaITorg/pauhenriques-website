@@ -6,7 +6,6 @@ const Nav = () => {
     { href: "/tienda", text: "Tienda" },
     { href: "/podcast", text: "Podcast" },
     { href: "/sobre-mi", text: "Sobre Mi" },
-    { href: "/programa-afiliados", text: "Afiliados" },
   ];
 
   return (
