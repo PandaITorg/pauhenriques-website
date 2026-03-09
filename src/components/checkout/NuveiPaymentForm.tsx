@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
+import { FaLock } from "react-icons/fa";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -76,7 +77,6 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
         JSON.stringify(response, null, 2),
       );
 
-      // Handle error responses (no card property)
       if (response.error) {
         const msg =
           response.error.type || "Error al procesar la tarjeta.";
@@ -107,7 +107,7 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
         const rawMsg = response.card.message || "";
         const friendlyMessages: Record<string, string> = {
           "Response by mock": "Tarjeta rechazada. Verifica los datos o usa otra tarjeta.",
-          "Card already added": "Esta tarjeta ya esta registrada. Puedes seleccionarla de tus tarjetas guardadas.",
+          "Card already added": "Esta tarjeta ya está registrada. Puedes seleccionarla de tus tarjetas guardadas.",
           "Card rejected": "Tarjeta rechazada por el banco emisor.",
         };
         const msg = friendlyMessages[rawMsg] || rawMsg || "Error al procesar la tarjeta.";
@@ -127,15 +127,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
     if (!pgSdkRef.current) return;
     setError(null);
     setIsProcessing(true);
-    // Sends a postMessage to the iframe telling it to validate & tokenize
     pgSdkRef.current.tokenize();
   };
 
-  // When Next.js <Script> fires onReady, bridge the class to window
   const handleScriptReady = useCallback(() => {
     try {
-      // class declarations are in global lexical scope, not on window.
-      // Use Function() constructor which evaluates in global scope.
       const PG = new Function("return PaymentGateway")();
       (window as any).PaymentGateway = PG;
       setSdkReady(true);
@@ -144,7 +140,6 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
     }
   }, []);
 
-  // Initialize PaymentGateway + generate_tokenize once SDK is ready
   useEffect(() => {
     if (!sdkReady || sdkInitRef.current) return;
     sdkInitRef.current = true;
@@ -201,10 +196,13 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
       />
 
       {/* SDK renders its iframe-based form inside this container */}
-      <div id={CONTAINER_ID} />
+      <div
+        id={CONTAINER_ID}
+        className="bg-surface-elevated border border-border-subtle rounded-xl p-4 min-h-16"
+      />
 
       {error && (
-        <p className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">
+        <p className="text-error text-sm bg-error/10 p-3 rounded-lg">
           {error}
         </p>
       )}
@@ -214,9 +212,16 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           type="button"
           onClick={handlePay}
           disabled={isProcessing}
-          className="w-full bg-background hover:bg-bosque-profundo-400 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.97]"
         >
-          {isProcessing ? "Verificando..." : "Agregar Tarjeta"}
+          {isProcessing ? (
+            <>
+              <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
+              Verificando...
+            </>
+          ) : (
+            "Agregar Tarjeta"
+          )}
         </button>
       )}
 
@@ -225,6 +230,12 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           <div className="simple-spinner" />
         </div>
       )}
+
+      {/* Trust indicator */}
+      <div className="flex items-center justify-center gap-2 text-text-main/30 text-xs">
+        <FaLock className="w-3 h-3" />
+        <span>Pago 100% seguro · Tokenización PCI Compliant</span>
+      </div>
     </div>
   );
 };

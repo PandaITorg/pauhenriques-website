@@ -30,7 +30,6 @@ export default function SavedCards({
       if (res.ok) {
         const data = await res.json();
         setCards(data.cards || []);
-        // Auto-select first card if none selected
         if (!selectedToken && data.cards?.length > 0) {
           onSelectCard(data.cards[0]);
         }
@@ -66,16 +65,13 @@ export default function SavedCards({
     }
   }
 
-  function getCardIcon(type: string) {
-    // Simple color coding by brand
+  function getCardColor(type: string) {
     const colors: Record<string, string> = {
-      vi: "text-blue-600",
-      mc: "text-orange-500",
-      ax: "text-green-600",
+      vi: "text-blue-400",
+      mc: "text-orange-400",
+      ax: "text-green-400",
     };
-    return (
-      <FaCreditCard className={`w-5 h-5 ${colors[type] || "text-gray-500"}`} />
-    );
+    return colors[type] || "text-text-main/40";
   }
 
   if (loading) {
@@ -97,22 +93,23 @@ export default function SavedCards({
               className={`p-4 border rounded-lg cursor-pointer transition-all ${
                 selectedToken === card.token
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-gray-200 hover:border-gray-400"
+                  : "border-border-default hover:border-border-strong"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {getCardIcon(card.type)}
+                  <FaCreditCard className={`w-5 h-5 ${getCardColor(card.type)}`} />
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-text-inverted">
-                        {getCardBrandName(card.type)} ****{card.number}
+                      <span className="font-semibold text-sm text-text-main">
+                        {getCardBrandName(card.type)}{" "}
+                        <span className="font-mono">****{card.number}</span>
                       </span>
                       {selectedToken === card.token && (
                         <FaCheck className="w-3.5 h-3.5 text-primary" />
                       )}
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-text-main/45">
                       {card.holder_name} · Exp {card.expiry_month}/
                       {card.expiry_year}
                     </p>
@@ -124,7 +121,7 @@ export default function SavedCards({
                     handleDelete(card.token);
                   }}
                   disabled={deleting === card.token}
-                  className="text-gray-400 hover:text-red-500 p-1 disabled:opacity-50"
+                  className="text-text-main/30 hover:text-error p-1 disabled:opacity-50 transition-colors"
                   title="Eliminar tarjeta"
                 >
                   <FaTrash className="w-3 h-3" />
@@ -137,7 +134,7 @@ export default function SavedCards({
 
       <button
         onClick={onAddNewCard}
-        className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors"
+        className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border-default rounded-lg text-sm text-text-main/50 hover:border-primary hover:text-primary transition-colors"
       >
         <FaPlus className="w-3 h-3" />
         {cards.length > 0 ? "Usar otra tarjeta" : "Agregar tarjeta"}

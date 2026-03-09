@@ -50,7 +50,6 @@ export default function SavedAddresses({
     try {
       const list = await getAddresses(user.uid);
       setAddresses(list);
-      // Auto-select default if nothing selected
       if (!selectedAddress && list.length > 0) {
         const def = list.find((a) => a.isDefault) || list[0];
         onSelect(toShipping(def));
@@ -137,6 +136,9 @@ export default function SavedAddresses({
     );
   }
 
+  const inputClass =
+    "w-full p-2.5 bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
+
   return (
     <div className="space-y-4">
       {/* Saved addresses list */}
@@ -149,17 +151,17 @@ export default function SavedAddresses({
               className={`p-4 border rounded-lg cursor-pointer transition-all ${
                 isSelected(addr)
                   ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-gray-200 hover:border-gray-400"
+                  : "border-border-default hover:border-border-strong"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-sm text-text-inverted">
+                    <span className="font-semibold text-sm text-text-main">
                       {addr.label || "Dirección"}
                     </span>
                     {addr.isDefault && (
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full">
                         Principal
                       </span>
                     )}
@@ -167,18 +169,18 @@ export default function SavedAddresses({
                       <FaCheck className="w-3.5 h-3.5 text-primary" />
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{addr.fullName}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-text-main/70">{addr.fullName}</p>
+                  <p className="text-sm text-text-main/50">
                     {addr.address}, {addr.city}, {addr.province}
                   </p>
-                  <p className="text-sm text-gray-500">{addr.phone}</p>
+                  <p className="text-sm text-text-main/50">{addr.phone}</p>
                 </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete(addr.id);
                   }}
-                  className="text-gray-400 hover:text-red-500 p-1"
+                  className="text-text-main/30 hover:text-error p-1 transition-colors"
                   title="Eliminar dirección"
                 >
                   <FaTrash className="w-3 h-3" />
@@ -193,7 +195,7 @@ export default function SavedAddresses({
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-primary hover:text-primary transition-colors"
+          className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-border-default rounded-lg text-sm text-text-main/50 hover:border-primary hover:text-primary transition-colors"
         >
           <FaPlus className="w-3 h-3" />
           Agregar nueva dirección
@@ -202,14 +204,14 @@ export default function SavedAddresses({
 
       {/* New address form */}
       {showForm && (
-        <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-          <h3 className="font-semibold text-sm text-text-inverted">
+        <div className="border border-border-subtle rounded-lg p-4 space-y-4">
+          <h3 className="font-semibold text-sm text-text-main">
             Nueva dirección
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-text-main/60 mb-1">
                 Etiqueta (opcional)
               </label>
               <input
@@ -217,11 +219,11 @@ export default function SavedAddresses({
                 placeholder="Ej: Casa, Oficina"
                 value={form.label}
                 onChange={(e) => setForm({ ...form, label: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-text-main/60 mb-1">
                 Nombre completo *
               </label>
               <input
@@ -230,25 +232,25 @@ export default function SavedAddresses({
                 onChange={(e) =>
                   setForm({ ...form, fullName: e.target.value })
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+                className={inputClass}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-text-main/60 mb-1">
               Teléfono *
             </label>
             <input
               type="tel"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+              className={inputClass}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium text-text-main/60 mb-1">
               Dirección *
             </label>
             <input
@@ -257,24 +259,24 @@ export default function SavedAddresses({
               onChange={(e) =>
                 setForm({ ...form, address: e.target.value })
               }
-              className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+              className={inputClass}
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-text-main/60 mb-1">
                 Ciudad *
               </label>
               <input
                 type="text"
                 value={form.city}
                 onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-text-main/60 mb-1">
                 Provincia *
               </label>
               <input
@@ -283,11 +285,11 @@ export default function SavedAddresses({
                 onChange={(e) =>
                   setForm({ ...form, province: e.target.value })
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+                className={inputClass}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-text-main/60 mb-1">
                 Código Postal
               </label>
               <input
@@ -296,7 +298,7 @@ export default function SavedAddresses({
                 onChange={(e) =>
                   setForm({ ...form, postalCode: e.target.value })
                 }
-                className="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none"
+                className={inputClass}
               />
             </div>
           </div>
@@ -309,9 +311,9 @@ export default function SavedAddresses({
               onChange={(e) =>
                 setForm({ ...form, isDefault: e.target.checked })
               }
-              className="rounded border-gray-300"
+              className="rounded border-border-default accent-primary"
             />
-            <label htmlFor="save-default" className="text-sm text-gray-600">
+            <label htmlFor="save-default" className="text-sm text-text-main/60">
               Establecer como dirección principal
             </label>
           </div>
@@ -320,7 +322,7 @@ export default function SavedAddresses({
             {addresses.length > 0 && (
               <button
                 onClick={() => setShowForm(false)}
-                className="flex-1 border border-gray-300 text-text-inverted font-medium py-2.5 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                className="flex-1 border border-border-default text-text-main/60 font-medium py-2.5 rounded-lg hover:bg-surface-elevated transition-colors text-sm"
               >
                 Cancelar
               </button>
@@ -328,14 +330,14 @@ export default function SavedAddresses({
             <button
               onClick={handleUseWithoutSaving}
               disabled={!isFormValid}
-              className="flex-1 border border-primary text-primary font-medium py-2.5 rounded-lg hover:bg-primary/5 transition-colors text-sm disabled:opacity-50"
+              className="flex-1 border border-primary text-primary font-medium py-2.5 rounded-lg hover:bg-primary/10 transition-colors text-sm disabled:opacity-50"
             >
               Usar sin guardar
             </button>
             <button
               onClick={handleSave}
               disabled={!isFormValid || saving}
-              className="flex-1 bg-background hover:bg-bosque-profundo-400 text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:bg-gray-400"
+              className="flex-1 bg-primary hover:bg-primary-hover text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:bg-surface-elevated disabled:text-text-main/30"
             >
               {saving ? "Guardando..." : "Guardar"}
             </button>
