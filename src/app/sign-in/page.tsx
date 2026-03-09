@@ -145,7 +145,7 @@ export default function SignInPage() {
   return (
     <main className="min-h-screen relative flex items-center justify-center px-4 py-16 bg-background overflow-hidden">
       {/* Subtle ambient glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/[0.04] rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-100 bg-primary/4 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/20 to-transparent" />
 
       {/* Form Card */}
@@ -243,7 +243,7 @@ export default function SignInPage() {
                 onChange={handleChange}
                 placeholder="••••••••"
                 autoComplete="current-password"
-                className={`${inputBase} !pr-11 ${errors.password ? inputError : inputNormal}`}
+                className={`${inputBase} pr-11! ${errors.password ? inputError : inputNormal}`}
               />
               <button
                 type="button"
