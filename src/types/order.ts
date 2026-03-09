@@ -31,11 +31,13 @@ export interface Order {
   userId: string;
   items: OrderItem[];
   subtotal: number;
+  vat: number;
   shipping: number;
   total: number;
   status: OrderStatus;
   paymentToken?: string;
   paymentTransactionId?: string;
+  authorizationCode?: string;
   shippingAddress: ShippingAddress;
   createdAt: Timestamp;
   updatedAt: Timestamp;

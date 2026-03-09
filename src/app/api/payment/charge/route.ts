@@ -8,6 +8,7 @@ interface ChargeRequestBody {
   token: string;
   orderId: string;
   amount: number;
+  vat: number;
   description: string;
   userId: string;
   userEmail: string;
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: ChargeRequestBody = await request.json();
-    const { token, orderId, amount, description, userId, userEmail } = body;
+    const { token, orderId, amount, vat, description, userId, userEmail } = body;
 
     if (!token || !orderId || !amount) {
       return NextResponse.json(
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
       description,
       devReference: orderId,
       cardToken: token,
+      vat: vat ?? 0,
     });
 
     if (
@@ -71,6 +73,7 @@ export async function POST(request: NextRequest) {
         await dbAdmin.collection("orders").doc(orderId).update({
           status: "paid",
           paymentTransactionId: nuveiData.transaction.id,
+          authorizationCode: nuveiData.transaction.authorization_code || null,
           updatedAt: new Date(),
         });
       }
@@ -78,6 +81,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         transactionId: nuveiData.transaction.id,
+        authorizationCode: nuveiData.transaction.authorization_code,
         orderId,
       });
     } else {

@@ -78,6 +78,45 @@ export async function deleteCard(token: string, uid: string) {
   });
 }
 
+export async function refundTransaction(transactionId: string) {
+  return nuveiRequest<{
+    status: string;
+    detail: string;
+  }>("/v2/transaction/refund/", "POST", {
+    transaction: { id: transactionId },
+  });
+}
+
+export async function verifyCard(params: {
+  userId: string;
+  userEmail: string;
+  cardToken: string;
+  value: string;
+}) {
+  return nuveiRequest<{
+    transaction?: {
+      status: string;
+      status_detail: number;
+      id: string;
+      message: string | null;
+    };
+    error?: {
+      type: string;
+      help: string;
+      description: string;
+    };
+  }>("/v2/transaction/verify/", "POST", {
+    user: {
+      id: params.userId,
+      email: params.userEmail,
+    },
+    card: {
+      token: params.cardToken,
+    },
+    value: params.value,
+  });
+}
+
 export async function debitWithToken(params: {
   userId: string;
   userEmail: string;

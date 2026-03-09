@@ -123,8 +123,10 @@ export default function CheckoutPage() {
     (total, item) => total + item.price * item.quantity,
     0,
   );
+  const IVA_RATE = 0.15;
+  const vat = Math.round(subtotal * IVA_RATE * 100) / 100;
   const shippingCost: number = 0;
-  const total = subtotal + shippingCost;
+  const total = Math.round((subtotal + vat + shippingCost) * 100) / 100;
 
   const currentStepIndex = STEPS.indexOf(step);
 
@@ -171,6 +173,7 @@ export default function CheckoutPage() {
         userId: user.uid,
         items: orderItems,
         subtotal,
+        vat,
         shipping: shippingCost,
         total,
         shippingAddress: shipping,
@@ -184,6 +187,7 @@ export default function CheckoutPage() {
           token: selectedCardToken,
           orderId,
           amount: total,
+          vat,
           description: `Orden ${orderId} - Pau Henriques`,
           userId: user.uid,
           userEmail: user.email,
@@ -386,6 +390,7 @@ export default function CheckoutPage() {
                       email={user.email || ""}
                       onTokenSuccess={handleTokenSuccess}
                       onTokenError={handleTokenError}
+                      onGoToSavedCards={() => setPaymentMode("saved")}
                       disabled={processingPayment}
                     />
                   </div>
@@ -573,6 +578,12 @@ export default function CheckoutPage() {
                   <span className="text-text-main/50">Subtotal</span>
                   <span className="font-medium text-text-main">
                     ${subtotal.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-main/50">IVA (15%)</span>
+                  <span className="font-medium text-text-main">
+                    ${vat.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">

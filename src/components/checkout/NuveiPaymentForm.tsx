@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
-import { FaLock } from "react-icons/fa";
+import {
+  FaLock,
+  FaExclamationTriangle,
+  FaTimesCircle,
+  FaInfoCircle,
+  FaRedo,
+} from "react-icons/fa";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -45,11 +51,20 @@ interface TokenizeResponse {
   };
 }
 
+type ErrorVariant = "rejected" | "duplicate" | "incomplete" | "system";
+
+interface CardError {
+  variant: ErrorVariant;
+  title: string;
+  message: string;
+}
+
 interface NuveiPaymentFormProps {
   uid: string;
   email: string;
   onTokenSuccess: (token: string) => void;
   onTokenError: (error: string) => void;
+  onGoToSavedCards?: () => void;
   disabled?: boolean;
 }
 
@@ -62,32 +77,66 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   email,
   onTokenSuccess,
   onTokenError,
+  onGoToSavedCards,
 }) => {
   const [sdkReady, setSdkReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<CardError | null>(null);
   const sdkInitRef = useRef(false);
   const pgSdkRef = useRef<PaymentGatewayInstance | null>(null);
+
+  function buildError(rawMsg: string): CardError {
+    if (rawMsg === "Card already added" || rawMsg.includes("already")) {
+      return {
+        variant: "duplicate",
+        title: "Tarjeta ya registrada",
+        message:
+          "Esta tarjeta ya está en tu cuenta. Selecciónala desde tus tarjetas guardadas.",
+      };
+    }
+    if (
+      rawMsg === "Card rejected" ||
+      rawMsg === "Response by mock" ||
+      rawMsg.toLowerCase().includes("reject")
+    ) {
+      return {
+        variant: "rejected",
+        title: "Tarjeta rechazada",
+        message:
+          "El banco emisor rechazó esta tarjeta. Verifica que los datos sean correctos o intenta con otra tarjeta.",
+      };
+    }
+    return {
+      variant: "system",
+      title: "Error de procesamiento",
+      message: rawMsg || "Ocurrió un error inesperado. Intenta de nuevo.",
+    };
+  }
 
   const responseCallback = useCallback(
     (response: any) => {
       setIsProcessing(false);
-      console.log(
-        "Nuvei tokenize response:",
-        JSON.stringify(response, null, 2),
-      );
 
       if (response.error) {
-        const msg =
-          response.error.type || "Error al procesar la tarjeta.";
-        setError(msg);
-        onTokenError(msg);
+        const err: CardError = {
+          variant: "system",
+          title: "Error del procesador",
+          message:
+            response.error.type || "Error al comunicarse con el procesador de pagos.",
+        };
+        setError(err);
+        onTokenError(err.message);
         return;
       }
 
       if (!response.card) {
-        setError("Respuesta inesperada del procesador de pagos.");
-        onTokenError("Unexpected response");
+        const err: CardError = {
+          variant: "system",
+          title: "Respuesta inesperada",
+          message: "No se recibió respuesta del procesador. Intenta de nuevo.",
+        };
+        setError(err);
+        onTokenError(err.message);
         return;
       }
 
@@ -99,20 +148,18 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           setError(null);
           onTokenSuccess(response.card.token);
         } else {
-          const msg = "No se recibió token de la tarjeta.";
-          setError(msg);
-          onTokenError(msg);
+          const err: CardError = {
+            variant: "system",
+            title: "Token no recibido",
+            message: "No se pudo registrar la tarjeta. Intenta de nuevo.",
+          };
+          setError(err);
+          onTokenError(err.message);
         }
       } else {
-        const rawMsg = response.card.message || "";
-        const friendlyMessages: Record<string, string> = {
-          "Response by mock": "Tarjeta rechazada. Verifica los datos o usa otra tarjeta.",
-          "Card already added": "Esta tarjeta ya está registrada. Puedes seleccionarla de tus tarjetas guardadas.",
-          "Card rejected": "Tarjeta rechazada por el banco emisor.",
-        };
-        const msg = friendlyMessages[rawMsg] || rawMsg || "Error al procesar la tarjeta.";
-        setError(msg);
-        onTokenError(msg);
+        const err = buildError(response.card.message || "");
+        setError(err);
+        onTokenError(err.message);
       }
     },
     [onTokenSuccess, onTokenError],
@@ -120,7 +167,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
 
   const notCompletedCallback = useCallback((message: string) => {
     setIsProcessing(false);
-    setError(`Completa todos los campos: ${message}`);
+    setError({
+      variant: "incomplete",
+      title: "Datos incompletos",
+      message: `Revisa los campos del formulario: ${message}`,
+    });
   }, []);
 
   const handlePay = () => {
@@ -136,7 +187,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
       (window as any).PaymentGateway = PG;
       setSdkReady(true);
     } catch {
-      setError("No se pudo inicializar el sistema de pagos.");
+      setError({
+        variant: "system",
+        title: "Error de inicialización",
+        message: "No se pudo inicializar el sistema de pagos. Recarga la página.",
+      });
     }
   }, []);
 
@@ -148,7 +203,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
     const appKey = process.env.NEXT_PUBLIC_NUVEI_CLIENT_APP_KEY;
 
     if (!appCode || !appKey) {
-      setError("Credenciales de pago no configuradas.");
+      setError({
+        variant: "system",
+        title: "Configuración incompleta",
+        message: "Credenciales de pago no configuradas. Contacta soporte.",
+      });
       return;
     }
 
@@ -156,7 +215,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
     const PGClass = (window as any).PaymentGateway;
 
     if (!PGClass) {
-      setError("Error: SDK de pagos no disponible. Recarga la página.");
+      setError({
+        variant: "system",
+        title: "SDK no disponible",
+        message: "El sistema de pagos no cargó correctamente. Recarga la página.",
+      });
       return;
     }
 
@@ -202,9 +265,61 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
       />
 
       {error && (
-        <p className="text-error text-sm bg-error/10 p-3 rounded-lg">
-          {error}
-        </p>
+        <div
+          className={`rounded-xl border p-4 text-sm transition-all duration-300 ${
+            error.variant === "rejected"
+              ? "bg-error/5 border-error/20"
+              : error.variant === "duplicate"
+                ? "bg-primary/5 border-primary/20"
+                : error.variant === "incomplete"
+                  ? "bg-warning/5 border-warning/20"
+                  : "bg-surface-elevated border-border-subtle"
+          }`}
+        >
+          <div className="flex gap-3">
+            <div className="shrink-0 mt-0.5">
+              {error.variant === "rejected" && (
+                <FaTimesCircle className="w-4 h-4 text-error" />
+              )}
+              {error.variant === "duplicate" && (
+                <FaInfoCircle className="w-4 h-4 text-primary" />
+              )}
+              {error.variant === "incomplete" && (
+                <FaExclamationTriangle className="w-4 h-4 text-warning" />
+              )}
+              {error.variant === "system" && (
+                <FaExclamationTriangle className="w-4 h-4 text-text-main/40" />
+              )}
+            </div>
+            <div className="grow space-y-1">
+              <p className="font-semibold text-text-main">{error.title}</p>
+              <p className="text-text-main/60 leading-relaxed">
+                {error.message}
+              </p>
+              <div className="flex gap-2 pt-2">
+                {error.variant === "duplicate" && onGoToSavedCards && (
+                  <button
+                    type="button"
+                    onClick={onGoToSavedCards}
+                    className="text-xs font-semibold text-primary hover:text-primary-hover underline underline-offset-2 transition-colors"
+                  >
+                    Ver tarjetas guardadas
+                  </button>
+                )}
+                {(error.variant === "rejected" || error.variant === "system") && (
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-main/50 hover:text-text-main transition-colors"
+                  >
+                    <FaRedo className="w-2.5 h-2.5" />
+                    Intentar de nuevo
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {sdkReady && (

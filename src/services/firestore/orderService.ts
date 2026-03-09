@@ -18,6 +18,7 @@ export async function createOrder(params: {
   userId: string;
   items: OrderItem[];
   subtotal: number;
+  vat: number;
   shipping: number;
   total: number;
   shippingAddress: ShippingAddress;
