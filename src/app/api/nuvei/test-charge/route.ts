@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
  * Only available in non-production environments.
  */
 export async function POST(request: NextRequest) {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NUVEI_ENV === "prod") {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 
