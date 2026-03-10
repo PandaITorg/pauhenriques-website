@@ -467,7 +467,7 @@ export default function CheckoutPage() {
                 )}
 
                 {/* TODO: Remove after Nuvei testing */}
-                {process.env.NODE_ENV !== "production" && (
+                {process.env.NEXT_PUBLIC_NUVEI_ENV !== "prod" && (
                   <Link
                     href="/checkout/test-nuvei"
                     className="mt-4 flex items-center justify-center gap-2 text-xs text-warning/60 hover:text-warning border border-dashed border-warning/20 hover:border-warning/40 rounded-lg py-2 transition-colors"

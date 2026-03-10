@@ -23,6 +23,8 @@ env:
     value: "NUVEISTG-EC-CLIENT"
   - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_KEY
     value: "rvpKAv2tc49x6YL38fvtv5jJxRRiPs"
+  - variable: NEXT_PUBLIC_NUVEI_ENV
+    value: "stg"
 
   # Firebase Admin SDK - SENSIBLES → Cloud Secret Manager
   - variable: FIREBASE_PROJECT_ID
@@ -37,3 +39,5 @@ env:
     secret: "nuvei-server-app-code"
   - variable: NUVEI_SERVER_APP_KEY
     secret: "nuvei-server-app-key"
+  - variable: NUVEI_ENV
+    value: "stg"

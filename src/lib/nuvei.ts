@@ -3,7 +3,7 @@ import crypto from "crypto";
 const NUVEI_DOMAIN = "paymentez.com";
 
 function getBaseUrl(): string {
-  const env = process.env.NODE_ENV === "production" ? "prod" : "stg";
+  const env = process.env.NUVEI_ENV === "prod" ? "prod" : "stg";
   return env === "prod"
     ? `https://ccapi.${NUVEI_DOMAIN}`
     : `https://ccapi-stg.${NUVEI_DOMAIN}`;

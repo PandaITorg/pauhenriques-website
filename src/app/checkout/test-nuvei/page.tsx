@@ -242,7 +242,7 @@ export default function TestNuveiPage() {
       return;
     }
 
-    const env = process.env.NODE_ENV === "production" ? "prod" : "stg";
+    const env = process.env.NEXT_PUBLIC_NUVEI_ENV === "prod" ? "prod" : "stg";
     const PGClass = (window as any).PaymentGateway;
 
     if (!PGClass) {
