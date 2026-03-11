@@ -4,6 +4,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -37,6 +38,14 @@ export async function createOrder(params: {
     orderData,
   );
   return docRef.id;
+}
+
+export async function markOrderFailed(orderId: string): Promise<void> {
+  const docRef = doc(db, ORDERS_COLLECTION, orderId);
+  await updateDoc(docRef, {
+    status: "failed" as OrderStatus,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function getOrderById(

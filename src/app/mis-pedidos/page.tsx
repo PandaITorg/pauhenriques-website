@@ -54,6 +54,11 @@ const STATUS_CONFIG: Record<
     color: "bg-error/15 text-error",
     icon: <FaTimesCircle className="w-3.5 h-3.5" />,
   },
+  failed: {
+    label: "Fallido",
+    color: "bg-error/15 text-error",
+    icon: <FaTimesCircle className="w-3.5 h-3.5" />,
+  },
 };
 
 function formatDate(timestamp: { seconds: number } | Date | null): string {

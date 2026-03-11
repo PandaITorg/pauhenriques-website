@@ -80,10 +80,20 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   onGoToSavedCards,
 }) => {
   const [sdkReady, setSdkReady] = useState(false);
+  const [sdkTimedOut, setSdkTimedOut] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<CardError | null>(null);
   const sdkInitRef = useRef(false);
   const pgSdkRef = useRef<PaymentGatewayInstance | null>(null);
+
+  // Timeout: if SDK hasn't loaded in 15s, show a helpful message
+  useEffect(() => {
+    if (sdkReady) return;
+    const timer = setTimeout(() => {
+      if (!sdkReady) setSdkTimedOut(true);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [sdkReady]);
 
   function buildError(rawMsg: string): CardError {
     if (rawMsg === "Card already added" || rawMsg.includes("already")) {
@@ -341,8 +351,22 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
       )}
 
       {!sdkReady && (
-        <div className="flex justify-center py-4">
+        <div className="flex flex-col items-center py-4 gap-3">
           <div className="simple-spinner" />
+          {sdkTimedOut && (
+            <div className="text-center space-y-2">
+              <p className="text-xs text-text-main/50">
+                El sistema de pagos está tardando en cargar.
+              </p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="text-xs font-semibold text-primary hover:text-primary-hover underline underline-offset-2 transition-colors"
+              >
+                Recargar página
+              </button>
+            </div>
+          )}
         </div>
       )}
 
