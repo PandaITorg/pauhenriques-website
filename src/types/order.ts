@@ -6,7 +6,8 @@ export type OrderStatus =
   | "paid"
   | "shipped"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "failed";
 
 export interface OrderItem {
   productId: string;

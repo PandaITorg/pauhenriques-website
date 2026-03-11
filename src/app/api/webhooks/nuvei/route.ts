@@ -62,8 +62,17 @@ export async function POST(request: NextRequest) {
     const isApproved =
       transaction.status === "success" && transaction.status_detail === 3;
 
+    const currentStatus = orderDoc.data()?.status;
+
+    // Never downgrade a "paid" order — webhook is idempotent
+    const finalStatuses = ["paid", "delivered", "shipped"];
+    const shouldUpdateStatus =
+      isApproved || !finalStatuses.includes(currentStatus);
+
     await orderRef.update({
-      status: isApproved ? "paid" : "cancelled",
+      ...(shouldUpdateStatus && {
+        status: isApproved ? "paid" : "cancelled",
+      }),
       paymentTransactionId: transaction.id,
       authorizationCode: transaction.authorization_code || null,
       webhookStatus: transaction.status,
@@ -72,8 +81,11 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
+    const newStatus = shouldUpdateStatus
+      ? (isApproved ? "paid" : "cancelled")
+      : currentStatus;
     console.log(
-      `Webhook: Order ${orderId} updated to ${isApproved ? "paid" : "cancelled"} (status_detail: ${transaction.status_detail})`,
+      `Webhook: Order ${orderId} → ${newStatus} (status_detail: ${transaction.status_detail})`,
     );
 
     return NextResponse.json({ received: true });

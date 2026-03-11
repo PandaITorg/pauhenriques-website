@@ -10,6 +10,7 @@ import {
   deleteAddress,
 } from "@/services/firestore/addressService";
 import { FaCheck, FaPlus, FaTrash } from "react-icons/fa";
+import { shippingAddressSchema } from "@/lib/schemas/shipping";
 
 interface SavedAddressesProps {
   onSelect: (address: ShippingAddress) => void;
@@ -38,6 +39,7 @@ export default function SavedAddresses({
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -82,16 +84,34 @@ export default function SavedAddresses({
     );
   }
 
-  const isFormValid =
+  const isFormFilled =
     form.fullName && form.phone && form.address && form.city && form.province;
 
+  function validateForm(): ShippingAddress | null {
+    const result = shippingAddressSchema.safeParse(form);
+    if (result.success) {
+      setFieldErrors({});
+      return result.data;
+    }
+    const errors: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as string;
+      if (!errors[field]) errors[field] = issue.message;
+    }
+    setFieldErrors(errors);
+    return null;
+  }
+
   async function handleSave() {
-    if (!user || !isFormValid) return;
+    if (!user) return;
+    const validated = validateForm();
+    if (!validated) return;
     setSaving(true);
     try {
       const isFirst = addresses.length === 0;
       await createAddress(user.uid, {
         ...form,
+        phone: validated.phone,
         isDefault: isFirst || form.isDefault,
       });
       setForm(EMPTY_FORM);
@@ -115,16 +135,9 @@ export default function SavedAddresses({
   }
 
   function handleUseWithoutSaving() {
-    if (!isFormValid) return;
-    onSelect({
-      fullName: form.fullName,
-      phone: form.phone,
-      address: form.address,
-      city: form.city,
-      province: form.province,
-      postalCode: form.postalCode,
-      country: form.country,
-    });
+    const validated = validateForm();
+    if (!validated) return;
+    onSelect(validated);
     setShowForm(false);
   }
 
@@ -229,11 +242,15 @@ export default function SavedAddresses({
               <input
                 type="text"
                 value={form.fullName}
-                onChange={(e) =>
-                  setForm({ ...form, fullName: e.target.value })
-                }
-                className={inputClass}
+                onChange={(e) => {
+                  setForm({ ...form, fullName: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, fullName: "" }));
+                }}
+                className={`${inputClass} ${fieldErrors.fullName ? "border-error" : ""}`}
               />
+              {fieldErrors.fullName && (
+                <p className="text-xs text-error mt-1">{fieldErrors.fullName}</p>
+              )}
             </div>
           </div>
 
@@ -243,10 +260,17 @@ export default function SavedAddresses({
             </label>
             <input
               type="tel"
+              placeholder="0991234567"
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              className={inputClass}
+              onChange={(e) => {
+                setForm({ ...form, phone: e.target.value });
+                setFieldErrors((prev) => ({ ...prev, phone: "" }));
+              }}
+              className={`${inputClass} ${fieldErrors.phone ? "border-error" : ""}`}
             />
+            {fieldErrors.phone && (
+              <p className="text-xs text-error mt-1">{fieldErrors.phone}</p>
+            )}
           </div>
 
           <div>
@@ -256,11 +280,15 @@ export default function SavedAddresses({
             <input
               type="text"
               value={form.address}
-              onChange={(e) =>
-                setForm({ ...form, address: e.target.value })
-              }
-              className={inputClass}
+              onChange={(e) => {
+                setForm({ ...form, address: e.target.value });
+                setFieldErrors((prev) => ({ ...prev, address: "" }));
+              }}
+              className={`${inputClass} ${fieldErrors.address ? "border-error" : ""}`}
             />
+            {fieldErrors.address && (
+              <p className="text-xs text-error mt-1">{fieldErrors.address}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -271,9 +299,15 @@ export default function SavedAddresses({
               <input
                 type="text"
                 value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                className={inputClass}
+                onChange={(e) => {
+                  setForm({ ...form, city: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, city: "" }));
+                }}
+                className={`${inputClass} ${fieldErrors.city ? "border-error" : ""}`}
               />
+              {fieldErrors.city && (
+                <p className="text-xs text-error mt-1">{fieldErrors.city}</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-text-main/60 mb-1">
@@ -282,11 +316,15 @@ export default function SavedAddresses({
               <input
                 type="text"
                 value={form.province}
-                onChange={(e) =>
-                  setForm({ ...form, province: e.target.value })
-                }
-                className={inputClass}
+                onChange={(e) => {
+                  setForm({ ...form, province: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, province: "" }));
+                }}
+                className={`${inputClass} ${fieldErrors.province ? "border-error" : ""}`}
               />
+              {fieldErrors.province && (
+                <p className="text-xs text-error mt-1">{fieldErrors.province}</p>
+              )}
             </div>
             <div>
               <label className="block text-xs font-medium text-text-main/60 mb-1">
@@ -295,11 +333,15 @@ export default function SavedAddresses({
               <input
                 type="text"
                 value={form.postalCode}
-                onChange={(e) =>
-                  setForm({ ...form, postalCode: e.target.value })
-                }
-                className={inputClass}
+                onChange={(e) => {
+                  setForm({ ...form, postalCode: e.target.value });
+                  setFieldErrors((prev) => ({ ...prev, postalCode: "" }));
+                }}
+                className={`${inputClass} ${fieldErrors.postalCode ? "border-error" : ""}`}
               />
+              {fieldErrors.postalCode && (
+                <p className="text-xs text-error mt-1">{fieldErrors.postalCode}</p>
+              )}
             </div>
           </div>
 
@@ -329,14 +371,14 @@ export default function SavedAddresses({
             )}
             <button
               onClick={handleUseWithoutSaving}
-              disabled={!isFormValid}
+              disabled={!isFormFilled}
               className="flex-1 border border-primary text-primary font-medium py-2.5 rounded-lg hover:bg-primary/10 transition-colors text-sm disabled:opacity-50"
             >
               Usar sin guardar
             </button>
             <button
               onClick={handleSave}
-              disabled={!isFormValid || saving}
+              disabled={!isFormFilled || saving}
               className="flex-1 bg-primary hover:bg-primary-hover text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:bg-surface-elevated disabled:text-text-main/30"
             >
               {saving ? "Guardando..." : "Guardar"}

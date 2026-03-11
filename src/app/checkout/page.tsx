@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ import SavedAddresses from "@/components/checkout/SavedAddresses";
 import SavedCards from "@/components/checkout/SavedCards";
 import StepIndicator from "@/components/checkout/StepIndicator";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
-import { createOrder } from "@/services/firestore/orderService";
+import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
 import { ShippingAddress } from "@/types/order";
 import { SavedCard, getCardBrandName } from "@/types/card";
 
@@ -99,6 +99,7 @@ export default function CheckoutPage() {
   const [isClient, setIsClient] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [processingPayment, setProcessingPayment] = useState(false);
+  const paymentLockRef = useRef(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
@@ -129,7 +130,7 @@ export default function CheckoutPage() {
   );
   const IVA_RATE = 0.15;
   const vat = Math.round(subtotal * IVA_RATE * 100) / 100;
-  const shippingCost: number = 0;
+  const shippingCost: number = 0; // Envío gratis en todo Ecuador — política de negocio
   const total = Math.round((subtotal + vat + shippingCost) * 100) / 100;
 
   const currentStepIndex = STEPS.indexOf(step);
@@ -160,9 +161,13 @@ export default function CheckoutPage() {
 
   async function handleConfirmPayment() {
     if (!user || !shipping || !selectedCardToken) return;
+    if (paymentLockRef.current) return;
+    paymentLockRef.current = true;
 
     setProcessingPayment(true);
     setPaymentError(null);
+
+    let orderId: string | null = null;
 
     try {
       const orderItems = items.map((item) => ({
@@ -173,7 +178,7 @@ export default function CheckoutPage() {
         quantity: item.quantity,
       }));
 
-      const orderId = await createOrder({
+      orderId = await createOrder({
         userId: user.uid,
         items: orderItems,
         subtotal,
@@ -209,22 +214,19 @@ export default function CheckoutPage() {
         }, 1500);
       } else {
         const errorMsg = data.error || "Error al procesar el pago.";
+        paymentLockRef.current = false;
         setProcessingPayment(false);
         setPaymentFailed(errorMsg);
-        setTimeout(() => {
-          setPaymentFailed(null);
-          setPaymentError(errorMsg);
-        }, 2500);
       }
     } catch (err) {
       console.error("Payment error:", err);
+      if (orderId) {
+        try { await markOrderFailed(orderId); } catch {}
+      }
       const errorMsg = "Error de conexión. Intenta de nuevo.";
+      paymentLockRef.current = false;
       setProcessingPayment(false);
       setPaymentFailed(errorMsg);
-      setTimeout(() => {
-        setPaymentFailed(null);
-        setPaymentError(errorMsg);
-      }, 2500);
     }
   }
 
@@ -267,9 +269,16 @@ export default function CheckoutPage() {
         <p className="text-text-main/50 text-sm max-w-xs">
           {paymentFailed}
         </p>
-        <p className="text-text-main/30 text-xs mt-4">
-          Volviendo al checkout...
-        </p>
+        <button
+          onClick={() => {
+            setPaymentFailed(null);
+            setPaymentError(paymentFailed);
+            setStep("confirm");
+          }}
+          className="mt-6 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+        >
+          Volver al checkout
+        </button>
       </div>
     );
   }
