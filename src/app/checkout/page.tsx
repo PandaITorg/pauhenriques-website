@@ -95,6 +95,12 @@ const CartItemRow = ({
   );
 };
 
+interface ThreeDSChallenge {
+  html: string;
+  orderId: string;
+  isDeviceFingerprint: boolean;
+}
+
 export default function CheckoutPage() {
   const [isClient, setIsClient] = useState(false);
   const [step, setStep] = useState<Step>("cart");
@@ -104,6 +110,7 @@ export default function CheckoutPage() {
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingAddress | null>(null);
+  const [threeDSChallenge, setThreeDSChallenge] = useState<ThreeDSChallenge | null>(null);
 
   const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
   const [selectedCardToken, setSelectedCardToken] = useState<string | null>(
@@ -120,18 +127,68 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
   const subtotal = items.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (acc, item) => acc + item.price * item.quantity,
     0,
   );
   const IVA_RATE = 0.15;
   const vat = Math.round(subtotal * IVA_RATE * 100) / 100;
-  const shippingCost: number = 0; // Envío gratis en todo Ecuador — política de negocio
+  const shippingCost: number = 0;
   const total = Math.round((subtotal + vat + shippingCost) * 100) / 100;
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Listen for 3DS challenge completion from /checkout/3ds-return
+  useEffect(() => {
+    async function handle3DSMessage(event: MessageEvent) {
+      if (event.data?.type !== "3DS_COMPLETE") return;
+      const { orderId } = event.data;
+      if (!orderId || !user || !selectedCardToken) return;
+
+      setThreeDSChallenge(null);
+      setProcessingPayment(true);
+
+      try {
+        const response = await fetch("/api/payment/3ds-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId,
+            userId: user.uid,
+            userEmail: user.email,
+            token: selectedCardToken,
+            amount: total,
+            vat,
+            description: `Orden ${orderId} - Pau Henriques`,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          setProcessingPayment(false);
+          setPaymentSuccess(true);
+          clearCart();
+          setTimeout(() => {
+            router.push(`/checkout/confirmacion?orderId=${orderId}`);
+          }, 1500);
+        } else {
+          paymentLockRef.current = false;
+          setProcessingPayment(false);
+          setPaymentFailed(data.error || "Error al completar el pago 3DS.");
+        }
+      } catch {
+        paymentLockRef.current = false;
+        setProcessingPayment(false);
+        setPaymentFailed("Error de conexión al completar la autenticación 3DS.");
+      }
+    }
+
+    window.addEventListener("message", handle3DSMessage);
+    return () => window.removeEventListener("message", handle3DSMessage);
+  }, [user, selectedCardToken, total, vat, clearCart, router]);
 
   const currentStepIndex = STEPS.indexOf(step);
 
@@ -189,6 +246,17 @@ export default function CheckoutPage() {
         paymentToken: selectedCardToken,
       });
 
+      const browserInfo = {
+        accept_header: "text/html",
+        user_agent: navigator.userAgent,
+        language: navigator.language,
+        timezone: String(new Date().getTimezoneOffset()),
+        screen_width: window.screen.width,
+        screen_height: window.screen.height,
+        color_depth: window.screen.colorDepth,
+        java_enabled: false,
+      };
+
       const response = await fetch("/api/payment/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -200,6 +268,7 @@ export default function CheckoutPage() {
           description: `Orden ${orderId} - Pau Henriques`,
           userId: user.uid,
           userEmail: user.email,
+          browserInfo,
         }),
       });
 
@@ -212,6 +281,15 @@ export default function CheckoutPage() {
         setTimeout(() => {
           router.push(`/checkout/confirmacion?orderId=${orderId}`);
         }, 1500);
+      } else if (data.challenge) {
+        // 3DS challenge required — show challenge modal
+        setProcessingPayment(false);
+        setThreeDSChallenge({
+          html: data.challengeHtml,
+          orderId: data.orderId,
+          isDeviceFingerprint: data.isDeviceFingerprint ?? false,
+        });
+        // Don't reset paymentLockRef — payment is still in progress via 3DS
       } else {
         const errorMsg = data.error || "Error al procesar el pago.";
         paymentLockRef.current = false;
@@ -310,6 +388,49 @@ export default function CheckoutPage() {
         >
           Ir a la Tienda
         </Link>
+      </div>
+    );
+  }
+
+  // 3DS Challenge modal — shown when bank requires OTP/biometric verification
+  if (threeDSChallenge) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-border-subtle flex items-center gap-3">
+              <FaShieldAlt className="w-4 h-4 text-primary" />
+              <div>
+                <p className="font-semibold text-text-main text-sm">
+                  Verificación de seguridad del banco
+                </p>
+                <p className="text-text-main/50 text-xs">
+                  {threeDSChallenge.isDeviceFingerprint
+                    ? "Verificando tu dispositivo..."
+                    : "Tu banco requiere verificación adicional"}
+                </p>
+              </div>
+            </div>
+            <div className="relative">
+              <iframe
+                srcDoc={threeDSChallenge.html}
+                className="w-full border-0"
+                style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "450px" }}
+                title="Autenticación 3DS"
+                sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation"
+              />
+              {threeDSChallenge.isDeviceFingerprint && (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <div className="simple-spinner" />
+                  <p className="text-sm text-text-main/60">Verificando tu dispositivo...</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <p className="text-center text-xs text-text-main/40 mt-3">
+            No cierres esta página. Conexión segura con tu banco.
+          </p>
+        </div>
       </div>
     );
   }

@@ -26,6 +26,13 @@ const NUVEI_ERROR_MESSAGES: Record<number, string> = {
   21: "Código de seguridad (CVV) incorrecto.",
   22: "Tipo de tarjeta no soportado para esta transacción.",
   23: "Transacción rechazada. Intenta de nuevo más tarde.",
+  37: "Tu banco requiere verificación adicional 3DS. Completa el proceso en la ventana emergente.",
+};
+
+const THREEDS_AUTH_MESSAGES: Record<string, string> = {
+  N: "Autenticación 3DS rechazada por tu banco. Intenta con otra tarjeta.",
+  R: "Tu banco rechazó la autenticación 3DS.",
+  U: "No se pudo verificar la autenticación 3DS. Intenta de nuevo.",
 };
 
 function getNuveiUserMessage(statusDetail?: number, rawMessage?: string | null): string {
@@ -45,6 +52,17 @@ function getNuveiUserMessage(statusDetail?: number, rawMessage?: string | null):
   return "No se pudo procesar el pago. Verifica los datos de tu tarjeta o intenta con otra.";
 }
 
+interface BrowserInfo {
+  accept_header: string;
+  user_agent: string;
+  language: string;
+  timezone: string;
+  screen_width: number;
+  screen_height: number;
+  color_depth: number;
+  java_enabled: boolean;
+}
+
 interface ChargeRequestBody {
   token: string;
   orderId: string;
@@ -53,6 +71,7 @@ interface ChargeRequestBody {
   description: string;
   userId: string;
   userEmail: string;
+  browserInfo?: BrowserInfo;
 }
 
 export async function POST(request: NextRequest) {
@@ -71,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: ChargeRequestBody = await request.json();
-    const { token, orderId, amount, vat, description, userId, userEmail } = body;
+    const { token, orderId, amount, vat, description, userId, userEmail, browserInfo } = body;
 
     if (!token || !orderId || !amount) {
       return NextResponse.json(
@@ -140,7 +159,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Call Nuvei debit with token
+    // Build term_url for 3DS challenge callback
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+    const termUrl = `${baseUrl}/checkout/3ds-return`;
+
+    // Call Nuvei debit with token (include 3DS params if browser info provided)
     const nuveiData = await debitWithToken({
       userId,
       userEmail,
@@ -149,6 +172,7 @@ export async function POST(request: NextRequest) {
       devReference: orderId,
       cardToken: token,
       vat: vat ?? 0,
+      ...(browserInfo ? { browserInfo, termUrl } : {}),
     });
 
     if (
@@ -174,13 +198,39 @@ export async function POST(request: NextRequest) {
         authorizationCode: nuveiData.transaction.authorization_code,
         orderId,
       });
-    } else {
-      // Charge failed — mark as failed but let webhook override if it has different info
+    }
+
+    // 3DS challenge required (status_detail: 37)
+    if (nuveiData.transaction?.status_detail === 37) {
+      const threeDSData = nuveiData["3ds"];
+      const challengeHtml =
+        threeDSData?.browser_response?.challenge_request ||
+        threeDSData?.browser_response?.hidden_iframe ||
+        "";
+
+      if (challengeHtml) {
+        // Mark order as 3ds-pending to prevent double-charge
+        if (dbAdmin) {
+          await dbAdmin.collection("orders").doc(orderId).update({
+            status: "3ds-pending",
+            updatedAt: new Date(),
+          });
+        }
+        return NextResponse.json({
+          challenge: true,
+          challengeHtml,
+          isDeviceFingerprint: !!threeDSData?.browser_response?.hidden_iframe && !threeDSData?.browser_response?.challenge_request,
+          orderId,
+        });
+      }
+    }
+
+    // 3DS frictionless failure — map authentication status to user message
+    const threeDSStatus = nuveiData["3ds"]?.authentication?.status;
+    if (threeDSStatus && THREEDS_AUTH_MESSAGES[threeDSStatus]) {
       if (dbAdmin) {
         const currentOrder = await dbAdmin.collection("orders").doc(orderId).get();
-        const currentStatus = currentOrder.data()?.status;
-        // Only downgrade if webhook hasn't already set a final status
-        if (currentStatus === "pending") {
+        if (currentOrder.data()?.status === "pending") {
           await dbAdmin.collection("orders").doc(orderId).update({
             status: "failed",
             chargeResponseAt: new Date(),
@@ -188,17 +238,35 @@ export async function POST(request: NextRequest) {
           });
         }
       }
-
       return NextResponse.json(
-        {
-          error: getNuveiUserMessage(
-            nuveiData.transaction?.status_detail,
-            nuveiData.transaction?.message || nuveiData.error?.description,
-          ),
-        },
+        { error: THREEDS_AUTH_MESSAGES[threeDSStatus] },
         { status: 400 },
       );
     }
+
+    // Generic charge failed — mark as failed but let webhook override if it has different info
+    if (dbAdmin) {
+      const currentOrder = await dbAdmin.collection("orders").doc(orderId).get();
+      const currentStatus = currentOrder.data()?.status;
+      // Only downgrade if webhook hasn't already set a final status
+      if (currentStatus === "pending") {
+        await dbAdmin.collection("orders").doc(orderId).update({
+          status: "failed",
+          chargeResponseAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+    }
+
+    return NextResponse.json(
+      {
+        error: getNuveiUserMessage(
+          nuveiData.transaction?.status_detail,
+          nuveiData.transaction?.message || nuveiData.error?.description,
+        ),
+      },
+      { status: 400 },
+    );
   } catch (error) {
     console.error("Payment charge error:", error);
     return NextResponse.json(

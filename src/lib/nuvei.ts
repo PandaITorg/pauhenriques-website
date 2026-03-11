@@ -117,6 +117,48 @@ export async function verifyCard(params: {
   });
 }
 
+export interface ThreeDSResponse {
+  authentication: {
+    status: string;
+    return_code: string;
+    return_message?: string;
+    cavv?: string;
+    eci?: string;
+    xid?: string;
+    reference_id?: string;
+  };
+  browser_response: {
+    hidden_iframe?: string;
+    challenge_request?: string;
+  };
+  sdk_response?: {
+    acs_trans_id?: string;
+    acs_reference_number?: string;
+  };
+}
+
+export interface DebitResponse {
+  transaction?: {
+    status: string;
+    current_status: string;
+    id: string;
+    message: string | null;
+    status_detail: number;
+    authorization_code: string | null;
+  };
+  card?: {
+    bin: string;
+    type: string;
+    number: string;
+  };
+  "3ds"?: ThreeDSResponse;
+  error?: {
+    type: string;
+    help: string;
+    description: string;
+  };
+}
+
 export async function debitWithToken(params: {
   userId: string;
   userEmail: string;
@@ -125,27 +167,19 @@ export async function debitWithToken(params: {
   devReference: string;
   cardToken: string;
   vat?: number;
+  browserInfo?: {
+    accept_header: string;
+    user_agent: string;
+    language: string;
+    timezone: string;
+    screen_width: number;
+    screen_height: number;
+    color_depth: number;
+    java_enabled: boolean;
+  };
+  termUrl?: string;
 }) {
-  return nuveiRequest<{
-    transaction?: {
-      status: string;
-      current_status: string;
-      id: string;
-      message: string | null;
-      status_detail: number;
-      authorization_code: string | null;
-    };
-    card?: {
-      bin: string;
-      type: string;
-      number: string;
-    };
-    error?: {
-      type: string;
-      help: string;
-      description: string;
-    };
-  }>("/v2/transaction/debit/", "POST", {
+  const body: Record<string, unknown> = {
     user: {
       id: params.userId,
       email: params.userEmail,
@@ -159,5 +193,17 @@ export async function debitWithToken(params: {
     card: {
       token: params.cardToken,
     },
-  });
+  };
+
+  if (params.browserInfo && params.termUrl) {
+    body.extra_params = {
+      threeDS2_data: {
+        term_url: params.termUrl,
+        device_type: "browser",
+      },
+      browser_info: params.browserInfo,
+    };
+  }
+
+  return nuveiRequest<DebitResponse>("/v2/transaction/debit/", "POST", body);
 }
