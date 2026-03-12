@@ -26,6 +26,7 @@ const NUVEI_ERROR_MESSAGES: Record<number, string> = {
   21: "Código de seguridad (CVV) incorrecto.",
   22: "Tipo de tarjeta no soportado para esta transacción.",
   23: "Transacción rechazada. Intenta de nuevo más tarde.",
+  36: "Tu banco requiere verificación adicional 3DS. Completa el proceso en la ventana emergente.",
   37: "Tu banco requiere verificación adicional 3DS. Completa el proceso en la ventana emergente.",
 };
 
@@ -161,9 +162,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build term_url for 3DS challenge callback
+    // Build term_url for 3DS challenge callback — include orderId so 3ds-return can identify the order
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
-    const termUrl = `${baseUrl}/checkout/3ds-return`;
+    const termUrl = `${baseUrl}/checkout/3ds-return?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
     const clientIp =
@@ -214,8 +215,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3DS challenge required (status_detail: 37)
-    if (nuveiData.transaction?.status_detail === 37) {
+    // 3DS challenge required (status_detail: 36 or 37)
+    if (nuveiData.transaction?.status_detail === 36 || nuveiData.transaction?.status_detail === 37) {
       const threeDSData = nuveiData["3ds"];
       const challengeHtml =
         threeDSData?.browser_response?.challenge_request ||
