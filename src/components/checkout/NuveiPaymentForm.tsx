@@ -69,9 +69,7 @@ interface NuveiPaymentFormProps {
 }
 
 const SDK_URL =
-  process.env.NEXT_PUBLIC_NUVEI_ENV === "prod"
-    ? "https://cdn.paymentez.com/ccapi/sdk/payment_sdk_stable.min.js"
-    : "https://cdn.paymentez.com/ccapi/sdk/payment_sdk_2.0.15_stg.min.js";
+  "https://cdn.paymentez.com/ccapi/sdk/payment_sdk_stable.min.js";
 const CONTAINER_ID = "nuvei-tokenize-container";
 
 const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
