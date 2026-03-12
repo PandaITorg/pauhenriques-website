@@ -255,6 +255,7 @@ export default function CheckoutPage() {
         screen_height: window.screen.height,
         color_depth: window.screen.colorDepth,
         js_enabled: true,
+        java_enabled: false,
       };
 
       const response = await fetch("/api/payment/charge", {

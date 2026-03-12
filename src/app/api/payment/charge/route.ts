@@ -61,6 +61,7 @@ interface BrowserInfo {
   screen_height: number;
   color_depth: number;
   js_enabled: boolean;
+  java_enabled: boolean;
   ip_address?: string;
 }
 
