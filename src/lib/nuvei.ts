@@ -171,11 +171,11 @@ export async function debitWithToken(params: {
     accept_header: string;
     user_agent: string;
     language: string;
-    timezone: string;
+    timezone_offset: number;
     screen_width: number;
     screen_height: number;
     color_depth: number;
-    java_enabled: boolean;
+    js_enabled: boolean;
     ip_address?: string;
   };
   termUrl?: string;

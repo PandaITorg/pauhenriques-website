@@ -250,11 +250,11 @@ export default function CheckoutPage() {
         accept_header: "text/html",
         user_agent: navigator.userAgent,
         language: navigator.language,
-        timezone: String(new Date().getTimezoneOffset()),
+        timezone_offset: new Date().getTimezoneOffset(),
         screen_width: window.screen.width,
         screen_height: window.screen.height,
         color_depth: window.screen.colorDepth,
-        java_enabled: false,
+        js_enabled: true,
       };
 
       const response = await fetch("/api/payment/charge", {
