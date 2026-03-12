@@ -185,6 +185,9 @@ export async function POST(request: NextRequest) {
       ...(enrichedBrowserInfo ? { browserInfo: enrichedBrowserInfo, termUrl } : {}),
     });
 
+    // DEBUG — remove before prod
+    console.log("[charge] Paymentez raw response:", JSON.stringify(nuveiData));
+
     if (
       nuveiData.transaction &&
       nuveiData.transaction.status === "success" &&
