@@ -418,7 +418,7 @@ export default function CheckoutPage() {
                 className="w-full border-0"
                 style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "450px" }}
                 title="Autenticación 3DS"
-                sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation"
+                sandbox="allow-forms allow-scripts allow-same-origin"
               />
               {threeDSChallenge.isDeviceFingerprint && (
                 <div className="flex flex-col items-center gap-3 py-10">
