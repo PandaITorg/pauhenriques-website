@@ -144,10 +144,23 @@ export default function CheckoutPage() {
   useEffect(() => {
     async function handle3DSMessage(event: MessageEvent) {
       if (event.data?.type !== "3DS_COMPLETE") return;
-      const { orderId } = event.data;
+      const { orderId, transStatus } = event.data;
       if (!orderId || !user || !selectedCardToken) return;
 
       setThreeDSChallenge(null);
+
+      // If bank rejected the challenge, fail without calling debit
+      if (transStatus && transStatus !== "Y" && transStatus !== "A") {
+        paymentLockRef.current = false;
+        const msg =
+          transStatus === "N" ? "Autenticación 3DS rechazada por tu banco. Intenta con otra tarjeta." :
+          transStatus === "R" ? "Tu banco rechazó la autenticación 3DS." :
+          transStatus === "U" ? "No se pudo verificar la autenticación 3DS. Intenta de nuevo." :
+          "Autenticación 3DS cancelada o no completada.";
+        setPaymentFailed(msg);
+        return;
+      }
+
       setProcessingPayment(true);
 
       try {

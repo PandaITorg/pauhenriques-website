@@ -10,7 +10,8 @@ export default function ThreeDSReturn() {
     // The ACS posts to this URL after the challenge completes.
     // We signal the parent checkout window via postMessage.
     const orderId = searchParams.get("orderId") || "";
-    const message = { type: "3DS_COMPLETE", orderId };
+    const transStatus = searchParams.get("transStatus") || "Y";
+    const message = { type: "3DS_COMPLETE", orderId, transStatus };
 
     // Try parent (iframe context) first, then opener (popup context)
     if (window.parent && window.parent !== window) {
