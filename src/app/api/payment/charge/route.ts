@@ -61,6 +61,7 @@ interface BrowserInfo {
   screen_height: number;
   color_depth: number;
   java_enabled: boolean;
+  ip_address?: string;
 }
 
 interface ChargeRequestBody {
@@ -163,6 +164,15 @@ export async function POST(request: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
     const termUrl = `${baseUrl}/checkout/3ds-return`;
 
+    // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
+    const clientIp =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      request.headers.get("x-real-ip") ||
+      "127.0.0.1";
+    const enrichedBrowserInfo = browserInfo
+      ? { ...browserInfo, ip_address: clientIp }
+      : undefined;
+
     // Call Nuvei debit with token (include 3DS params if browser info provided)
     const nuveiData = await debitWithToken({
       userId,
@@ -172,7 +182,7 @@ export async function POST(request: NextRequest) {
       devReference: orderId,
       cardToken: token,
       vat: vat ?? 0,
-      ...(browserInfo ? { browserInfo, termUrl } : {}),
+      ...(enrichedBrowserInfo ? { browserInfo: enrichedBrowserInfo, termUrl } : {}),
     });
 
     if (

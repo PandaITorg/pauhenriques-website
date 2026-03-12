@@ -176,6 +176,7 @@ export async function debitWithToken(params: {
     screen_height: number;
     color_depth: number;
     java_enabled: boolean;
+    ip_address?: string;
   };
   termUrl?: string;
 }) {
