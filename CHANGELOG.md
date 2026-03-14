@@ -6,9 +6,37 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
 ---
 
-## [0.9.0-beta] — 2026-03-10 _(versión actual)_
+## [0.10.0-beta] — 2026-03-14 _(versión actual)_
 
-> **Estado: Beta** — Features core completas. Pagos en sandbox/testing. Pendiente validación en producción con transacciones reales.
+> **Estado: Beta** — Flujo 3DS2 completo probado en staging (Modirum). Pendiente certificación con credenciales de producción.
+
+### Added
+- **Flujo 3DS2 completo** para pagos Nuvei/Paymentez:
+  - **Frictionless (status 35):** iframe oculto + timer 5s + verify `AUTHENTICATION_CONTINUE`
+  - **Challenge (status 36/37):** iframe visible con ACS del banco + verify `BY_CRES`
+  - Escalación automática 35 → 36 si el banco lo requiere
+- **API `/api/payment/3ds-callback`:** captura `cres` del ACS POST y lo almacena en Firestore
+- **API `/api/payment/3ds-complete`:** llama a Nuvei Verify (`/v2/transaction/verify/`)
+- **Función `verifyThreeDS()`** en `lib/nuvei.ts`
+- Guard de idempotencia para prevenir llamadas dobles a 3ds-complete
+- Mensajes de error en español para cada escenario de fallo 3DS (`N`, `R`, `U`)
+- Órdenes marcadas como `failed` en Firestore cuando el banco rechaza la autenticación
+- Inyección de `ip_address` del cliente en `browser_info` para 3DS2
+
+### Changed
+- `3ds-complete` usa Verify API en lugar de un segundo `debitWithToken()`
+- Normalización de respuesta Verify API (maneja formato flat y nested de Nuvei)
+- `postMessage` en `ThreeDSReturn` usa `targetOrigin` específico en lugar de `"*"`
+- Default de `transStatus` cambiado de `"Y"` a `"U"` cuando no se puede leer el body del ACS
+
+### Fixed
+- Campos `browser_info` corregidos para cumplir con spec Paymentez 3DS2 (`java_enabled`, field names)
+- Race condition de doble llamada a `3ds-complete` eliminada con `threeDSCompleteCalledRef`
+- Tarjetas de prueba 3DS Modirum (4016360000000002, 4016360000000010) funcionan correctamente
+
+---
+
+## [0.9.0-beta] — 2026-03-10
 
 ### Added
 - **Integración Nuvei completa:** tokenización frontend, `/debit`, webhook, refund, verify, IVA
@@ -169,6 +197,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
 ## Roadmap hacia 1.0.0 (Release)
 
+- [x] Flujo 3DS2 completo (frictionless + challenge) probado en staging
+- [ ] Certificación staging con Nuvei (pruebas con todas las tarjetas requeridas)
+- [ ] Migrar a credenciales de producción Nuvei
 - [ ] Pagos Nuvei validados en producción con transacciones reales
 - [ ] Eliminar página de test Nuvei
 - [ ] Testing E2E del flujo completo (registro → carrito → checkout → pago)
