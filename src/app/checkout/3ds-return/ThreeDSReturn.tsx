@@ -13,11 +13,13 @@ export default function ThreeDSReturn() {
     const transStatus = searchParams.get("transStatus") || "Y";
     const message = { type: "3DS_COMPLETE", orderId, transStatus };
 
+    const targetOrigin = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+
     // Try parent (iframe context) first, then opener (popup context)
     if (window.parent && window.parent !== window) {
-      window.parent.postMessage(message, "*");
+      window.parent.postMessage(message, targetOrigin);
     } else if (window.opener) {
-      window.opener.postMessage(message, "*");
+      window.opener.postMessage(message, targetOrigin);
     }
   }, [searchParams]);
 

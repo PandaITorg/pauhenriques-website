@@ -9,6 +9,7 @@ function getBaseUrl(): string {
     : `https://ccapi-stg.${NUVEI_DOMAIN}`;
 }
 
+
 function getServerCredentials() {
   const appCode = process.env.NUVEI_SERVER_APP_CODE;
   const appKey = process.env.NUVEI_SERVER_APP_KEY;
@@ -208,4 +209,29 @@ export async function debitWithToken(params: {
   }
 
   return nuveiRequest<DebitResponse>("/v2/transaction/debit/", "POST", body);
+}
+
+// --- 3DS Verify API ---
+
+export interface VerifyThreeDSParams {
+  transactionId: string;
+  userId: string;
+  userEmail: string;
+  type: "AUTHENTICATION_CONTINUE" | "BY_CRES";
+  value?: string;
+}
+
+export async function verifyThreeDS(params: VerifyThreeDSParams): Promise<DebitResponse> {
+  const body: Record<string, unknown> = {
+    user: {
+      id: params.userId,
+      email: params.userEmail,
+    },
+    transaction: { id: params.transactionId },
+    type: params.type,
+  };
+  if (params.value) {
+    body.value = params.value;
+  }
+  return nuveiRequest<DebitResponse>("/v2/transaction/verify/", "POST", body);
 }

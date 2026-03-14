@@ -212,7 +212,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3DS challenge required (status_detail: 36 or 37)
+    // 3DS method requested (status_detail 35): frictionless — hidden iframe + wait 5s + verify
+    if (nuveiData.transaction?.status_detail === 35) {
+      const threeDSData = nuveiData["3ds"];
+      const hiddenIframeHtml = threeDSData?.browser_response?.hidden_iframe || "";
+
+      if (dbAdmin) {
+        await dbAdmin.collection("orders").doc(orderId).update({
+          status: "3ds-pending",
+          nuveiTransactionId: nuveiData.transaction.id || null,
+          updatedAt: new Date(),
+        });
+      }
+      return NextResponse.json({
+        challenge: true,
+        challengeHtml: hiddenIframeHtml,
+        isDeviceFingerprint: true,
+        orderId,
+        nuveiTransactionId: nuveiData.transaction.id,
+        statusDetail: 35,
+      });
+    }
+
+    // 3DS challenge requested (status_detail 36 or 37): interactive challenge
     if (nuveiData.transaction?.status_detail === 36 || nuveiData.transaction?.status_detail === 37) {
       const threeDSData = nuveiData["3ds"];
       const challengeHtml =
@@ -221,18 +243,20 @@ export async function POST(request: NextRequest) {
         "";
 
       if (challengeHtml) {
-        // Mark order as 3ds-pending to prevent double-charge
         if (dbAdmin) {
           await dbAdmin.collection("orders").doc(orderId).update({
             status: "3ds-pending",
+            nuveiTransactionId: nuveiData.transaction?.id || null,
             updatedAt: new Date(),
           });
         }
         return NextResponse.json({
           challenge: true,
           challengeHtml,
-          isDeviceFingerprint: !!threeDSData?.browser_response?.hidden_iframe && !threeDSData?.browser_response?.challenge_request,
+          isDeviceFingerprint: false,
           orderId,
+          nuveiTransactionId: nuveiData.transaction?.id,
+          statusDetail: nuveiData.transaction?.status_detail,
         });
       }
     }

@@ -99,6 +99,8 @@ interface ThreeDSChallenge {
   html: string;
   orderId: string;
   isDeviceFingerprint: boolean;
+  nuveiTransactionId: string;
+  statusDetail: number;
 }
 
 export default function CheckoutPage() {
@@ -111,6 +113,7 @@ export default function CheckoutPage() {
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingAddress | null>(null);
   const [threeDSChallenge, setThreeDSChallenge] = useState<ThreeDSChallenge | null>(null);
+  const threeDSCompleteCalledRef = useRef(false);
 
   const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
   const [selectedCardToken, setSelectedCardToken] = useState<string | null>(
@@ -140,16 +143,77 @@ export default function CheckoutPage() {
     setIsClient(true);
   }, []);
 
-  // Listen for 3DS challenge completion from /checkout/3ds-return
+  // Shared handler for verify API responses (used by both status 35 timer and status 36 postMessage)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleVerifyResponse = useRef((data: any) => {
+    if (data.success) {
+      setThreeDSChallenge(null);
+      setProcessingPayment(false);
+      setPaymentSuccess(true);
+      clearCart();
+      setTimeout(() => {
+        router.push(`/checkout/confirmacion?orderId=${data.orderId}`);
+      }, 1500);
+    } else if (data.challenge) {
+      // Escalation: status 35 → 36 (or verify returned another challenge)
+      setProcessingPayment(false);
+      setThreeDSChallenge({
+        html: data.challengeHtml,
+        orderId: data.orderId,
+        isDeviceFingerprint: false,
+        nuveiTransactionId: data.nuveiTransactionId,
+        statusDetail: data.statusDetail,
+      });
+    } else {
+      paymentLockRef.current = false;
+      setProcessingPayment(false);
+      setPaymentFailed(data.error || "Error al completar el pago 3DS.");
+      setThreeDSChallenge(null);
+    }
+  });
+
+  // Timer for status_detail 35: wait 5 seconds, then call verify with AUTHENTICATION_CONTINUE
+  useEffect(() => {
+    if (!threeDSChallenge || threeDSChallenge.statusDetail !== 35 || !user) return;
+
+    const timer = setTimeout(async () => {
+      if (threeDSCompleteCalledRef.current) return;
+      threeDSCompleteCalledRef.current = true;
+      setProcessingPayment(true);
+      try {
+        const response = await fetch("/api/payment/3ds-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: threeDSChallenge.orderId,
+            userId: user.uid,
+            type: "AUTHENTICATION_CONTINUE",
+            nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
+          }),
+        });
+        const data = await response.json();
+        handleVerifyResponse.current(data);
+      } catch {
+        paymentLockRef.current = false;
+        setProcessingPayment(false);
+        setPaymentFailed("Error de conexión al verificar 3DS.");
+        setThreeDSChallenge(null);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [threeDSChallenge, user]);
+
+  // Listen for 3DS challenge completion from /checkout/3ds-return (status_detail 36 flow)
   useEffect(() => {
     async function handle3DSMessage(event: MessageEvent) {
       if (event.data?.type !== "3DS_COMPLETE") return;
       const { orderId, transStatus } = event.data;
-      if (!orderId || !user || !selectedCardToken) return;
+      if (!orderId || !user) return;
 
       setThreeDSChallenge(null);
 
-      // If bank rejected the challenge, fail without calling debit
+      // If bank rejected the challenge, fail without calling verify
       if (transStatus && transStatus !== "Y" && transStatus !== "A") {
         paymentLockRef.current = false;
         const msg =
@@ -158,9 +222,15 @@ export default function CheckoutPage() {
           transStatus === "U" ? "No se pudo verificar la autenticación 3DS. Intenta de nuevo." :
           "Autenticación 3DS cancelada o no completada.";
         setPaymentFailed(msg);
+        // Mark order as failed in Firestore
+        try {
+          await markOrderFailed(orderId);
+        } catch { /* best effort */ }
         return;
       }
 
+      if (threeDSCompleteCalledRef.current) return;
+      threeDSCompleteCalledRef.current = true;
       setProcessingPayment(true);
 
       try {
@@ -170,28 +240,12 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             orderId,
             userId: user.uid,
-            userEmail: user.email,
-            token: selectedCardToken,
-            amount: total,
-            vat,
-            description: `Orden ${orderId} - Pau Henriques`,
+            type: "BY_CRES",
           }),
         });
 
         const data = await response.json();
-
-        if (data.success) {
-          setProcessingPayment(false);
-          setPaymentSuccess(true);
-          clearCart();
-          setTimeout(() => {
-            router.push(`/checkout/confirmacion?orderId=${orderId}`);
-          }, 1500);
-        } else {
-          paymentLockRef.current = false;
-          setProcessingPayment(false);
-          setPaymentFailed(data.error || "Error al completar el pago 3DS.");
-        }
+        handleVerifyResponse.current(data);
       } catch {
         paymentLockRef.current = false;
         setProcessingPayment(false);
@@ -201,7 +255,7 @@ export default function CheckoutPage() {
 
     window.addEventListener("message", handle3DSMessage);
     return () => window.removeEventListener("message", handle3DSMessage);
-  }, [user, selectedCardToken, total, vat, clearCart, router]);
+  }, [user]);
 
   const currentStepIndex = STEPS.indexOf(step);
 
@@ -236,6 +290,7 @@ export default function CheckoutPage() {
 
     setProcessingPayment(true);
     setPaymentError(null);
+    threeDSCompleteCalledRef.current = false;
 
     let orderId: string | null = null;
 
@@ -296,12 +351,14 @@ export default function CheckoutPage() {
           router.push(`/checkout/confirmacion?orderId=${orderId}`);
         }, 1500);
       } else if (data.challenge) {
-        // 3DS challenge required — show challenge modal
+        // 3DS challenge required — show challenge modal (status 35 or 36)
         setProcessingPayment(false);
         setThreeDSChallenge({
           html: data.challengeHtml,
           orderId: data.orderId,
           isDeviceFingerprint: data.isDeviceFingerprint ?? false,
+          nuveiTransactionId: data.nuveiTransactionId || "",
+          statusDetail: data.statusDetail || 36,
         });
         // Don't reset paymentLockRef — payment is still in progress via 3DS
       } else {

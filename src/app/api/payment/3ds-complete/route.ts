@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
-import { debitWithToken } from "@/lib/nuvei";
+import { verifyThreeDS } from "@/lib/nuvei";
+import { z } from "zod";
+import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
-interface ThreeDSCompleteBody {
-  orderId: string;
-  userId: string;
-  userEmail: string;
-  token: string;
-  amount: number;
-  vat: number;
-  description: string;
-}
+const ThreeDSCompleteSchema = z.object({
+  orderId: z.string().min(1),
+  userId: z.string().min(1),
+  type: z.enum(["AUTHENTICATION_CONTINUE", "BY_CRES"]),
+  nuveiTransactionId: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,78 +28,148 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sesion invalida" }, { status: 401 });
     }
 
-    const body: ThreeDSCompleteBody = await request.json();
-    const { orderId, userId, userEmail, token, amount, vat, description } = body;
-
-    if (!orderId || !userId || !token || !amount) {
+    const rawBody = await request.json();
+    const parsed = ThreeDSCompleteSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
     }
+
+    const { orderId, userId, type, nuveiTransactionId: bodyTxId } = parsed.data;
 
     if (decodedToken.uid !== userId) {
       return NextResponse.json({ error: "Usuario no coincide" }, { status: 403 });
     }
 
-    // Validate order is in 3ds-pending state (prevents double charge)
-    if (dbAdmin) {
-      const orderDoc = await dbAdmin.collection("orders").doc(orderId).get();
-      if (!orderDoc.exists) {
-        return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
-      }
-      const orderData = orderDoc.data();
-      if (orderData?.status !== "3ds-pending") {
-        return NextResponse.json(
-          { error: "Esta orden ya fue procesada" },
-          { status: 409 },
-        );
-      }
+    if (!dbAdmin) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
-    // Second debit call — no extra_params needed, 3DS already authenticated
-    const nuveiData = await debitWithToken({
-      userId,
-      userEmail,
-      amount,
-      description,
-      devReference: orderId,
-      cardToken: token,
-      vat: vat ?? 0,
-    });
+    // Read order from Firestore
+    const orderDoc = await dbAdmin.collection("orders").doc(orderId).get();
+    if (!orderDoc.exists) {
+      return NextResponse.json({ error: "Orden no encontrada" }, { status: 404 });
+    }
 
-    if (
-      nuveiData.transaction &&
-      nuveiData.transaction.status === "success" &&
-      nuveiData.transaction.status_detail === 3
-    ) {
-      if (dbAdmin) {
-        await dbAdmin.collection("orders").doc(orderId).update({
-          status: "paid",
-          paymentTransactionId: nuveiData.transaction.id,
-          authorizationCode: nuveiData.transaction.authorization_code || null,
-          chargeResponseAt: new Date(),
-          updatedAt: new Date(),
-        });
-      }
+    const orderData = orderDoc.data()!;
 
+    // Idempotency: if already paid, return success
+    if (orderData.status === "paid") {
       return NextResponse.json({
         success: true,
-        transactionId: nuveiData.transaction.id,
-        authorizationCode: nuveiData.transaction.authorization_code,
+        transactionId: orderData.paymentTransactionId,
         orderId,
       });
-    } else {
-      if (dbAdmin) {
-        await dbAdmin.collection("orders").doc(orderId).update({
-          status: "failed",
-          chargeResponseAt: new Date(),
-          updatedAt: new Date(),
-        });
-      }
+    }
 
+    if (orderData.status !== "3ds-pending") {
       return NextResponse.json(
-        { error: "No se pudo completar el pago tras la autenticación 3DS." },
+        { error: "Esta orden ya fue procesada" },
+        { status: 409 },
+      );
+    }
+
+    // Get transaction ID from order (preferred) or request body (fallback)
+    const transactionId = orderData.nuveiTransactionId || bodyTxId;
+    if (!transactionId) {
+      return NextResponse.json(
+        { error: "No se encontró el ID de transacción para verificar" },
         { status: 400 },
       );
     }
+
+    // For BY_CRES, get the cres value stored by 3ds-callback
+    const cresValue = type === "BY_CRES" ? orderData.threeDSCres : undefined;
+    if (type === "BY_CRES" && !cresValue) {
+      return NextResponse.json(
+        { error: "No se encontró el valor de autenticación 3DS (cres)" },
+        { status: 400 },
+      );
+    }
+
+    // Get user email from order or Firebase Auth
+    const userEmail = orderData.userEmail || decodedToken.email || "";
+
+    // Call Nuvei Verify API instead of a second debit
+    const verifyResult = await verifyThreeDS({
+      transactionId,
+      userId,
+      userEmail,
+      type,
+      value: cresValue,
+    });
+
+    // The verify API can return two different response structures:
+    // 1. Nested (DebitResponse): { transaction: { status: "success", status_detail: 3, id: "..." } }
+    // 2. Flat: { status: 1, status_detail: 3, transaction_id: "..." }
+    // We normalize to handle both.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw = verifyResult as any;
+    const txStatus = verifyResult.transaction?.status ?? raw.status;
+    const txStatusDetail = verifyResult.transaction?.status_detail ?? raw.status_detail;
+    const txId = verifyResult.transaction?.id ?? raw.transaction_id ?? transactionId;
+    const txAuthCode = verifyResult.transaction?.authorization_code ?? raw.authorization_code ?? null;
+
+    // Success: status "success" or status 1, with status_detail 3
+    const isSuccess =
+      (txStatus === "success" || txStatus === 1) && txStatusDetail === 3;
+
+    if (isSuccess) {
+      await dbAdmin.collection("orders").doc(orderId).update({
+        status: "paid",
+        paymentTransactionId: txId,
+        authorizationCode: txAuthCode,
+        chargeResponseAt: new Date(),
+        updatedAt: new Date(),
+        threeDSCres: FieldValue.delete(),
+      });
+
+      return NextResponse.json({
+        success: true,
+        transactionId: txId,
+        authorizationCode: txAuthCode,
+        orderId,
+      });
+    }
+
+    // Escalation: verify after status 35 returned status 36 (challenge required)
+    if (txStatusDetail === 36 || txStatusDetail === 37) {
+      const threeDSData = verifyResult["3ds"];
+      const challengeHtml =
+        threeDSData?.browser_response?.challenge_request ||
+        threeDSData?.browser_response?.hidden_iframe ||
+        "";
+
+      if (challengeHtml) {
+        // Update transaction ID in case it changed
+        await dbAdmin.collection("orders").doc(orderId).update({
+          nuveiTransactionId: txId,
+          updatedAt: new Date(),
+          threeDSCres: FieldValue.delete(),
+        });
+
+        return NextResponse.json({
+          challenge: true,
+          challengeHtml,
+          isDeviceFingerprint: false,
+          orderId,
+          nuveiTransactionId: txId,
+          statusDetail: txStatusDetail,
+        });
+      }
+    }
+
+    // Failure
+    await dbAdmin.collection("orders").doc(orderId).update({
+      status: "failed",
+      chargeResponseAt: new Date(),
+      updatedAt: new Date(),
+      threeDSCres: FieldValue.delete(),
+    });
+
+    return NextResponse.json(
+      { error: "Pago rechazado tras autenticación 3DS." },
+      { status: 400 },
+    );
   } catch (error) {
     console.error("3DS complete error:", error);
     return NextResponse.json(
