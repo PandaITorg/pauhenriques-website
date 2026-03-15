@@ -41,7 +41,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+  // Derive base URL from request headers so it works automatically in local/staging/production
+  const host = request.headers.get("host") || "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
   return NextResponse.redirect(
     `${baseUrl}/checkout/3ds-return?orderId=${encodeURIComponent(orderId)}&transStatus=${encodeURIComponent(transStatus)}`,
     303,

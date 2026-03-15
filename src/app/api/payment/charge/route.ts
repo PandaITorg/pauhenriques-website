@@ -163,7 +163,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Build term_url for 3DS challenge callback — include orderId so 3ds-return can identify the order
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+    // Derive base URL from request headers so it works automatically in local/staging/production
+    const host = request.headers.get("host") || "localhost:3000";
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
     const termUrl = `${baseUrl}/api/payment/3ds-callback?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
