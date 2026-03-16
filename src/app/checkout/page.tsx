@@ -23,6 +23,7 @@ import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
 import SavedCards from "@/components/checkout/SavedCards";
 import StepIndicator from "@/components/checkout/StepIndicator";
+import CouponInput, { AppliedCoupon } from "@/components/checkout/CouponInput";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
 import { ShippingAddress } from "@/types/order";
@@ -122,6 +123,7 @@ export default function CheckoutPage() {
   const [selectedCardInfo, setSelectedCardInfo] = useState<SavedCard | null>(
     null,
   );
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   const items = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -134,10 +136,12 @@ export default function CheckoutPage() {
     (acc, item) => acc + item.price * item.quantity,
     0,
   );
+  const discount = appliedCoupon?.discount ?? 0;
+  const discountedSubtotal = Math.max(0, subtotal - discount);
   const IVA_RATE = 0.15;
-  const vat = Math.round(subtotal * IVA_RATE * 100) / 100;
+  const vat = Math.round(discountedSubtotal * IVA_RATE * 100) / 100;
   const shippingCost: number = 0;
-  const total = Math.round((subtotal + vat + shippingCost) * 100) / 100;
+  const total = Math.round((discountedSubtotal + vat + shippingCost) * 100) / 100;
 
   useEffect(() => {
     setIsClient(true);
@@ -306,12 +310,18 @@ export default function CheckoutPage() {
       orderId = await createOrder({
         userId: user.uid,
         items: orderItems,
-        subtotal,
+        subtotal: discountedSubtotal,
         vat,
         shipping: shippingCost,
         total,
         shippingAddress: shipping,
         paymentToken: selectedCardToken,
+        ...(appliedCoupon && {
+          discount,
+          couponCode: appliedCoupon.code,
+          promotionId: appliedCoupon.promotionId,
+          discountType: appliedCoupon.type,
+        }),
       });
 
       const browserInfo = {
@@ -538,6 +548,22 @@ export default function CheckoutPage() {
                     onUpdateQty={updateQuantity}
                   />
                 ))}
+
+                {/* Coupon code input */}
+                <div className="mt-4 pt-4 border-t border-border-subtle">
+                  <CouponInput
+                    subtotal={subtotal}
+                    items={items.map((i) => ({
+                      productId: i.id,
+                      price: i.price,
+                      quantity: i.quantity,
+                    }))}
+                    appliedCoupon={appliedCoupon}
+                    onApply={setAppliedCoupon}
+                    onRemove={() => setAppliedCoupon(null)}
+                  />
+                </div>
+
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
                   <Link
                     href="/tienda"
@@ -665,17 +691,6 @@ export default function CheckoutPage() {
                       disabled={processingPayment}
                     />
                   </div>
-                )}
-
-                {/* TODO: Remove after Nuvei testing */}
-                {process.env.NEXT_PUBLIC_NUVEI_ENV !== "prod" && (
-                  <Link
-                    href="/checkout/test-nuvei"
-                    className="mt-4 flex items-center justify-center gap-2 text-xs text-warning/60 hover:text-warning border border-dashed border-warning/20 hover:border-warning/40 rounded-lg py-2 transition-colors"
-                  >
-                    <span>🧪</span>
-                    Simulador de flujo de pago Nuvei
-                  </Link>
                 )}
 
                 {/* Trust badges */}
@@ -862,6 +877,16 @@ export default function CheckoutPage() {
                     ${subtotal.toFixed(2)}
                   </span>
                 </div>
+                {appliedCoupon && discount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-success">
+                      Descuento ({appliedCoupon.code})
+                    </span>
+                    <span className="font-medium text-success">
+                      -${discount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-text-main/50">IVA (15%)</span>
                   <span className="font-medium text-text-main">

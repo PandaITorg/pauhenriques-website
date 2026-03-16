@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { PromotionType } from "./promotion";
 
 export type OrderStatus =
   | "pending"
@@ -40,6 +41,10 @@ export interface Order {
   paymentTransactionId?: string;
   authorizationCode?: string;
   shippingAddress: ShippingAddress;
+  discount?: number;
+  couponCode?: string;
+  promotionId?: string;
+  discountType?: PromotionType;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

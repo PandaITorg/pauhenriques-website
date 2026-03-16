@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { debitWithToken } from "@/lib/nuvei";
+import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
 
@@ -151,9 +152,56 @@ export async function POST(request: NextRequest) {
         verifiedSubtotal += currentPrice * item.quantity;
       }
 
-      // Verify total matches server-calculated amount
-      const verifiedVat = Math.round(verifiedSubtotal * 0.15 * 100) / 100;
-      const verifiedTotal = Math.round((verifiedSubtotal + verifiedVat) * 100) / 100;
+      // Re-validate coupon if one was applied to the order
+      let verifiedDiscount = 0;
+      const orderDiscount = orderData?.discount ?? 0;
+      const orderPromotionId = orderData?.promotionId;
+
+      if (orderPromotionId && orderDiscount > 0) {
+        const promoDoc = await dbAdmin.collection("promotions").doc(orderPromotionId).get();
+        if (!promoDoc.exists || !promoDoc.data()?.isActive) {
+          return NextResponse.json(
+            { error: "El cupon aplicado ya no es valido. Remuevelo y vuelve a intentar." },
+            { status: 409 },
+          );
+        }
+        const promo = promoDoc.data()!;
+
+        // Check date range
+        const now = new Date();
+        const validFrom = promo.rules.validFrom.toDate ? promo.rules.validFrom.toDate() : new Date(promo.rules.validFrom);
+        const validUntil = promo.rules.validUntil.toDate ? promo.rules.validUntil.toDate() : new Date(promo.rules.validUntil);
+        if (now < validFrom || now > validUntil) {
+          return NextResponse.json(
+            { error: "El cupon aplicado ha expirado. Remuevelo y vuelve a intentar." },
+            { status: 409 },
+          );
+        }
+
+        // Check max uses
+        if (promo.rules.maxTotalUses && promo.currentUses >= promo.rules.maxTotalUses) {
+          return NextResponse.json(
+            { error: "El cupon aplicado ya alcanzo su limite de usos." },
+            { status: 409 },
+          );
+        }
+
+        // Recalculate discount server-side
+        if (promo.type === "percentage") {
+          verifiedDiscount = verifiedSubtotal * (promo.value / 100);
+          if (promo.maxDiscountAmount) {
+            verifiedDiscount = Math.min(verifiedDiscount, promo.maxDiscountAmount);
+          }
+        } else if (promo.type === "fixed_amount") {
+          verifiedDiscount = Math.min(promo.value, verifiedSubtotal);
+        }
+        verifiedDiscount = Math.round(verifiedDiscount * 100) / 100;
+      }
+
+      // Verify total matches server-calculated amount (accounting for discount)
+      const verifiedDiscountedSubtotal = Math.max(0, verifiedSubtotal - verifiedDiscount);
+      const verifiedVat = Math.round(verifiedDiscountedSubtotal * 0.15 * 100) / 100;
+      const verifiedTotal = Math.round((verifiedDiscountedSubtotal + verifiedVat) * 100) / 100;
       if (verifiedTotal !== amount) {
         return NextResponse.json(
           { error: "El monto no coincide con los precios actuales. Actualiza tu carrito." },
@@ -198,13 +246,36 @@ export async function POST(request: NextRequest) {
       // Update order — charge sets "paid" and transaction data.
       // Webhook may also update; we use merge-friendly fields so neither overwrites the other.
       if (dbAdmin) {
-        await dbAdmin.collection("orders").doc(orderId).update({
+        const batch = dbAdmin.batch();
+        const orderRef = dbAdmin.collection("orders").doc(orderId);
+
+        batch.update(orderRef, {
           status: "paid",
           paymentTransactionId: nuveiData.transaction.id,
           authorizationCode: nuveiData.transaction.authorization_code || null,
           chargeResponseAt: new Date(),
           updatedAt: new Date(),
         });
+
+        // Atomically increment promotion usage if coupon was applied
+        const orderSnap = await orderRef.get();
+        const orderInfo = orderSnap.data();
+        if (orderInfo?.promotionId) {
+          const promoRef = dbAdmin.collection("promotions").doc(orderInfo.promotionId);
+          batch.update(promoRef, {
+            currentUses: FieldValue.increment(1),
+          });
+
+          const usageRef = promoRef.collection("usages").doc();
+          batch.set(usageRef, {
+            userId: orderInfo.userId,
+            orderId,
+            discountApplied: orderInfo.discount || 0,
+            usedAt: new Date(),
+          });
+        }
+
+        await batch.commit();
       }
 
       return NextResponse.json({

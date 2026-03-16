@@ -6,6 +6,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AdminBanner from "@/components/admin/AdminBanner";
 import NavigationProgress from "@/components/NavigationProgress";
+import ToastContainer from "@/components/ui/ToastContainer";
+import AnnouncementBanner from "@/components/ui/AnnouncementBanner";
 import { useLayoutEffect } from "react";
 
 function Wrapper({ children }: { children: React.ReactNode }) {
@@ -27,6 +29,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <Suspense>
           <NavigationProgress />
         </Suspense>
+        <ToastContainer />
         <main>{children}</main>
       </Wrapper>
     );
@@ -37,6 +40,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <Suspense>
         <NavigationProgress />
       </Suspense>
+      <ToastContainer />
+      <AnnouncementBanner />
       <AdminBanner />
       <Header />
       <main className={isHomePage ? "bg-tertiary" : "bg-tertiary"}>

@@ -6,6 +6,7 @@ import {
   FaBox,
   FaClipboardList,
   FaTachometerAlt,
+  FaTag,
   FaBars,
   FaTimes,
   FaExternalLinkAlt,
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: FaTachometerAlt },
   { href: "/admin/productos", label: "Productos", icon: FaBox },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
+  { href: "/admin/promociones", label: "Promociones", icon: FaTag },
 ];
 
 export default function AdminSidebar() {

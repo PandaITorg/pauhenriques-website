@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Order, OrderItem, ShippingAddress, OrderStatus } from "@/types/order";
+import type { PromotionType } from "@/types/promotion";
 
 const ORDERS_COLLECTION = "orders";
 
@@ -25,6 +26,10 @@ export async function createOrder(params: {
   shippingAddress: ShippingAddress;
   paymentToken?: string;
   paymentTransactionId?: string;
+  discount?: number;
+  couponCode?: string;
+  promotionId?: string;
+  discountType?: PromotionType;
 }): Promise<string> {
   const orderData = {
     ...params,
