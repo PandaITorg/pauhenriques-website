@@ -3,7 +3,7 @@
 // Forzar renderizado dinámico — esta página usa Firebase Auth que requiere el browser
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, AuthError } from "firebase/auth";
@@ -45,6 +45,20 @@ const inputError =
 
 // ===== PAGE COMPONENT =====
 export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="simple-spinner" />
+        </div>
+      }
+    >
+      <SignInContent />
+    </Suspense>
+  );
+}
+
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();

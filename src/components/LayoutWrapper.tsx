@@ -1,9 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AdminBanner from "@/components/admin/AdminBanner";
+import NavigationProgress from "@/components/NavigationProgress";
 import { useLayoutEffect } from "react";
 
 function Wrapper({ children }: { children: React.ReactNode }) {
@@ -22,6 +24,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   if (isLinksPage) {
     return (
       <Wrapper>
+        <Suspense>
+          <NavigationProgress />
+        </Suspense>
         <main>{children}</main>
       </Wrapper>
     );
@@ -29,6 +34,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <Wrapper>
+      <Suspense>
+        <NavigationProgress />
+      </Suspense>
       <AdminBanner />
       <Header />
       <main className={isHomePage ? "bg-tertiary" : "bg-tertiary"}>
