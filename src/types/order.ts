@@ -8,7 +8,9 @@ export type OrderStatus =
   | "shipped"
   | "delivered"
   | "cancelled"
-  | "failed";
+  | "failed"
+  | "3ds-pending"
+  | "otp-pending";
 
 export interface OrderItem {
   productId: string;

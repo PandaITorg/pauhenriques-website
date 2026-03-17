@@ -217,7 +217,7 @@ export interface VerifyThreeDSParams {
   transactionId: string;
   userId: string;
   userEmail: string;
-  type: "AUTHENTICATION_CONTINUE" | "BY_CRES";
+  type: "AUTHENTICATION_CONTINUE" | "BY_CRES" | "BY_OTP";
   value?: string;
 }
 

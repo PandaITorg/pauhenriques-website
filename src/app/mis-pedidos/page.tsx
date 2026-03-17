@@ -59,6 +59,16 @@ const STATUS_CONFIG: Record<
     color: "bg-error/15 text-error",
     icon: <FaTimesCircle className="w-3.5 h-3.5" />,
   },
+  "3ds-pending": {
+    label: "Verificando 3DS",
+    color: "bg-warning/15 text-warning",
+    icon: <FaClock className="w-3.5 h-3.5" />,
+  },
+  "otp-pending": {
+    label: "Verificando OTP",
+    color: "bg-warning/15 text-warning",
+    icon: <FaClock className="w-3.5 h-3.5" />,
+  },
 };
 
 function formatDate(timestamp: { seconds: number } | Date | null): string {

@@ -9,8 +9,9 @@ export const dynamic = "force-dynamic";
 const ThreeDSCompleteSchema = z.object({
   orderId: z.string().min(1),
   userId: z.string().min(1),
-  type: z.enum(["AUTHENTICATION_CONTINUE", "BY_CRES"]),
+  type: z.enum(["AUTHENTICATION_CONTINUE", "BY_CRES", "BY_OTP"]),
   nuveiTransactionId: z.string().optional(),
+  otpCode: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
     }
 
-    const { orderId, userId, type, nuveiTransactionId: bodyTxId } = parsed.data;
+    const { orderId, userId, type, nuveiTransactionId: bodyTxId, otpCode } = parsed.data;
 
     if (decodedToken.uid !== userId) {
       return NextResponse.json({ error: "Usuario no coincide" }, { status: 403 });
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (orderData.status !== "3ds-pending") {
+    if (orderData.status !== "3ds-pending" && orderData.status !== "otp-pending") {
       return NextResponse.json(
         { error: "Esta orden ya fue procesada" },
         { status: 409 },
@@ -86,8 +87,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For BY_OTP, get the OTP code from the request body
+    if (type === "BY_OTP" && !otpCode) {
+      return NextResponse.json(
+        { error: "Debes ingresar el código OTP" },
+        { status: 400 },
+      );
+    }
+
     // Get user email from order or Firebase Auth
     const userEmail = orderData.userEmail || decodedToken.email || "";
+
+    // Determine the value to send: cres for 3DS, otpCode for OTP
+    const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
 
     // Call Nuvei Verify API instead of a second debit
     const verifyResult = await verifyThreeDS({
@@ -95,7 +107,7 @@ export async function POST(request: NextRequest) {
       userId,
       userEmail,
       type,
-      value: cresValue,
+      value: verifyValue,
     });
 
     // The verify API can return two different response structures:

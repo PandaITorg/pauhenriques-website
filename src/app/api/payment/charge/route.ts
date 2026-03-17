@@ -27,6 +27,7 @@ const NUVEI_ERROR_MESSAGES: Record<number, string> = {
   21: "Código de seguridad (CVV) incorrecto.",
   22: "Tipo de tarjeta no soportado para esta transacción.",
   23: "Transacción rechazada. Intenta de nuevo más tarde.",
+  31: "Tu banco requiere verificación OTP. Ingresa el código enviado a tu teléfono.",
   36: "Tu banco requiere verificación adicional 3DS. Completa el proceso en la ventana emergente.",
   37: "Tu banco requiere verificación adicional 3DS. Completa el proceso en la ventana emergente.",
 };
@@ -305,6 +306,23 @@ export async function POST(request: NextRequest) {
         orderId,
         nuveiTransactionId: nuveiData.transaction.id,
         statusDetail: 35,
+      });
+    }
+
+    // OTP verification requested (status_detail 31): show OTP form to capture code
+    if (nuveiData.transaction?.status_detail === 31) {
+      if (dbAdmin) {
+        await dbAdmin.collection("orders").doc(orderId).update({
+          status: "otp-pending",
+          nuveiTransactionId: nuveiData.transaction.id || null,
+          updatedAt: new Date(),
+        });
+      }
+      return NextResponse.json({
+        otpRequired: true,
+        orderId,
+        nuveiTransactionId: nuveiData.transaction.id,
+        statusDetail: 31,
       });
     }
 

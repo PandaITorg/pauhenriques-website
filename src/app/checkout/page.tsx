@@ -115,6 +115,10 @@ export default function CheckoutPage() {
   const [shipping, setShipping] = useState<ShippingAddress | null>(null);
   const [threeDSChallenge, setThreeDSChallenge] = useState<ThreeDSChallenge | null>(null);
   const threeDSCompleteCalledRef = useRef(false);
+  const [otpChallenge, setOtpChallenge] = useState<{ orderId: string; nuveiTransactionId: string } | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSubmitting, setOtpSubmitting] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
   const [selectedCardToken, setSelectedCardToken] = useState<string | null>(
@@ -360,6 +364,15 @@ export default function CheckoutPage() {
         setTimeout(() => {
           router.push(`/checkout/confirmacion?orderId=${orderId}`);
         }, 1500);
+      } else if (data.otpRequired) {
+        // OTP verification required (status_detail 31) — show OTP form
+        setProcessingPayment(false);
+        setOtpChallenge({
+          orderId: data.orderId,
+          nuveiTransactionId: data.nuveiTransactionId || "",
+        });
+        setOtpCode("");
+        setOtpError(null);
       } else if (data.challenge) {
         // 3DS challenge required — show challenge modal (status 35 or 36)
         setProcessingPayment(false);
@@ -469,6 +482,116 @@ export default function CheckoutPage() {
         >
           Ir a la Tienda
         </Link>
+      </div>
+    );
+  }
+
+  // OTP Challenge — shown when bank requires OTP verification (status_detail 31)
+  if (otpChallenge) {
+    const handleOtpSubmit = async () => {
+      if (!otpCode.trim() || !user) return;
+      setOtpSubmitting(true);
+      setOtpError(null);
+      try {
+        const response = await fetch("/api/payment/3ds-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: otpChallenge.orderId,
+            userId: user.uid,
+            type: "BY_OTP",
+            nuveiTransactionId: otpChallenge.nuveiTransactionId,
+            otpCode: otpCode.trim(),
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setOtpChallenge(null);
+          setPaymentSuccess(true);
+          clearCart();
+          setTimeout(() => {
+            router.push(`/checkout/confirmacion?orderId=${data.orderId}`);
+          }, 1500);
+        } else {
+          setOtpError(data.error || "Código OTP incorrecto. Intenta de nuevo.");
+        }
+      } catch {
+        setOtpError("Error de conexión. Intenta de nuevo.");
+      } finally {
+        setOtpSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-border-subtle flex items-center gap-3">
+              <FaShieldAlt className="w-4 h-4 text-primary" />
+              <div>
+                <p className="font-semibold text-text-main text-sm">
+                  Verificación de seguridad
+                </p>
+                <p className="text-text-main/50 text-xs">
+                  Tu banco ha enviado un código a tu teléfono
+                </p>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-text-main/70 text-center">
+                Ingresa el código de verificación (OTP) que recibiste por SMS de tu banco.
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="Código OTP"
+                className="w-full text-center text-2xl tracking-[0.3em] font-mono border border-border-default rounded-lg py-3 px-4 bg-background text-text-main placeholder:text-text-main/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleOtpSubmit();
+                }}
+              />
+              {otpError && (
+                <p className="text-error text-xs text-center">{otpError}</p>
+              )}
+              <button
+                onClick={handleOtpSubmit}
+                disabled={otpSubmitting || !otpCode.trim()}
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:bg-surface-elevated disabled:text-text-main/30"
+              >
+                {otpSubmitting ? (
+                  <>
+                    <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
+                    Verificando...
+                  </>
+                ) : (
+                  <>
+                    <FaLock className="w-3.5 h-3.5" />
+                    Verificar código
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setOtpChallenge(null);
+                  paymentLockRef.current = false;
+                  setPaymentFailed("Verificación OTP cancelada.");
+                }}
+                disabled={otpSubmitting}
+                className="w-full text-sm text-text-main/50 hover:text-text-main transition-colors py-2"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-xs text-text-main/40 mt-3">
+            No cierres esta página. Conexión segura con tu banco.
+          </p>
+        </div>
       </div>
     );
   }
