@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
     const host = request.headers.get("host") || "localhost:3000";
     const protocol = host.includes("localhost") ? "http" : "https";
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
-    const termUrl = `${baseUrl}/api/payment/3ds-callback?orderId=${orderId}`;
+    const termUrl = `${baseUrl}/payment/3ds-callback?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
     const clientIp =
