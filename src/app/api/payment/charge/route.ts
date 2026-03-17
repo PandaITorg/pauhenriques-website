@@ -218,7 +218,11 @@ export async function POST(request: NextRequest) {
     const host = request.headers.get("host") || "localhost:3000";
     const protocol = host.includes("localhost") ? "http" : "https";
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
-    const termUrl = `${baseUrl}/payment/3ds-callback?orderId=${orderId}`;
+    // Use Cloud Function for 3DS callback — Firebase App Hosting blocks external POSTs
+    const functionsBase = process.env.NUVEI_ENV === "prod"
+      ? "https://us-central1-pau-henriques-web-v1.cloudfunctions.net"
+      : "https://us-central1-pau-henriques-web-v1.cloudfunctions.net";
+    const termUrl = `${functionsBase}/threeDSCallback?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
     const clientIp =

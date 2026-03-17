@@ -69,6 +69,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if the Cloud Function callback stored a failed transStatus
+    const storedTransStatus = orderData.threeDSTransStatus;
+    if (storedTransStatus && storedTransStatus !== "Y" && storedTransStatus !== "A") {
+      // Authentication failed — mark order as failed
+      await dbAdmin.collection("orders").doc(orderId).update({
+        status: "failed",
+        chargeResponseAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const msg =
+        storedTransStatus === "N" ? "Autenticación 3DS rechazada por tu banco." :
+        storedTransStatus === "R" ? "Tu banco rechazó la autenticación 3DS." :
+        "No se pudo verificar la autenticación 3DS.";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+
     // Get transaction ID from order (preferred) or request body (fallback)
     const transactionId = orderData.nuveiTransactionId || bodyTxId;
     if (!transactionId) {
