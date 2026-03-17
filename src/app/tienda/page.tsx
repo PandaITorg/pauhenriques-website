@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import TiendaClient from "./page_client";
 
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function TiendaPage() {
-  return <TiendaClient />;
+  return (
+    <Suspense>
+      <TiendaClient />
+    </Suspense>
+  );
 }
