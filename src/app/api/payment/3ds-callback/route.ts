@@ -3,15 +3,40 @@ import { dbAdmin } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
-// Paymentez ACS calls this endpoint after the 3DS challenge completes (POST or GET).
-// We capture the cres (Challenge Response) value and store it on the order,
-// then redirect to /payment/3ds-return (outside /checkout/* to avoid auth blocking).
+// Paymentez ACS calls this endpoint after the 3DS challenge completes.
+// We capture the cres value, store it, and return an HTML page that
+// sends a postMessage to the parent checkout window — no redirects needed.
+// (Firebase App Hosting blocks 303 redirects from API routes.)
 
-function buildReturnUrl(request: NextRequest, orderId: string, transStatus: string) {
-  const host = request.headers.get("host") || "localhost:3000";
-  const protocol = host.includes("localhost") ? "http" : "https";
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
-  return `${baseUrl}/payment/3ds-return?orderId=${encodeURIComponent(orderId)}&transStatus=${encodeURIComponent(transStatus)}`;
+function buildCompletionPage(orderId: string, transStatus: string): NextResponse {
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>3DS Verification</title></head>
+<body>
+<script>
+(function() {
+  var message = {
+    type: "3DS_COMPLETE",
+    orderId: "${orderId}",
+    transStatus: "${transStatus}"
+  };
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(message, "*");
+    } else if (window.opener) {
+      window.opener.postMessage(message, "*");
+    }
+  } catch(e) {}
+})();
+</script>
+<p style="font-family:sans-serif;color:#666;text-align:center;margin-top:40px">
+Verificando autenticaci&oacute;n...
+</p>
+</body></html>`;
+
+  return new NextResponse(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
 }
 
 async function storeCres(orderId: string, cres: string) {
@@ -51,10 +76,9 @@ export async function POST(request: NextRequest) {
   }
 
   await storeCres(orderId, cres);
-  return NextResponse.redirect(buildReturnUrl(request, orderId, transStatus), 303);
+  return buildCompletionPage(orderId, transStatus);
 }
 
-// Some ACS implementations use GET redirect instead of POST
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const orderId = searchParams.get("orderId") || "";
@@ -62,5 +86,5 @@ export async function GET(request: NextRequest) {
   const cres = searchParams.get("cres") || searchParams.get("CRes") || "";
 
   await storeCres(orderId, cres);
-  return NextResponse.redirect(buildReturnUrl(request, orderId, transStatus), 303);
+  return buildCompletionPage(orderId, transStatus);
 }
