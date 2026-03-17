@@ -50,14 +50,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect authenticated user routes
-  // Exclude /checkout/3ds-return — the ACS iframe redirects here after challenge
-  // and it won't have the user's session cookie
   const protectedPaths = ["/checkout", "/mi-cuenta", "/mis-pedidos"];
   if (protectedPaths.some((p) => pathname.startsWith(p))) {
-    if (pathname.startsWith("/checkout/3ds-return")) {
-      return NextResponse.next();
-    }
-
     const decoded = await verifySession(request);
 
     if (!decoded) {
