@@ -102,6 +102,7 @@ export async function POST(request: NextRequest) {
     const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
 
     // Call Nuvei Verify API instead of a second debit
+    console.log("[3ds-complete] Calling verify:", { transactionId, type, hasValue: !!verifyValue });
     const verifyResult = await verifyThreeDS({
       transactionId,
       userId,
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
       type,
       value: verifyValue,
     });
+    console.log("[3ds-complete] Verify response:", JSON.stringify(verifyResult));
 
     // The verify API can return two different response structures:
     // 1. Nested (DebitResponse): { transaction: { status: "success", status_detail: 3, id: "..." } }

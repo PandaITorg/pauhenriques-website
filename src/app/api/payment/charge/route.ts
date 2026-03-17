@@ -238,6 +238,13 @@ export async function POST(request: NextRequest) {
       vat: vat ?? 0,
       ...(enrichedBrowserInfo ? { browserInfo: enrichedBrowserInfo, termUrl } : {}),
     });
+    console.log("[charge] Nuvei debit response:", JSON.stringify({
+      status: nuveiData.transaction?.status,
+      status_detail: nuveiData.transaction?.status_detail,
+      id: nuveiData.transaction?.id,
+      "3ds_auth": nuveiData["3ds"]?.authentication?.status,
+      error: nuveiData.error,
+    }));
 
     if (
       nuveiData.transaction &&
