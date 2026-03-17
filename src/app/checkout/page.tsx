@@ -212,8 +212,12 @@ export default function CheckoutPage() {
     return () => clearTimeout(timer);
   }, [threeDSChallenge, user]);
 
-  // Listen for 3DS challenge completion from /checkout/3ds-return (status_detail 36 flow)
+  // Listen for 3DS challenge completion via postMessage (works on localhost)
+  // AND poll verify API as fallback (works on Firebase App Hosting where callback POST is blocked)
   useEffect(() => {
+    if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
+
+    // --- postMessage listener (fast path when callback works) ---
     async function handle3DSMessage(event: MessageEvent) {
       if (event.data?.type !== "3DS_COMPLETE") return;
       const { orderId, transStatus } = event.data;
@@ -221,7 +225,6 @@ export default function CheckoutPage() {
 
       setThreeDSChallenge(null);
 
-      // If bank rejected the challenge, fail without calling verify
       if (transStatus && transStatus !== "Y" && transStatus !== "A") {
         paymentLockRef.current = false;
         const msg =
@@ -230,10 +233,7 @@ export default function CheckoutPage() {
           transStatus === "U" ? "No se pudo verificar la autenticación 3DS. Intenta de nuevo." :
           "Autenticación 3DS cancelada o no completada.";
         setPaymentFailed(msg);
-        // Mark order as failed in Firestore
-        try {
-          await markOrderFailed(orderId);
-        } catch { /* best effort */ }
+        try { await markOrderFailed(orderId); } catch { /* best effort */ }
         return;
       }
 
@@ -245,15 +245,9 @@ export default function CheckoutPage() {
         const response = await fetch("/api/payment/3ds-complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId,
-            userId: user.uid,
-            type: "BY_CRES",
-          }),
+          body: JSON.stringify({ orderId, userId: user.uid, type: "BY_CRES" }),
         });
-
-        const data = await response.json();
-        handleVerifyResponse.current(data);
+        handleVerifyResponse.current(await response.json());
       } catch {
         paymentLockRef.current = false;
         setProcessingPayment(false);
@@ -262,8 +256,68 @@ export default function CheckoutPage() {
     }
 
     window.addEventListener("message", handle3DSMessage);
-    return () => window.removeEventListener("message", handle3DSMessage);
-  }, [user]);
+
+    // --- Polling fallback (for when callback POST is blocked by infra) ---
+    // Start polling after 8 seconds (give callback time to work first)
+    // Then poll every 3 seconds for up to 2 minutes
+    let pollCount = 0;
+    const MAX_POLLS = 40; // 40 * 3s = 2 minutes
+    const POLL_DELAY = 8000; // wait 8s before first poll
+    const POLL_INTERVAL = 3000;
+
+    const pollTimer = setTimeout(() => {
+      pollIntervalRef = setInterval(async () => {
+        if (threeDSCompleteCalledRef.current) {
+          clearInterval(pollIntervalRef!);
+          return;
+        }
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+          clearInterval(pollIntervalRef!);
+          paymentLockRef.current = false;
+          setProcessingPayment(false);
+          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
+          setThreeDSChallenge(null);
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/payment/3ds-complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: threeDSChallenge.orderId,
+              userId: user.uid,
+              type: "AUTHENTICATION_CONTINUE",
+              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
+            }),
+          });
+          const data = await response.json();
+
+          // If verify returned a definitive result, handle it
+          if (data.success || (data.error && !data.error.includes("autenticación 3DS"))) {
+            if (threeDSCompleteCalledRef.current) return;
+            threeDSCompleteCalledRef.current = true;
+            clearInterval(pollIntervalRef!);
+            setProcessingPayment(true);
+            setThreeDSChallenge(null);
+            handleVerifyResponse.current(data);
+          }
+          // Otherwise keep polling (challenge still in progress)
+        } catch {
+          // Network error — keep polling
+        }
+      }, POLL_INTERVAL);
+    }, POLL_DELAY);
+
+    let pollIntervalRef: ReturnType<typeof setInterval> | null = null;
+
+    return () => {
+      window.removeEventListener("message", handle3DSMessage);
+      clearTimeout(pollTimer);
+      if (pollIntervalRef) clearInterval(pollIntervalRef);
+    };
+  }, [threeDSChallenge, user]);
 
   const currentStepIndex = STEPS.indexOf(step);
 
