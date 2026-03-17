@@ -96,7 +96,9 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   }, [sdkReady]);
 
   function buildError(rawMsg: string): CardError {
-    if (rawMsg === "Card already added" || rawMsg.includes("already")) {
+    const msg = rawMsg.toLowerCase();
+
+    if (msg.includes("already")) {
       return {
         variant: "duplicate",
         title: "Tarjeta ya registrada",
@@ -104,22 +106,56 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           "Esta tarjeta ya está en tu cuenta. Selecciónala desde tus tarjetas guardadas.",
       };
     }
+    if (msg.includes("blacklist") || msg.includes("black list")) {
+      return {
+        variant: "rejected",
+        title: "Tarjeta no aceptada",
+        message:
+          "Esta tarjeta está en una lista restringida y no puede ser utilizada. Contacta a tu banco o intenta con otra tarjeta.",
+      };
+    }
+    if (msg.includes("fraud")) {
+      return {
+        variant: "rejected",
+        title: "Tarjeta rechazada por seguridad",
+        message:
+          "El sistema de seguridad rechazó esta tarjeta. Intenta con otra tarjeta.",
+      };
+    }
     if (
-      rawMsg === "Card rejected" ||
-      rawMsg === "Response by mock" ||
-      rawMsg.toLowerCase().includes("reject")
+      msg.includes("reject") ||
+      msg.includes("response by mock") ||
+      msg.includes("denied") ||
+      msg.includes("declined")
     ) {
       return {
         variant: "rejected",
         title: "Tarjeta rechazada",
         message:
-          "El banco emisor rechazó esta tarjeta. Verifica que los datos sean correctos o intenta con otra tarjeta.",
+          "El banco emisor rechazó esta tarjeta. Verifica los datos o intenta con otra tarjeta.",
       };
     }
+    if (msg.includes("expired")) {
+      return {
+        variant: "rejected",
+        title: "Tarjeta vencida",
+        message:
+          "Esta tarjeta está vencida. Actualiza tu método de pago o usa otra tarjeta.",
+      };
+    }
+    if (msg.includes("invalid") || msg.includes("not valid")) {
+      return {
+        variant: "rejected",
+        title: "Tarjeta inválida",
+        message:
+          "Los datos de la tarjeta no son válidos. Verifica el número, fecha y CVV.",
+      };
+    }
+    // Fallback — never show raw Nuvei messages to the user
     return {
-      variant: "system",
-      title: "Error de procesamiento",
-      message: rawMsg || "Ocurrió un error inesperado. Intenta de nuevo.",
+      variant: "rejected",
+      title: "Tarjeta no aceptada",
+      message: "No se pudo registrar esta tarjeta. Verifica los datos o intenta con otra.",
     };
   }
 
@@ -128,25 +164,21 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
       setIsProcessing(false);
 
       if (response.error) {
-        const err: CardError = {
-          variant: "system",
-          title: "Error del procesador",
-          message:
-            response.error.type || "Error al comunicarse con el procesador de pagos.",
-        };
-        setError(err);
-        onTokenError(err.message);
+        console.log("[NuveiPaymentForm] SDK error response:", JSON.stringify(response.error));
+        setError({
+          variant: "rejected",
+          title: "Tarjeta no aceptada",
+          message: "No se pudo registrar esta tarjeta. Verifica los datos o intenta con otra.",
+        });
         return;
       }
 
       if (!response.card) {
-        const err: CardError = {
+        setError({
           variant: "system",
           title: "Respuesta inesperada",
           message: "No se recibió respuesta del procesador. Intenta de nuevo.",
-        };
-        setError(err);
-        onTokenError(err.message);
+        });
         return;
       }
 
@@ -158,21 +190,18 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           setError(null);
           onTokenSuccess(response.card.token);
         } else {
-          const err: CardError = {
+          setError({
             variant: "system",
             title: "Token no recibido",
             message: "No se pudo registrar la tarjeta. Intenta de nuevo.",
-          };
-          setError(err);
-          onTokenError(err.message);
+          });
         }
       } else {
-        const err = buildError(response.card.message || "");
-        setError(err);
-        onTokenError(err.message);
+        // Show error inline only — don't propagate to parent to avoid duplicate messages
+        setError(buildError(response.card.message || ""));
       }
     },
-    [onTokenSuccess, onTokenError],
+    [onTokenSuccess],
   );
 
   const notCompletedCallback = useCallback((message: string) => {
@@ -246,7 +275,7 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
         default_country: "ECU",
         icon_colour: "#a68a63",
         use_dropdowns: false,
-        exclusive_types: ["vi", "mc", "ax"],
+        exclusive_types: ["vi", "mc", "ax", "di"],
         invalid_card_type_message:
           "Tipo de tarjeta no aceptada para esta operación.",
       },
@@ -268,37 +297,21 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
         onReady={handleScriptReady}
       />
 
-      {/* SDK renders its iframe-based form inside this container */}
-      <div
-        id={CONTAINER_ID}
-        className="bg-surface-elevated border border-border-subtle rounded-xl p-4 min-h-16"
-      />
-
-      {error && (
+      {/* Terminal error state — hide form, show only error with clear actions */}
+      {error && error.variant !== "incomplete" ? (
         <div
-          className={`rounded-xl border p-4 text-sm transition-all duration-300 ${
-            error.variant === "rejected"
-              ? "bg-error/5 border-error/20"
-              : error.variant === "duplicate"
-                ? "bg-primary/5 border-primary/20"
-                : error.variant === "incomplete"
-                  ? "bg-warning/5 border-warning/20"
-                  : "bg-surface-elevated border-border-subtle"
+          className={`rounded-xl border p-5 text-sm ${
+            error.variant === "duplicate"
+              ? "bg-primary/5 border-primary/20"
+              : "bg-error/5 border-error/20"
           }`}
         >
           <div className="flex gap-3">
             <div className="shrink-0 mt-0.5">
-              {error.variant === "rejected" && (
-                <FaTimesCircle className="w-4 h-4 text-error" />
-              )}
-              {error.variant === "duplicate" && (
+              {error.variant === "duplicate" ? (
                 <FaInfoCircle className="w-4 h-4 text-primary" />
-              )}
-              {error.variant === "incomplete" && (
-                <FaExclamationTriangle className="w-4 h-4 text-warning" />
-              )}
-              {error.variant === "system" && (
-                <FaExclamationTriangle className="w-4 h-4 text-text-main/40" />
+              ) : (
+                <FaTimesCircle className="w-4 h-4 text-error" />
               )}
             </div>
             <div className="grow space-y-1">
@@ -306,48 +319,90 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
               <p className="text-text-main/60 leading-relaxed">
                 {error.message}
               </p>
-              <div className="flex gap-2 pt-2">
-                {error.variant === "duplicate" && onGoToSavedCards && (
-                  <button
-                    type="button"
-                    onClick={onGoToSavedCards}
-                    className="text-xs font-semibold text-primary hover:text-primary-hover underline underline-offset-2 transition-colors"
-                  >
-                    Ver tarjetas guardadas
-                  </button>
-                )}
-                {(error.variant === "rejected" || error.variant === "system") && (
-                  <button
-                    type="button"
-                    onClick={() => setError(null)}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-main/50 hover:text-text-main transition-colors"
-                  >
-                    <FaRedo className="w-2.5 h-2.5" />
-                    Intentar de nuevo
-                  </button>
-                )}
-              </div>
             </div>
           </div>
+          <div className="flex gap-3 mt-4 pt-3 border-t border-border-subtle">
+            {error.variant === "duplicate" && onGoToSavedCards ? (
+              <button
+                type="button"
+                onClick={onGoToSavedCards}
+                className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm cursor-pointer"
+              >
+                Ver tarjetas guardadas
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  // Re-initialize SDK form
+                  sdkInitRef.current = false;
+                  setSdkReady(false);
+                  setTimeout(() => {
+                    handleScriptReady();
+                  }, 100);
+                }}
+                className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm cursor-pointer inline-flex items-center justify-center gap-2"
+              >
+                <FaRedo className="w-3 h-3" />
+                Intentar con otra tarjeta
+              </button>
+            )}
+          </div>
         </div>
-      )}
+      ) : (
+        <>
+          {/* SDK renders its iframe-based form inside this container */}
+          <div
+            id={CONTAINER_ID}
+            className="bg-surface-elevated border border-border-subtle rounded-xl p-4 min-h-16"
+          />
 
-      {sdkReady && (
-        <button
-          type="button"
-          onClick={handlePay}
-          disabled={isProcessing}
-          className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.97]"
-        >
-          {isProcessing ? (
-            <>
-              <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
-              Verificando...
-            </>
-          ) : (
-            "Agregar Tarjeta"
+          {/* Inline validation errors (incomplete fields, system errors) */}
+          {error && (
+            <div
+              className={`rounded-xl border p-4 text-sm ${
+                error.variant === "incomplete"
+                  ? "bg-warning/5 border-warning/20"
+                  : "bg-surface-elevated border-border-subtle"
+              }`}
+            >
+              <div className="flex gap-3">
+                <FaExclamationTriangle
+                  className={`w-4 h-4 shrink-0 mt-0.5 ${
+                    error.variant === "incomplete"
+                      ? "text-warning"
+                      : "text-text-main/40"
+                  }`}
+                />
+                <div className="grow">
+                  <p className="font-semibold text-text-main">{error.title}</p>
+                  <p className="text-text-main/60 leading-relaxed">
+                    {error.message}
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
-        </button>
+
+          {sdkReady && (
+            <button
+              type="button"
+              onClick={handlePay}
+              disabled={isProcessing}
+              className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.97] cursor-pointer"
+            >
+              {isProcessing ? (
+                <>
+                  <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
+                  Verificando...
+                </>
+              ) : (
+                "Agregar Tarjeta"
+              )}
+            </button>
+          )}
+        </>
       )}
 
       {!sdkReady && (

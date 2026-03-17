@@ -91,7 +91,7 @@ export async function refundTransaction(transactionId: string) {
 export async function verifyCard(params: {
   userId: string;
   userEmail: string;
-  cardToken: string;
+  transactionReference: string;
   value: string;
 }) {
   return nuveiRequest<{
@@ -111,9 +111,10 @@ export async function verifyCard(params: {
       id: params.userId,
       email: params.userEmail,
     },
-    card: {
-      token: params.cardToken,
+    transaction: {
+      id: params.transactionReference,
     },
+    type: "BY_AMOUNT",
     value: params.value,
   });
 }
@@ -229,9 +230,7 @@ export async function verifyThreeDS(params: VerifyThreeDSParams): Promise<DebitR
     },
     transaction: { id: params.transactionId },
     type: params.type,
+    value: params.value ?? "",
   };
-  if (params.value) {
-    body.value = params.value;
-  }
   return nuveiRequest<DebitResponse>("/v2/transaction/verify/", "POST", body);
 }

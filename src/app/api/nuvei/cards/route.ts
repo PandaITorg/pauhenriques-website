@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/firebase-admin";
+import { auth, dbAdmin } from "@/lib/firebase-admin";
 import { listCards, deleteCard } from "@/lib/nuvei";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,23 @@ export async function GET(request: NextRequest) {
       (c) => c.status === "valid" || c.status === "review",
     );
 
+    // Check Firestore for locally verified cards (Nuvei may still report "review")
+    if (dbAdmin && cards.some((c) => c.status === "review")) {
+      const verifiedDoc = await dbAdmin
+        .collection("users")
+        .doc(decoded.uid)
+        .collection("verifiedCards")
+        .get();
+      const verifiedTokens = new Set(verifiedDoc.docs.map((d) => d.id));
+
+      const enrichedCards = cards.map((c) =>
+        c.status === "review" && verifiedTokens.has(c.token)
+          ? { ...c, status: "valid" as const }
+          : c,
+      );
+      return NextResponse.json({ cards: enrichedCards });
+    }
+
     return NextResponse.json({ cards });
   } catch (error) {
     console.error("Error listing cards:", error);
@@ -56,6 +73,19 @@ export async function DELETE(request: NextRequest) {
     }
 
     const result = await deleteCard(token, decoded.uid);
+
+    // Also remove from verified cards if exists
+    if (dbAdmin) {
+      try {
+        await dbAdmin
+          .collection("users")
+          .doc(decoded.uid)
+          .collection("verifiedCards")
+          .doc(token)
+          .delete();
+      } catch { /* ignore if doesn't exist */ }
+    }
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error deleting card:", error);

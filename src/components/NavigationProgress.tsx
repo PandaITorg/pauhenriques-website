@@ -61,7 +61,15 @@ export default function NavigationProgress() {
   // Listen for clicks on internal links (event delegation)
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest("a");
+      const target = e.target as HTMLElement;
+
+      // Skip if click originated from a button or interactive element inside a link
+      // (e.g. "Add to cart" button inside a product card link)
+      if (target.closest("button, [role='button'], input, select, textarea")) {
+        return;
+      }
+
+      const anchor = target.closest("a");
       if (!anchor) return;
 
       const href = anchor.getAttribute("href");

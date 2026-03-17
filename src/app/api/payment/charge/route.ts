@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // Nuvei/Paymentez status_detail codes → user-friendly messages in Spanish
 const NUVEI_ERROR_MESSAGES: Record<number, string> = {
   0: "Error del procesador de pagos. Intenta de nuevo.",
-  1: "El banco rechazó la transacción. Contacta a tu banco.",
+  // 1 = review/pending — handled separately, not shown as error
   2: "Error en la validación del banco. Verifica los datos de tu tarjeta.",
   // 3 = success, not used here
   4: "Tarjeta rechazada por el banco. Intenta con otra tarjeta.",
@@ -16,10 +16,10 @@ const NUVEI_ERROR_MESSAGES: Record<number, string> = {
   6: "Error de comunicación con el banco. Intenta en unos minutos.",
   7: "Tarjeta reportada como perdida o robada. Contacta a tu banco.",
   8: "Tarjeta rechazada por seguridad antifraude.",
-  9: "Fondos insuficientes. Verifica tu saldo o usa otra tarjeta.",
+  9: "Transacción denegada por el banco. Contacta a tu banco o intenta con otra tarjeta.",
   10: "La tarjeta no pudo ser procesada. Intenta con otra tarjeta.",
-  11: "Transacción duplicada detectada. Espera unos minutos.",
-  12: "Error de conexión con el banco. Intenta de nuevo.",
+  11: "Transacción rechazada por el sistema antifraude.",
+  12: "Tarjeta en lista restringida. Contacta a tu banco.",
   13: "Tarjeta inválida o deshabilitada. Contacta a tu banco.",
   14: "El monto excede el límite permitido por tu tarjeta.",
   19: "Transacción rechazada por filtro antifraude.",
@@ -96,6 +96,8 @@ export async function POST(request: NextRequest) {
 
     const body: ChargeRequestBody = await request.json();
     const { token, orderId, amount, vat, description, userId, userEmail, browserInfo } = body;
+
+    console.log("[charge] Request:", { token: token?.substring(0, 10) + "...", orderId, amount, userId: userId?.substring(0, 8) + "..." });
 
     if (!token || !orderId || !amount) {
       return NextResponse.json(
@@ -291,6 +293,26 @@ export async function POST(request: NextRequest) {
         transactionId: nuveiData.transaction.id,
         authorizationCode: nuveiData.transaction.authorization_code,
         orderId,
+      });
+    }
+
+    // Review/pending transaction (status "pending", status_detail 1): payment is under review
+    if (
+      nuveiData.transaction?.status === "pending" &&
+      nuveiData.transaction?.status_detail === 1
+    ) {
+      if (dbAdmin) {
+        await dbAdmin.collection("orders").doc(orderId).update({
+          status: "processing",
+          paymentTransactionId: nuveiData.transaction.id || null,
+          chargeResponseAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
+      return NextResponse.json({
+        review: true,
+        orderId,
+        transactionId: nuveiData.transaction.id,
       });
     }
 

@@ -281,9 +281,21 @@ export default function CheckoutPage() {
     return false;
   }
 
-  const handleTokenSuccess = (token: string) => {
+  const handleTokenSuccess = async (token: string) => {
     setSelectedCardToken(token);
+    setSelectedCardInfo(null);
     setPaymentMode("saved");
+    // Fetch updated card list to get full card info for the newly added token
+    try {
+      const res = await fetch("/api/nuvei/cards");
+      if (res.ok) {
+        const data = await res.json();
+        const newCard = (data.cards || []).find((c: SavedCard) => c.token === token);
+        if (newCard) {
+          setSelectedCardInfo(newCard);
+        }
+      }
+    } catch { /* proceed without card info */ }
     setStep("confirm");
   };
 
@@ -363,6 +375,14 @@ export default function CheckoutPage() {
         clearCart();
         setTimeout(() => {
           router.push(`/checkout/confirmacion?orderId=${orderId}`);
+        }, 1500);
+      } else if (data.review) {
+        // Payment under review — treat as pending success, clear cart
+        setProcessingPayment(false);
+        setPaymentSuccess(true);
+        clearCart();
+        setTimeout(() => {
+          router.push(`/checkout/confirmacion?orderId=${orderId}&review=1`);
         }, 1500);
       } else if (data.otpRequired) {
         // OTP verification required (status_detail 31) — show OTP form
@@ -779,11 +799,15 @@ export default function CheckoutPage() {
                   <div className="space-y-4">
                     <SavedCards
                       onSelectCard={(card) => {
+                        if (card.status === "review" || card.status === "pending") return;
                         setSelectedCardToken(card.token);
                         setSelectedCardInfo(card);
                       }}
                       selectedToken={selectedCardToken}
-                      onAddNewCard={() => setPaymentMode("new")}
+                      onAddNewCard={() => {
+                        setPaymentMode("new");
+                        setPaymentError(null);
+                      }}
                     />
 
                     {selectedCardToken && (
