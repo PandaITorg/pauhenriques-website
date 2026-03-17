@@ -119,6 +119,7 @@ export default function CheckoutPage() {
   const [otpCode, setOtpCode] = useState("");
   const [otpSubmitting, setOtpSubmitting] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
+  const [challengeVerifying, setChallengeVerifying] = useState(false);
 
   const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
   const [selectedCardToken, setSelectedCardToken] = useState<string | null>(
@@ -156,6 +157,7 @@ export default function CheckoutPage() {
   const handleVerifyResponse = useRef((data: any) => {
     if (data.success) {
       setThreeDSChallenge(null);
+      setChallengeVerifying(false);
       setProcessingPayment(false);
       setPaymentSuccess(true);
       clearCart();
@@ -165,6 +167,7 @@ export default function CheckoutPage() {
     } else if (data.challenge) {
       // Escalation: status 35 → 36 (or verify returned another challenge)
       setProcessingPayment(false);
+      setChallengeVerifying(false);
       setThreeDSChallenge({
         html: data.challengeHtml,
         orderId: data.orderId,
@@ -175,6 +178,7 @@ export default function CheckoutPage() {
     } else {
       paymentLockRef.current = false;
       setProcessingPayment(false);
+      setChallengeVerifying(false);
       setPaymentFailed(data.error || "Error al completar el pago 3DS.");
       setThreeDSChallenge(null);
     }
@@ -262,7 +266,7 @@ export default function CheckoutPage() {
     // Then poll every 3 seconds for up to 2 minutes
     let pollCount = 0;
     const MAX_POLLS = 40; // 40 * 3s = 2 minutes
-    const POLL_DELAY = 8000; // wait 8s before first poll
+    const POLL_DELAY = 3000; // wait 3s before first poll
     const POLL_INTERVAL = 3000;
 
     const pollTimer = setTimeout(() => {
@@ -672,6 +676,28 @@ export default function CheckoutPage() {
 
   // 3DS Challenge modal — shown when bank requires OTP/biometric verification
   if (threeDSChallenge) {
+    // After user completes challenge, iframe navigates to callback (which may 403).
+    // Show our own spinner instead of the error.
+    if (challengeVerifying) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
+          <div className="bg-surface-card border border-border-subtle rounded-xl p-8 max-w-sm w-full shadow-xl">
+            <FaShieldAlt className="w-8 h-8 text-primary mx-auto mb-4" />
+            <div className="simple-spinner w-8! h-8! border-3! mx-auto mb-4" />
+            <h2 className="font-cormorant text-xl font-semibold text-text-main mb-2">
+              Verificando con tu banco
+            </h2>
+            <p className="text-text-main/50 text-sm">
+              Estamos confirmando tu autenticación. Esto puede tomar unos segundos...
+            </p>
+          </div>
+          <p className="text-center text-xs text-text-main/40 mt-3">
+            No cierres esta página.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-md">
@@ -696,6 +722,17 @@ export default function CheckoutPage() {
                 style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "450px" }}
                 title="Autenticación 3DS"
                 sandbox="allow-forms allow-scripts allow-same-origin"
+                onLoad={(e) => {
+                  // Detect when iframe navigates away from challenge (user completed it)
+                  // The first load is the challenge form, subsequent loads mean the ACS
+                  // submitted to our callback — switch to verifying spinner
+                  const iframe = e.currentTarget;
+                  if (!iframe.dataset.initialLoad) {
+                    iframe.dataset.initialLoad = "true";
+                  } else if (!threeDSChallenge.isDeviceFingerprint) {
+                    setChallengeVerifying(true);
+                  }
+                }}
               />
               {threeDSChallenge.isDeviceFingerprint && (
                 <div className="flex flex-col items-center gap-3 py-10">
