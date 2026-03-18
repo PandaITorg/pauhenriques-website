@@ -213,15 +213,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build term_url for 3DS challenge callback — include orderId so 3ds-return can identify the order
-    // Derive base URL from request headers so it works automatically in local/staging/production
-    const host = request.headers.get("host") || "localhost:3000";
-    const protocol = host.includes("localhost") ? "http" : "https";
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
-    // Use Cloud Function for 3DS callback — Firebase App Hosting blocks external POSTs
-    const functionsBase = process.env.NUVEI_ENV === "prod"
-      ? "https://us-central1-pau-henriques-web-v1.cloudfunctions.net"
-      : "https://us-central1-pau-henriques-web-v1.cloudfunctions.net";
+    // Build term_url for 3DS challenge callback
+    // Cloud Function URL — Firebase App Hosting blocks external POSTs
+    const functionsBase = process.env.CLOUD_FUNCTIONS_BASE_URL
+      || "https://us-central1-pau-henriques-web-v1.cloudfunctions.net";
     const termUrl = `${functionsBase}/threeDSCallback?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)

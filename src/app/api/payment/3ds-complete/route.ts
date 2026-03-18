@@ -170,6 +170,8 @@ export async function POST(request: NextRequest) {
         chargeResponseAt: new Date(),
         updatedAt: new Date(),
         threeDSCres: FieldValue.delete(),
+        threeDSTransStatus: FieldValue.delete(),
+        isDeviceFingerprint: FieldValue.delete(),
       });
 
       // Increment promotion usage if coupon was applied
