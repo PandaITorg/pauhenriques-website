@@ -154,7 +154,8 @@ export default function CheckoutPage() {
 
   // Shared handler for verify API responses (used by both status 35 timer and status 36 postMessage)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleVerifyResponse = useRef((data: any) => {
+  const handleVerifyResponse = useRef((_data: any) => {});
+  handleVerifyResponse.current = (data: any) => {
     if (data.success) {
       setThreeDSChallenge(null);
       setChallengeVerifying(false);
@@ -166,6 +167,8 @@ export default function CheckoutPage() {
       }, 1500);
     } else if (data.challenge) {
       // Escalation: status 35 → 36 (or verify returned another challenge)
+      // Reset the ref so postMessage/polling can resolve the new challenge
+      threeDSCompleteCalledRef.current = false;
       setProcessingPayment(false);
       setChallengeVerifying(false);
       setThreeDSChallenge({
@@ -182,7 +185,7 @@ export default function CheckoutPage() {
       setPaymentFailed(data.error || "Error al completar el pago 3DS.");
       setThreeDSChallenge(null);
     }
-  });
+  };
 
   // Timer for status_detail 35: wait 5 seconds, then call verify with AUTHENTICATION_CONTINUE
   useEffect(() => {
@@ -230,6 +233,7 @@ export default function CheckoutPage() {
       setThreeDSChallenge(null);
 
       if (transStatus && transStatus !== "Y" && transStatus !== "A") {
+        threeDSCompleteCalledRef.current = true;
         paymentLockRef.current = false;
         const msg =
           transStatus === "N" ? "Autenticación 3DS rechazada por tu banco. Intenta con otra tarjeta." :
@@ -261,13 +265,15 @@ export default function CheckoutPage() {
 
     window.addEventListener("message", handle3DSMessage);
 
-    // --- Polling fallback (for when callback POST is blocked by infra) ---
-    // Start polling after 8 seconds (give callback time to work first)
-    // Then poll every 3 seconds for up to 2 minutes
+    // --- Polling fallback (for when postMessage doesn't arrive) ---
+    // Start polling after 10 seconds (give Cloud Function + postMessage time first)
+    // Then poll every 4 seconds for up to 2 minutes
     let pollCount = 0;
-    const MAX_POLLS = 40; // 40 * 3s = 2 minutes
-    const POLL_DELAY = 3000; // wait 3s before first poll
-    const POLL_INTERVAL = 3000;
+    const MAX_POLLS = 30; // 30 * 4s = 2 minutes
+    const POLL_DELAY = 10000; // wait 10s before first poll
+    const POLL_INTERVAL = 4000;
+
+    let pollIntervalRef: ReturnType<typeof setInterval> | null = null;
 
     const pollTimer = setTimeout(() => {
       pollIntervalRef = setInterval(async () => {
@@ -298,8 +304,11 @@ export default function CheckoutPage() {
           });
           const data = await response.json();
 
+          // If still pending (challenge not completed yet), keep polling
+          if (data.pending) return;
+
           // If verify returned a definitive result, handle it
-          if (data.success || (data.error && !data.error.includes("autenticación 3DS"))) {
+          if (data.success || data.error) {
             if (threeDSCompleteCalledRef.current) return;
             threeDSCompleteCalledRef.current = true;
             clearInterval(pollIntervalRef!);
@@ -307,14 +316,11 @@ export default function CheckoutPage() {
             setThreeDSChallenge(null);
             handleVerifyResponse.current(data);
           }
-          // Otherwise keep polling (challenge still in progress)
         } catch {
           // Network error — keep polling
         }
       }, POLL_INTERVAL);
     }, POLL_DELAY);
-
-    let pollIntervalRef: ReturnType<typeof setInterval> | null = null;
 
     return () => {
       window.removeEventListener("message", handle3DSMessage);

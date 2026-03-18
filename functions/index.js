@@ -27,30 +27,33 @@ exports.threeDSCallback = onRequest(
         cres = req.body.cres || req.body.CRes || "";
       }
     } else if (req.method === "GET") {
-      transStatus = req.query.transStatus || "Y";
+      transStatus = req.query.transStatus || "U";
       cres = req.query.cres || req.query.CRes || "";
     }
 
     // Store cres on the order so 3ds-complete can use it for BY_CRES verify
-    if (orderId && cres) {
+    // Only update if order exists and is in 3ds-pending state (prevents tampering)
+    if (orderId) {
       try {
-        await db.collection("orders").doc(orderId).update({
-          threeDSCres: cres,
-          threeDSTransStatus: transStatus,
-          updatedAt: new Date(),
-        });
+        const orderRef = db.collection("orders").doc(orderId);
+        const orderDoc = await orderRef.get();
+
+        if (!orderDoc.exists || orderDoc.data().status !== "3ds-pending") {
+          console.warn("Callback rejected: order not in 3ds-pending state", { orderId, status: orderDoc.data()?.status });
+        } else if (cres) {
+          await orderRef.update({
+            threeDSCres: cres,
+            threeDSTransStatus: transStatus,
+            updatedAt: new Date(),
+          });
+        } else if (transStatus) {
+          await orderRef.update({
+            threeDSTransStatus: transStatus,
+            updatedAt: new Date(),
+          });
+        }
       } catch (err) {
         console.error("Failed to store cres on order:", err);
-      }
-    } else if (orderId && transStatus) {
-      // Even without cres, store the transStatus so polling can detect failures
-      try {
-        await db.collection("orders").doc(orderId).update({
-          threeDSTransStatus: transStatus,
-          updatedAt: new Date(),
-        });
-      } catch (err) {
-        console.error("Failed to store transStatus on order:", err);
       }
     }
 

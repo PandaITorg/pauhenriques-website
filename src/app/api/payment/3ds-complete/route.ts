@@ -94,9 +94,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // For AUTHENTICATION_CONTINUE on a 3DS challenge (36/37), check if the
+    // Cloud Function callback has stored the cres first. If not, the challenge
+    // is still in progress — return "pending" without calling Nuvei.
+    if (type === "AUTHENTICATION_CONTINUE" && orderData.threeDSCres) {
+      // Cloud Function already stored the cres — upgrade to BY_CRES
+      console.log("[3ds-complete] Polling detected stored cres, upgrading to BY_CRES");
+    } else if (type === "AUTHENTICATION_CONTINUE" && !orderData.isDeviceFingerprint) {
+      // Challenge still in progress — no cres yet, don't call Nuvei
+      return NextResponse.json({ pending: true });
+    }
+
+    // Determine the actual verify type and value
+    const actualType = (type === "AUTHENTICATION_CONTINUE" && orderData.threeDSCres)
+      ? "BY_CRES" as const
+      : type;
+
     // For BY_CRES, get the cres value stored by 3ds-callback
-    const cresValue = type === "BY_CRES" ? orderData.threeDSCres : undefined;
-    if (type === "BY_CRES" && !cresValue) {
+    const cresValue = (actualType === "BY_CRES") ? orderData.threeDSCres : undefined;
+    if (actualType === "BY_CRES" && !cresValue) {
       return NextResponse.json(
         { error: "No se encontró el valor de autenticación 3DS (cres)" },
         { status: 400 },
@@ -118,12 +134,12 @@ export async function POST(request: NextRequest) {
     const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
 
     // Call Nuvei Verify API instead of a second debit
-    console.log("[3ds-complete] Calling verify:", { transactionId, type, hasValue: !!verifyValue });
+    console.log("[3ds-complete] Calling verify:", { transactionId, type: actualType, hasValue: !!verifyValue });
     const verifyResult = await verifyThreeDS({
       transactionId,
       userId,
       userEmail,
-      type,
+      type: actualType,
       value: verifyValue,
     });
     console.log("[3ds-complete] Verify response:", JSON.stringify(verifyResult));
@@ -144,7 +160,10 @@ export async function POST(request: NextRequest) {
       (txStatus === "success" || txStatus === 1) && txStatusDetail === 3;
 
     if (isSuccess) {
-      await dbAdmin.collection("orders").doc(orderId).update({
+      const batch = dbAdmin.batch();
+      const orderRef = dbAdmin.collection("orders").doc(orderId);
+
+      batch.update(orderRef, {
         status: "paid",
         paymentTransactionId: txId,
         authorizationCode: txAuthCode,
@@ -152,6 +171,23 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
         threeDSCres: FieldValue.delete(),
       });
+
+      // Increment promotion usage if coupon was applied
+      if (orderData.promotionId) {
+        const promoRef = dbAdmin.collection("promotions").doc(orderData.promotionId);
+        batch.update(promoRef, {
+          currentUses: FieldValue.increment(1),
+        });
+        const usageRef = promoRef.collection("usages").doc();
+        batch.set(usageRef, {
+          userId: orderData.userId,
+          orderId,
+          discountApplied: orderData.discount || 0,
+          usedAt: new Date(),
+        });
+      }
+
+      await batch.commit();
 
       return NextResponse.json({
         success: true,
@@ -170,9 +206,10 @@ export async function POST(request: NextRequest) {
         "";
 
       if (challengeHtml) {
-        // Update transaction ID in case it changed
+        // Update transaction ID and clear fingerprint flag (escalation 35→36)
         await dbAdmin.collection("orders").doc(orderId).update({
           nuveiTransactionId: txId,
+          isDeviceFingerprint: FieldValue.delete(),
           updatedAt: new Date(),
           threeDSCres: FieldValue.delete(),
         });

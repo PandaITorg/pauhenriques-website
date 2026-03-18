@@ -328,6 +328,7 @@ export async function POST(request: NextRequest) {
       if (dbAdmin) {
         await dbAdmin.collection("orders").doc(orderId).update({
           status: "3ds-pending",
+          isDeviceFingerprint: true,
           nuveiTransactionId: nuveiData.transaction.id || null,
           updatedAt: new Date(),
         });
