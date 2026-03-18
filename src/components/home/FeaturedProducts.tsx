@@ -31,7 +31,7 @@ const FeaturedProducts = () => {
   return (
     <section className="bg-white py-12 md:py-20">
       <div className="container mx-auto px-5">
-        <h2 className="text-2xl md:text-3xl font-bold text-text-inverted text-center mb-3">
+        <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-inverted text-center mb-3">
           Productos para una Vida sin Toxicos
         </h2>
         <p className="text-text-inverted/50 text-center mb-8 md:mb-12 max-w-lg mx-auto">

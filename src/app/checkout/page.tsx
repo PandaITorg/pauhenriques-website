@@ -498,7 +498,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
         <div className="animate-[scale-in_0.4s_ease-out]">
-          <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-5" />
+          <FaCheckCircle className="w-16 h-16 text-success mx-auto mb-5" />
         </div>
         <h1 className="font-cormorant text-2xl md:text-3xl font-semibold text-text-main mb-2">
           Pago aprobado
@@ -531,7 +531,7 @@ export default function CheckoutPage() {
             setPaymentError(paymentFailed);
             setStep("confirm");
           }}
-          className="mt-6 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+          className="mt-6 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200"
         >
           Volver al checkout
         </button>
@@ -562,7 +562,7 @@ export default function CheckoutPage() {
         <p className="text-text-main/50 mb-6">Explora nuestra tienda</p>
         <Link
           href="/tienda"
-          className="bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-lg transition-colors"
+          className="bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200"
         >
           Ir a la Tienda
         </Link>
@@ -645,7 +645,7 @@ export default function CheckoutPage() {
               <button
                 onClick={handleOtpSubmit}
                 disabled={otpSubmitting || !otpCode.trim()}
-                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:bg-surface-elevated disabled:text-text-main/30"
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {otpSubmitting ? (
                   <>
@@ -757,12 +757,28 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-6 md:py-10 px-4 sm:px-6">
-      <div className="container mx-auto max-w-5xl">
-        <h1 className="font-cormorant text-2xl md:text-3xl font-semibold text-text-main text-center mb-6">
-          Checkout
-        </h1>
+    <div className="min-h-screen bg-background">
+      {/* ── Hero header ── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/60 via-background to-background" />
+        <div className="relative max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-4 md:pt-16 md:pb-6 text-center">
+          <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-2">
+            Compra segura
+          </span>
+          <h1 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-main mb-1">
+            Checkout
+          </h1>
+          <p className="text-sm text-text-main/50">
+            <FaLock className="inline w-3 h-3 mr-1 -mt-0.5" />
+            Conexion encriptada
+          </p>
+        </div>
+      </section>
 
+      {/* ── Separator ── */}
+      <div className="h-px max-w-5xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-6 md:py-10">
         {/* Steps indicator */}
         <StepIndicator
           currentStep={step}
@@ -807,14 +823,14 @@ export default function CheckoutPage() {
                 <div className="flex flex-col sm:flex-row gap-3 mt-6">
                   <Link
                     href="/tienda"
-                    className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-lg hover:bg-surface-elevated transition-colors text-sm"
+                    className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-xl hover:bg-surface-elevated transition-colors text-sm"
                   >
                     <FaArrowLeft className="w-3 h-3" />
                     Seguir comprando
                   </Link>
                   <button
                     onClick={() => setStep("shipping")}
-                    className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors"
+                    className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200"
                   >
                     Continuar con el envío
                   </button>
@@ -850,7 +866,7 @@ export default function CheckoutPage() {
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setStep("cart")}
-                    className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-lg hover:bg-surface-elevated transition-colors"
+                    className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-xl hover:bg-surface-elevated transition-colors"
                   >
                     <FaArrowLeft className="w-3 h-3" />
                     Volver
@@ -858,7 +874,7 @@ export default function CheckoutPage() {
                   <button
                     onClick={() => setStep("payment")}
                     disabled={!shipping}
-                    className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:bg-surface-elevated disabled:text-text-main/30"
+                    className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30"
                   >
                     Continuar al Pago
                   </button>
@@ -910,7 +926,7 @@ export default function CheckoutPage() {
                     {selectedCardToken && (
                       <button
                         onClick={() => setStep("confirm")}
-                        className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-lg transition-colors"
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200"
                       >
                         Revisar pedido →
                       </button>
@@ -955,7 +971,7 @@ export default function CheckoutPage() {
 
                 <button
                   onClick={() => setStep("shipping")}
-                  className="mt-4 w-full flex items-center justify-center gap-2 border border-border-default text-text-main/60 font-medium py-3 rounded-lg hover:bg-surface-elevated transition-colors"
+                  className="mt-4 w-full flex items-center justify-center gap-2 border border-border-default text-text-main/60 font-medium py-3 rounded-xl hover:bg-surface-elevated transition-colors"
                 >
                   <FaArrowLeft className="w-3 h-3" />
                   Volver
@@ -1068,7 +1084,7 @@ export default function CheckoutPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setStep("payment")}
-                    className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-lg hover:bg-surface-elevated transition-colors"
+                    className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-xl hover:bg-surface-elevated transition-colors"
                   >
                     <FaArrowLeft className="w-3 h-3" />
                     Editar pago
@@ -1076,7 +1092,7 @@ export default function CheckoutPage() {
                   <button
                     onClick={handleConfirmPayment}
                     disabled={processingPayment || !selectedCardToken}
-                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-lg transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 active:scale-[0.97]"
+                    className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 active:scale-[0.97]"
                   >
                     {processingPayment ? (
                       <>

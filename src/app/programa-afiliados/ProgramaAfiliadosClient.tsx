@@ -475,7 +475,7 @@ export default function ProgramaAfiliadosClient() {
           priority
         />
         <div className="container mx-auto text-center bg-background/95 backdrop-blur-sm p-6 md:p-8 rounded-xl relative z-10">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 md:mb-4">
+          <h1 className="font-cormorant text-3xl sm:text-4xl md:text-5xl font-semibold mb-3 md:mb-4">
             Conviertete en Afiliado de Pau Henriques
           </h1>
           <p className="text-base md:text-xl mb-6 md:mb-8">
@@ -484,7 +484,7 @@ export default function ProgramaAfiliadosClient() {
           </p>
           <button
             onClick={scrollToForm}
-            className="bg-primary text-text-inverted font-bold py-3 px-8 rounded-full hover:brightness-90 transition duration-300"
+            className="bg-primary text-white font-semibold py-3 px-8 rounded-full hover:bg-primary-hover transition-all duration-200 hover:-translate-y-px hover:shadow-(--shadow-glow-primary)"
           >
             Únete Ahora
           </button>
@@ -493,7 +493,7 @@ export default function ProgramaAfiliadosClient() {
 
       <div className="container mx-auto py-10 md:py-16">
         <section className="text-center mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-text-inverted">
+          <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold mb-6 md:mb-8 text-text-inverted">
             Como Funciona?
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
@@ -506,7 +506,7 @@ export default function ProgramaAfiliadosClient() {
                 gratuito.
               </p>
             </div>
-            <div className="p-8 bg-white rounded-lg shadow-md text-text-inverted">
+            <div className="p-6 md:p-8 bg-white rounded-xl shadow-md text-text-inverted">
               <h3 className="text-2xl font-bold mb-4 text-primary">
                 2. Promociona
               </h3>
@@ -515,7 +515,7 @@ export default function ProgramaAfiliadosClient() {
                 redes sociales, blog o con tus amigos.
               </p>
             </div>
-            <div className="p-8 bg-white rounded-lg shadow-md text-text-inverted">
+            <div className="p-6 md:p-8 bg-white rounded-xl shadow-md text-text-inverted">
               <h3 className="text-2xl font-bold mb-4 text-primary">
                 3. Gana Comisiones
               </h3>
@@ -527,8 +527,8 @@ export default function ProgramaAfiliadosClient() {
           </div>
         </section>
 
-        <section className="mb-16 bg-white p-8 rounded-lg shadow-md text-text-inverted">
-          <h2 className="text-4xl font-bold text-center mb-8">
+        <section className="mb-16 bg-white p-6 md:p-8 rounded-xl shadow-md text-text-inverted">
+          <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-center mb-8">
             Beneficios del Programa
           </h2>
           <ul className="grid md:grid-cols-2 gap-8 text-lg">
@@ -565,9 +565,9 @@ export default function ProgramaAfiliadosClient() {
 
         <section
           ref={sectionRef}
-          className="bg-white p-8 rounded-lg shadow-md text-text-inverted"
+          className="bg-white p-6 md:p-8 rounded-xl shadow-md text-text-inverted"
         >
-          <h2 className="text-4xl font-bold text-center mb-8">
+          <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-center mb-8">
             Únete a Nuestro Equipo
           </h2>
 
@@ -593,7 +593,7 @@ export default function ProgramaAfiliadosClient() {
                   Cargando datos de países y ciudades...
                 </div>
               ) : cscError ? (
-                <div className="text-center text-red-500 text-lg">
+                <div className="text-center text-error text-lg">
                   {cscError}
                 </div>
               ) : (
@@ -613,10 +613,10 @@ export default function ProgramaAfiliadosClient() {
                       value={formData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary"
                     />
                     {errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                      <p className="text-error text-sm mt-1">{errors.name}</p>
                     )}
                   </div>
                   <div className="mb-4">
@@ -629,10 +629,10 @@ export default function ProgramaAfiliadosClient() {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary"
                     />
                     {errors.email && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-error text-sm mt-1">
                         {errors.email}
                       </p>
                     )}
@@ -646,7 +646,7 @@ export default function ProgramaAfiliadosClient() {
                         id="country"
                         value={country?.iso2 || ""}
                         onChange={handleCountryChange}
-                        className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary"
+                        className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary"
                       >
                         <option value="">Selecciona un país</option>
                         {countries.map((c) => (
@@ -656,7 +656,7 @@ export default function ProgramaAfiliadosClient() {
                         ))}
                       </select>
                       {errors.country && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="text-error text-sm mt-1">
                           {errors.country}
                         </p>
                       )}
@@ -670,7 +670,7 @@ export default function ProgramaAfiliadosClient() {
                         value={region?.iso2 || ""}
                         onChange={handleRegionChange}
                         disabled={!country || states.length === 0}
-                        className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary disabled:bg-gray-200"
+                        className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary disabled:bg-warm-100"
                       >
                         <option value="">
                           Selecciona una provincia/estado
@@ -682,7 +682,7 @@ export default function ProgramaAfiliadosClient() {
                         ))}
                       </select>
                       {errors.region && (
-                        <p className="text-red-500 text-sm mt-1">
+                        <p className="text-error text-sm mt-1">
                           {errors.region}
                         </p>
                       )}
@@ -697,7 +697,7 @@ export default function ProgramaAfiliadosClient() {
                       value={city?.name || ""}
                       onChange={handleCityChange}
                       disabled={!region || cities.length === 0}
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary disabled:bg-gray-200"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary disabled:bg-warm-100"
                     >
                       <option value="">Selecciona una ciudad</option>
                       {cities.map((c) => (
@@ -707,7 +707,7 @@ export default function ProgramaAfiliadosClient() {
                       ))}
                     </select>
                     {errors.city && (
-                      <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                      <p className="text-error text-sm mt-1">{errors.city}</p>
                     )}
                   </div>
                   <div className="mb-4">
@@ -726,10 +726,10 @@ export default function ProgramaAfiliadosClient() {
                         ) as CountryCode[]
                       }
                       disabled={!country}
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary disabled:bg-gray-200"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary disabled:bg-warm-100"
                     />
                     {errors.phone && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-error text-sm mt-1">
                         {errors.phone}
                       </p>
                     )}
@@ -747,10 +747,10 @@ export default function ProgramaAfiliadosClient() {
                       accept="image/*"
                       onChange={handleFileChange}
                       required
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-text-inverted hover:file:brightness-90"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-text-inverted hover:file:brightness-90"
                     />
                     {errors.profilePicture && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-error text-sm mt-1">
                         {errors.profilePicture}
                       </p>
                     )}
@@ -764,19 +764,19 @@ export default function ProgramaAfiliadosClient() {
                       id="website"
                       value={formData.website}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary"
                       placeholder="tu-pagina.com"
                     />
                   </div>
 
-                  <div className="border-t border-gray-200 pt-4 mt-4">
+                  <div className="border-t border-border-warm pt-4 mt-4">
                     <div className="flex items-center mb-4">
                       <input
                         type="checkbox"
                         id="no-socials"
                         checked={noSocials}
                         onChange={handleNoSocialsChange}
-                        className="h-4 w-4 accent-primary focus:ring-primary border-gray-300 rounded"
+                        className="h-4 w-4 accent-primary focus:ring-primary border-border-warm rounded"
                       />
                       <label
                         htmlFor="no-socials"
@@ -809,7 +809,7 @@ export default function ProgramaAfiliadosClient() {
                                 className={`p-2.5 border rounded-lg transition-colors ${
                                   social.platform === p.id
                                     ? "bg-primary text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                    : "bg-warm-50 text-text-inverted/60 hover:bg-warm-100"
                                 }`}
                               >
                                 <p.icon className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -826,14 +826,14 @@ export default function ProgramaAfiliadosClient() {
                                 e.target.value
                               )
                             }
-                            className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary"
+                            className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary"
                             placeholder="TuUsuario"
                           />
                           {formData.socials.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeSocialField(index)}
-                              className="text-red-500 font-bold p-2"
+                              className="text-error font-bold p-2"
                             >
                               X
                             </button>
@@ -860,10 +860,10 @@ export default function ProgramaAfiliadosClient() {
                       rows={4}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-3 py-2 border rounded-lg bg-gray-100 border-primary focus:outline-none focus:border-secondary"
+                      className="w-full px-3 py-2 border rounded-lg bg-warm-50 border-primary focus:outline-none focus:border-secondary"
                     ></textarea>
                     {errors.message && (
-                      <p className="text-red-500 text-sm mt-1">
+                      <p className="text-error text-sm mt-1">
                         {errors.message}
                       </p>
                     )}

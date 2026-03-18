@@ -128,10 +128,10 @@ export default function SavedCards({
 
   function getCardColor(type: string) {
     const colors: Record<string, string> = {
-      vi: "text-blue-400",
-      mc: "text-orange-400",
-      ax: "text-green-400",
-      di: "text-blue-300",
+      vi: "text-info",
+      mc: "text-warning",
+      ax: "text-success",
+      di: "text-info/70",
     };
     return colors[type] || "text-text-main/40";
   }

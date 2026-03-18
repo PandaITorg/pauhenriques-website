@@ -71,7 +71,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
         <h3 className="font-bold text-sm sm:text-base text-text-inverted line-clamp-2 mb-1">
           {product.name}
         </h3>
-        <p className="text-xs text-gray-500 mb-2 line-clamp-2 grow">
+        <p className="text-xs text-text-inverted/50 mb-2 line-clamp-2 grow">
           {product.description}
         </p>
 
@@ -85,7 +85,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
               disabled={isAdded}
               className={`w-full font-semibold py-2.5 px-4 rounded-lg text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                 isAdded
-                  ? "bg-green-500 text-white"
+                  ? "bg-success text-white"
                   : "bg-background hover:bg-bosque-profundo-400 text-white"
               }`}
             >

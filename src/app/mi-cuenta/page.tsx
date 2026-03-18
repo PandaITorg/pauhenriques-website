@@ -51,7 +51,7 @@ const TABS = [
 ];
 
 const inputClass =
-  "w-full p-2.5 bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
+  "w-full py-3 px-4 bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
 
 export default function MiCuentaPage() {
   const { user, loading, signOut } = useAuth();
@@ -151,38 +151,56 @@ export default function MiCuentaPage() {
 
   if (!user) return null;
 
+  const displayName = profile
+    ? `${profile.nombre} ${profile.apellido}`
+    : user.displayName || "Mi Cuenta";
+
   return (
-    <div className="min-h-screen bg-background py-8 px-4 sm:px-6">
-      <div className="container mx-auto max-w-3xl">
-        {/* Header card */}
-        <div className="bg-surface-card border border-border-subtle rounded-xl p-6 mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full overflow-hidden bg-primary/15 flex items-center justify-center shrink-0">
-              {user.photoURL ? (
-                <Image
-                  src={user.photoURL}
-                  alt="Avatar"
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                <span className="text-2xl font-bold text-primary">
-                  {(profile?.nombre?.[0] || user.email?.[0] || "U").toUpperCase()}
-                </span>
-              )}
+    <div className="min-h-screen bg-background">
+      {/* ── Hero header with avatar ── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/60 via-background to-background" />
+        {/* Ambient glow behind avatar */}
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-8 md:pt-20 md:pb-10">
+          <div className="flex flex-col items-center text-center">
+            {/* Avatar with glow ring */}
+            <div className="relative w-20 h-20 mb-4">
+              <div className="absolute -inset-1 rounded-full bg-linear-to-br from-primary/40 to-primary/10 blur-sm" />
+              <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-primary/30 bg-surface-card flex items-center justify-center">
+                {user.photoURL ? (
+                  <Image
+                    src={user.photoURL}
+                    alt="Avatar"
+                    width={80}
+                    height={80}
+                    className="object-cover w-full h-full"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-primary">
+                    {(profile?.nombre?.[0] || user.email?.[0] || "U").toUpperCase()}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="min-w-0">
-              <h1 className="font-cormorant text-2xl font-semibold text-text-main truncate">
-                {profile
-                  ? `${profile.nombre} ${profile.apellido}`
-                  : user.displayName || "Mi Cuenta"}
-              </h1>
-              <p className="text-sm text-text-main/50 truncate">{user.email}</p>
-            </div>
+
+            <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-2">
+              Mi Cuenta
+            </span>
+            <h1 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-main mb-1">
+              {displayName}
+            </h1>
+            <p className="text-sm text-text-main/50">{user.email}</p>
           </div>
         </div>
+      </section>
 
+      {/* ── Separator ── */}
+      <div className="h-px max-w-3xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      {/* ── Content ── */}
+      <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Tabs */}
         <div className="flex border-b border-border-default mb-6 overflow-x-auto">
           {TABS.map((tab) => (
@@ -295,7 +313,7 @@ export default function MiCuentaPage() {
                       type="email"
                       value={user.email || ""}
                       disabled
-                      className="w-full p-2.5 bg-surface-elevated border border-border-subtle rounded-lg text-sm text-text-main/40"
+                      className="w-full py-3 px-4 bg-surface-elevated border border-border-subtle rounded-xl text-sm text-text-main/40"
                     />
                     <p className="text-xs text-text-main/30 mt-1">
                       El email no se puede cambiar
@@ -312,14 +330,14 @@ export default function MiCuentaPage() {
                           telefono: profile?.telefono || "",
                         });
                       }}
-                      className="flex-1 border border-border-default text-text-main/60 font-medium py-2.5 rounded-lg hover:bg-surface-elevated transition-colors text-sm"
+                      className="flex-1 border border-border-default text-text-main/60 font-medium py-2.5 rounded-xl hover:bg-surface-elevated transition-colors text-sm"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleSave}
                       disabled={saving}
-                      className="flex-1 bg-primary hover:bg-primary-hover text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:bg-surface-elevated disabled:text-text-main/30"
+                      className="flex-1 bg-primary hover:bg-primary-hover text-white font-medium py-2.5 rounded-xl transition-all duration-200 text-sm disabled:bg-surface-elevated disabled:text-text-main/30"
                     >
                       {saving ? "Guardando..." : "Guardar cambios"}
                     </button>
@@ -370,7 +388,7 @@ export default function MiCuentaPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link
                 href="/mis-pedidos"
-                className="bg-surface-card border border-border-subtle rounded-xl p-5 flex items-center gap-4 hover:border-border-strong transition-colors"
+                className="bg-surface-card border border-border-subtle rounded-xl p-5 flex items-center gap-4 hover:border-primary/30 hover:shadow-(--shadow-glow-primary) transition-all duration-200"
               >
                 <div className="w-10 h-10 bg-primary/15 rounded-lg flex items-center justify-center">
                   <FaShoppingBag className="w-4 h-4 text-primary" />
@@ -387,7 +405,7 @@ export default function MiCuentaPage() {
 
               <button
                 onClick={handleSignOut}
-                className="bg-surface-card border border-border-subtle rounded-xl p-5 flex items-center gap-4 hover:border-error/40 transition-colors text-left"
+                className="bg-surface-card border border-border-subtle rounded-xl p-5 flex items-center gap-4 hover:border-error/40 transition-colors text-left cursor-pointer"
               >
                 <div className="w-10 h-10 bg-error/10 rounded-lg flex items-center justify-center">
                   <FaSignOutAlt className="w-4 h-4 text-error" />
@@ -452,7 +470,7 @@ export default function MiCuentaPage() {
                 />
                 <button
                   onClick={() => setShowNuveiForm(false)}
-                  className="w-full mt-3 border border-border-default text-text-main/60 font-medium py-2 rounded-lg hover:bg-surface-elevated transition-colors text-sm"
+                  className="w-full mt-3 border border-border-default text-text-main/60 font-medium py-2.5 rounded-xl hover:bg-surface-elevated transition-colors text-sm"
                 >
                   Cancelar
                 </button>

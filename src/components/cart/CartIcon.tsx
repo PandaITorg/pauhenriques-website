@@ -21,11 +21,11 @@ const CartIcon = () => {
   return (
     <Link
       href="/checkout"
-      className="relative flex items-center text-text-main hover:text-[#5a6b4a] transition-colors"
+      className="relative flex items-center text-text-main hover:text-secondary transition-colors"
     >
       <FaShoppingCart className="h-6 w-6" />
       {isClient && totalItems > 0 && (
-        <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-red-500 text-white text-xs rounded-full">
+        <span className="absolute -top-2 -right-2 flex items-center justify-center w-5 h-5 bg-error text-white text-xs rounded-full">
           {totalItems}
         </span>
       )}

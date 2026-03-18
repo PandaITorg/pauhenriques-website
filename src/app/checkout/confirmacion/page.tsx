@@ -35,19 +35,38 @@ export default function ConfirmacionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-5">
-      <div className="bg-surface-card border border-border-subtle rounded-xl p-8 max-w-md w-full text-center">
-        {/* Success icon */}
-        <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto mb-5">
-          <FaCheckCircle className="w-8 h-8 text-success" />
-        </div>
+    <div className="min-h-screen bg-background">
+      {/* ── Hero header ── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/60 via-background to-background" />
+        {/* Ambient success glow */}
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 w-64 h-64 bg-success/8 rounded-full blur-3xl pointer-events-none" />
 
-        <h1 className="font-cormorant text-2xl font-semibold text-text-main mb-2">
-          Compra Exitosa!
-        </h1>
-        <p className="text-text-main/50 mb-6">
-          Gracias por tu compra. Tu pedido ha sido procesado.
-        </p>
+        <div className="relative max-w-md mx-auto px-5 sm:px-6 pt-14 pb-8 md:pt-20 md:pb-10 text-center">
+          {/* Success icon with glow */}
+          <div className="relative w-20 h-20 mx-auto mb-5">
+            <div className="absolute -inset-1 rounded-full bg-success/20 blur-sm" />
+            <div className="relative w-full h-full rounded-full bg-success/15 flex items-center justify-center">
+              <FaCheckCircle className="w-9 h-9 text-success" />
+            </div>
+          </div>
+
+          <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-success/70 mb-2">
+            Pago confirmado
+          </span>
+          <h1 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-main mb-2">
+            Compra Exitosa!
+          </h1>
+          <p className="text-text-main/50">
+            Gracias por tu compra. Tu pedido ha sido procesado.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Separator ── */}
+      <div className="h-px max-w-md mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      <div className="max-w-md mx-auto px-5 sm:px-6 py-8 md:py-10 text-center">
 
         {order && (
           <div className="bg-surface-elevated rounded-lg p-4 mb-6 text-left text-sm">
@@ -88,13 +107,13 @@ export default function ConfirmacionPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href="/mis-pedidos"
-            className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-6 rounded-lg transition-colors text-center"
+            className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 hover:-translate-y-px hover:shadow-(--shadow-glow-primary) text-center"
           >
             Ver mis pedidos
           </Link>
           <Link
             href="/tienda"
-            className="flex-1 border border-primary text-primary font-semibold py-3 px-6 rounded-lg hover:bg-primary/10 transition-colors text-center"
+            className="flex-1 border border-primary/40 text-primary font-semibold py-3 px-6 rounded-xl hover:bg-primary/10 transition-all duration-200 text-center"
           >
             Seguir comprando
           </Link>

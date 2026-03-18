@@ -154,18 +154,6 @@ body {
   animation: animated-gradient 15s ease infinite;
 }
 
-/* --- Links Page --- */
-
-.animated-linear-gradient-links {
-  background: linear-gradient(
-    to bottom,
-    var(--color-bosque-profundo-400),
-    var(--color-bosque-profundo-500),
-    var(--color-bosque-profundo-600)
-  );
-  background-size: 100% 300%;
-  animation: linear-gradient-animation-links 25s ease infinite;
-}
 
 /* --- Keyframes --- */
 
@@ -265,17 +253,6 @@ body {
   }
 }
 
-@keyframes linear-gradient-animation-links {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 0% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
-}
 
 @keyframes subtle-move {
   0%,
@@ -333,8 +310,12 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fixed[aria-label="Notificaciones"] * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

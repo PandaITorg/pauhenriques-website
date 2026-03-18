@@ -156,7 +156,7 @@ export default function AdminPromocionesPage() {
   };
 
   const inputClass =
-    "bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
+    "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
 
   const tabs: { value: StatusFilter; label: string }[] = [
     { value: "all", label: "Todas" },
@@ -168,16 +168,32 @@ export default function AdminPromocionesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-text-main">Promociones</h1>
-        <Link
-          href="/admin/promociones/nuevo"
-          className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-medium px-4 py-2.5 rounded-lg transition-colors text-sm"
-        >
-          <FaPlus className="w-3.5 h-3.5" />
-          Nueva Promocion
-        </Link>
+      {/* ── Header with gradient ── */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/40 to-background" />
+        <div className="relative px-5 lg:px-8 pt-6 pb-4 md:pt-8 md:pb-6 flex items-center justify-between">
+          <div>
+            <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-1">
+              Gestion
+            </span>
+            <h1 className="text-2xl font-semibold text-text-main">Promociones</h1>
+          </div>
+          <Link
+            href="/admin/promociones/nuevo"
+            className="flex items-center gap-2 bg-primary hover:bg-primary-hover text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 text-sm hover:-translate-y-px hover:shadow-(--shadow-glow-primary)"
+          >
+            <FaPlus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Nueva Promocion</span>
+            <span className="sm:hidden">Nueva</span>
+          </Link>
+        </div>
       </div>
+
+      {/* ── Separator ── */}
+      <div className="h-px bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      {/* ── Content ── */}
+      <div className="px-5 lg:px-8 py-6">
 
       {/* Status tabs */}
       <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
@@ -345,6 +361,7 @@ export default function AdminPromocionesPage() {
             </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

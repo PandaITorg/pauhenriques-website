@@ -31,11 +31,11 @@ function getPasswordStrength(password: string): StrengthInfo {
   const normalizedScore = Math.min(4, score);
 
   const levels: Record<number, Omit<StrengthInfo, "score">> = {
-    0: { level: "weak", label: "Muy débil", color: "bg-red-500" },
-    1: { level: "weak", label: "Débil", color: "bg-red-400" },
-    2: { level: "fair", label: "Regular", color: "bg-amber-400" },
-    3: { level: "good", label: "Buena", color: "bg-yellow-400" },
-    4: { level: "strong", label: "Fuerte ✓", color: "bg-[#a4ac85]" },
+    0: { level: "weak", label: "Muy débil", color: "bg-error" },
+    1: { level: "weak", label: "Débil", color: "bg-error/70" },
+    2: { level: "fair", label: "Regular", color: "bg-warning" },
+    3: { level: "good", label: "Buena", color: "bg-warning" },
+    4: { level: "strong", label: "Fuerte ✓", color: "bg-tertiary" },
   };
 
   return {
@@ -53,10 +53,10 @@ export default function PasswordStrengthIndicator({
 
   const labelColors: Record<StrengthLevel, string> = {
     empty: "",
-    weak: "text-red-400",
-    fair: "text-amber-400",
-    good: "text-yellow-400",
-    strong: "text-[#a4ac85]",
+    weak: "text-error",
+    fair: "text-warning",
+    good: "text-warning",
+    strong: "text-tertiary",
   };
 
   return (
@@ -69,7 +69,7 @@ export default function PasswordStrengthIndicator({
             className={`h-0.75 flex-1 rounded-full transition-all duration-300 ${
               bar <= strength.score
                 ? strength.color
-                : "bg-[rgba(166,138,99,0.15)]"
+                : "bg-primary-muted"
             }`}
           />
         ))}

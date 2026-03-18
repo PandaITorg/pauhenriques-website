@@ -260,6 +260,7 @@ export default function MisPedidosPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
@@ -274,8 +275,10 @@ export default function MisPedidosPage() {
       try {
         const data = await getOrdersByUser(user!.uid);
         setOrders(data);
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error loading orders:", err);
+        const msg = err instanceof Error ? err.message : "Error desconocido";
+        setErrorOrders(msg);
       } finally {
         setLoadingOrders(false);
       }
@@ -294,25 +297,34 @@ export default function MisPedidosPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 sm:px-6">
-      <div className="container mx-auto max-w-3xl">
-        {/* Header */}
+    <div className="min-h-screen bg-background">
+      {/* ── Hero header ── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/60 via-background to-background" />
+        <div className="relative max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-6 md:pt-20 md:pb-8 text-center">
+          <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-3">
+            Historial
+          </span>
+          <h1 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-main mb-2">
+            Mis Pedidos
+          </h1>
+          <p className="text-sm text-text-main/50">
+            Revisa el estado de tus compras
+          </p>
+        </div>
+      </section>
+
+      {/* ── Separator ── */}
+      <div className="h-px max-w-3xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      <div className="max-w-3xl mx-auto px-5 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Back link */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/mi-cuenta"
-              className="w-8 h-8 flex items-center justify-center rounded-lg text-text-main/40 hover:text-text-main hover:bg-surface-card transition-colors"
-            >
-              <FaArrowLeft className="w-3.5 h-3.5" />
-            </Link>
-            <h1 className="font-cormorant text-2xl font-semibold text-text-main">
-              Mis Pedidos
-            </h1>
-          </div>
           <Link
             href="/mi-cuenta"
-            className="text-sm text-primary hover:text-primary-hover transition-colors"
+            className="flex items-center gap-2 text-sm text-text-main/50 hover:text-text-main transition-colors"
           >
+            <FaArrowLeft className="w-3 h-3" />
             Mi cuenta
           </Link>
         </div>
@@ -320,6 +332,34 @@ export default function MisPedidosPage() {
         {loadingOrders ? (
           <div className="bg-surface-card border border-border-subtle rounded-xl p-8 text-center">
             <div className="simple-spinner mx-auto" />
+          </div>
+        ) : errorOrders ? (
+          <div className="bg-surface-card border border-error/30 rounded-xl p-10 text-center">
+            <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-4">
+              <FaTimesCircle className="w-7 h-7 text-error" />
+            </div>
+            <h2 className="text-lg font-semibold text-text-main mb-1">
+              Error al cargar pedidos
+            </h2>
+            <p className="text-sm text-text-main/50 mb-4">
+              {errorOrders}
+            </p>
+            <button
+              onClick={() => {
+                setErrorOrders(null);
+                setLoadingOrders(true);
+                getOrdersByUser(user!.uid)
+                  .then(setOrders)
+                  .catch((err: unknown) => {
+                    const msg = err instanceof Error ? err.message : "Error desconocido";
+                    setErrorOrders(msg);
+                  })
+                  .finally(() => setLoadingOrders(false));
+              }}
+              className="inline-block bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-6 rounded-xl transition-all duration-200 text-sm"
+            >
+              Reintentar
+            </button>
           </div>
         ) : orders.length === 0 ? (
           /* ─── Empty state ─── */
@@ -335,7 +375,7 @@ export default function MisPedidosPage() {
             </p>
             <Link
               href="/tienda"
-              className="inline-block bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-6 rounded-lg transition-colors text-sm"
+              className="inline-block bg-primary hover:bg-primary-hover text-white font-medium py-2.5 px-6 rounded-xl transition-all duration-200 text-sm"
             >
               Ir a la Tienda
             </Link>

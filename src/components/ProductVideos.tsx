@@ -246,7 +246,7 @@ const ProductVideos: React.FC = () => {
               isTextFading ? "opacity-0" : "opacity-100"
             }`}
           >
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-text-inverted mb-3">
+            <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-inverted mb-3">
               {currentVideo.title}
             </h2>
             <p className="text-base md:text-lg text-text-inverted/80 mb-5 leading-relaxed">
