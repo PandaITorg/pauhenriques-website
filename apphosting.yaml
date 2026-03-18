@@ -20,11 +20,11 @@ env:
 
   # Nuvei Payment Gateway - Client (NEXT_PUBLIC_*)
   - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_CODE
-    value: "MODIRUMTESTADDCARD-EC"
+    value: "PAUHENRIQUES-EC-CLIENT"
   - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_KEY
-    value: "DdfZCEm71Lq7e29ByRRC3KM9rFEw6c"
+    value: "SdwaMUQvmOLhrfOKXr3zYwmXm4Zphk"
   - variable: NEXT_PUBLIC_NUVEI_ENV
-    value: "stg"
+    value: "prod"
 
   # Firebase Admin SDK - SENSIBLES → Cloud Secret Manager
   - variable: FIREBASE_PROJECT_ID
@@ -40,4 +40,4 @@ env:
   - variable: NUVEI_SERVER_APP_KEY
     secret: "nuvei-server-app-key"
   - variable: NUVEI_ENV
-    value: "stg"
+    value: "prod"
