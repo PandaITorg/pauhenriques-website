@@ -90,7 +90,6 @@ export async function refundTransaction(transactionId: string) {
 
 export async function verifyCard(params: {
   userId: string;
-  userEmail: string;
   transactionReference: string;
   value: string;
 }) {
@@ -109,7 +108,6 @@ export async function verifyCard(params: {
   }>("/v2/transaction/verify/", "POST", {
     user: {
       id: params.userId,
-      email: params.userEmail,
     },
     transaction: {
       id: params.transactionReference,
@@ -168,6 +166,7 @@ export async function debitWithToken(params: {
   description: string;
   devReference: string;
   cardToken: string;
+  cvc?: string;
   vat?: number;
   browserInfo?: {
     accept_header: string;
@@ -196,6 +195,7 @@ export async function debitWithToken(params: {
     },
     card: {
       token: params.cardToken,
+      ...(params.cvc ? { cvc: params.cvc } : {}),
     },
   };
 
@@ -217,7 +217,6 @@ export async function debitWithToken(params: {
 export interface VerifyThreeDSParams {
   transactionId: string;
   userId: string;
-  userEmail: string;
   type: "AUTHENTICATION_CONTINUE" | "BY_CRES" | "BY_OTP";
   value?: string;
 }
@@ -226,7 +225,6 @@ export async function verifyThreeDS(params: VerifyThreeDSParams): Promise<DebitR
   const body: Record<string, unknown> = {
     user: {
       id: params.userId,
-      email: params.userEmail,
     },
     transaction: { id: params.transactionId },
     type: params.type,

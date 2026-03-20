@@ -41,3 +41,7 @@ env:
     secret: "nuvei-server-app-key"
   - variable: NUVEI_ENV
     value: "prod"
+
+  # Email — Resend
+  - variable: RESEND_API_KEY
+    secret: "resend-api-key"

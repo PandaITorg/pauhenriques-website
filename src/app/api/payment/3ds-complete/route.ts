@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { verifyThreeDS } from "@/lib/nuvei";
+import { sendPaymentConfirmation } from "@/lib/email";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -127,9 +128,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user email from order or Firebase Auth
-    const userEmail = orderData.userEmail || decodedToken.email || "";
-
     // Determine the value to send: cres for 3DS, otpCode for OTP
     const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
 
@@ -138,7 +136,6 @@ export async function POST(request: NextRequest) {
     const verifyResult = await verifyThreeDS({
       transactionId,
       userId,
-      userEmail,
       type: actualType,
       value: verifyValue,
     });
@@ -191,10 +188,27 @@ export async function POST(request: NextRequest) {
 
       await batch.commit();
 
+      // Send confirmation email (non-blocking)
+      const userEmail = orderData.userEmail || decodedToken.email || "";
+      const emailResult = await sendPaymentConfirmation({
+        to: userEmail,
+        customerName: orderData.shippingAddress?.fullName || "",
+        orderId,
+        transactionId: txId,
+        authorizationCode: txAuthCode,
+        items: orderData.items || [],
+        subtotal: orderData.subtotal || orderData.total,
+        discount: orderData.discount || undefined,
+        couponCode: orderData.couponCode,
+        vat: orderData.vat || 0,
+        total: orderData.total,
+      }).catch(() => ({ success: false }));
+
       return NextResponse.json({
         success: true,
         transactionId: txId,
         authorizationCode: txAuthCode,
+        emailSent: emailResult.success,
         orderId,
       });
     }

@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
 
     const result = await verifyCard({
       userId: decodedToken.uid,
-      userEmail: decodedToken.email || "",
       transactionReference: transactionReference || cardToken,
       value,
     });

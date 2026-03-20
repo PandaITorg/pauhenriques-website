@@ -128,6 +128,7 @@ export default function CheckoutPage() {
   const [selectedCardInfo, setSelectedCardInfo] = useState<SavedCard | null>(
     null,
   );
+  const [savedCardCvc, setSavedCardCvc] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   const items = useCartStore((state) => state.items);
@@ -162,8 +163,9 @@ export default function CheckoutPage() {
       setProcessingPayment(false);
       setPaymentSuccess(true);
       clearCart();
+      const emailParam3ds = data.emailSent === false ? "&emailSent=false" : "";
       setTimeout(() => {
-        router.push(`/checkout/confirmacion?orderId=${data.orderId}`);
+        router.push(`/checkout/confirmacion?orderId=${data.orderId}${emailParam3ds}`);
       }, 1500);
     } else if (data.challenge) {
       // Escalation: status 35 → 36 (or verify returned another challenge)
@@ -421,6 +423,7 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           token: selectedCardToken,
+          ...(savedCardCvc ? { cvc: savedCardCvc } : {}),
           orderId,
           amount: total,
           vat,
@@ -437,8 +440,9 @@ export default function CheckoutPage() {
         setProcessingPayment(false);
         setPaymentSuccess(true);
         clearCart();
+        const emailParam = data.emailSent === false ? "&emailSent=false" : "";
         setTimeout(() => {
-          router.push(`/checkout/confirmacion?orderId=${orderId}`);
+          router.push(`/checkout/confirmacion?orderId=${orderId}${emailParam}`);
         }, 1500);
       } else if (data.review) {
         // Payment under review — treat as pending success, clear cart
@@ -593,8 +597,9 @@ export default function CheckoutPage() {
           setOtpChallenge(null);
           setPaymentSuccess(true);
           clearCart();
+          const emailParamOtp = data.emailSent === false ? "&emailSent=false" : "";
           setTimeout(() => {
-            router.push(`/checkout/confirmacion?orderId=${data.orderId}`);
+            router.push(`/checkout/confirmacion?orderId=${data.orderId}${emailParamOtp}`);
           }, 1500);
         } else {
           setOtpError(data.error || "Código OTP incorrecto. Intenta de nuevo.");
@@ -706,7 +711,7 @@ export default function CheckoutPage() {
 
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
-        <div className="w-full max-w-md">
+        <div className="w-full max-w-lg">
           <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden shadow-xl">
             <div className="p-4 border-b border-border-subtle flex items-center gap-3">
               <FaShieldAlt className="w-4 h-4 text-primary" />
@@ -725,7 +730,7 @@ export default function CheckoutPage() {
               <iframe
                 srcDoc={threeDSChallenge.html}
                 className="w-full border-0"
-                style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "450px" }}
+                style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "600px" }}
                 title="Autenticación 3DS"
                 sandbox="allow-forms allow-scripts allow-same-origin"
                 onLoad={(e) => {
@@ -911,10 +916,11 @@ export default function CheckoutPage() {
                 {user && paymentMode === "saved" && (
                   <div className="space-y-4">
                     <SavedCards
-                      onSelectCard={(card) => {
+                      onSelectCard={(card, cvc) => {
                         if (card.status === "review" || card.status === "pending") return;
                         setSelectedCardToken(card.token);
                         setSelectedCardInfo(card);
+                        setSavedCardCvc(cvc);
                       }}
                       selectedToken={selectedCardToken}
                       onAddNewCard={() => {
@@ -926,7 +932,8 @@ export default function CheckoutPage() {
                     {selectedCardToken && (
                       <button
                         onClick={() => setStep("confirm")}
-                        className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200"
+                        disabled={!savedCardCvc}
+                        className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30"
                       >
                         Revisar pedido →
                       </button>
@@ -1091,7 +1098,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     onClick={handleConfirmPayment}
-                    disabled={processingPayment || !selectedCardToken}
+                    disabled={processingPayment || !selectedCardToken || (paymentMode === "saved" && !savedCardCvc)}
                     className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 active:scale-[0.97]"
                   >
                     {processingPayment ? (

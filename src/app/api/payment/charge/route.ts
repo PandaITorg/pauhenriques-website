@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { debitWithToken } from "@/lib/nuvei";
+import { sendPaymentConfirmation } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,7 @@ interface BrowserInfo {
 
 interface ChargeRequestBody {
   token: string;
+  cvc?: string;
   orderId: string;
   amount: number;
   vat: number;
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: ChargeRequestBody = await request.json();
-    const { token, orderId, amount, vat, description, userId, userEmail, browserInfo } = body;
+    const { token, cvc, orderId, amount, vat, description, userId, userEmail, browserInfo } = body;
 
     console.log("[charge] Request:", { token: token?.substring(0, 10) + "...", orderId, amount, userId: userId?.substring(0, 8) + "..." });
 
@@ -236,6 +238,7 @@ export async function POST(request: NextRequest) {
       description,
       devReference: orderId,
       cardToken: token,
+      ...(cvc ? { cvc } : {}),
       vat: vat ?? 0,
       ...(enrichedBrowserInfo ? { browserInfo: enrichedBrowserInfo, termUrl } : {}),
     });
@@ -285,6 +288,29 @@ export async function POST(request: NextRequest) {
         }
 
         await batch.commit();
+
+        // Send confirmation email (non-blocking)
+        const emailResult = await sendPaymentConfirmation({
+          to: userEmail,
+          customerName: orderInfo?.shippingAddress?.fullName || "",
+          orderId,
+          transactionId: nuveiData.transaction.id,
+          authorizationCode: nuveiData.transaction.authorization_code || null,
+          items: orderInfo?.items || [],
+          subtotal: orderInfo?.subtotal || amount,
+          discount: orderInfo?.discount || undefined,
+          couponCode: orderInfo?.couponCode,
+          vat: orderInfo?.vat || vat,
+          total: amount,
+        }).catch(() => ({ success: false }));
+
+        return NextResponse.json({
+          success: true,
+          transactionId: nuveiData.transaction.id,
+          authorizationCode: nuveiData.transaction.authorization_code,
+          orderId,
+          emailSent: emailResult.success,
+        });
       }
 
       return NextResponse.json({
@@ -292,6 +318,7 @@ export async function POST(request: NextRequest) {
         transactionId: nuveiData.transaction.id,
         authorizationCode: nuveiData.transaction.authorization_code,
         orderId,
+        emailSent: false,
       });
     }
 

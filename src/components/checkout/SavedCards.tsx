@@ -5,6 +5,7 @@ import { SavedCard, getCardBrandName } from "@/types/card";
 import {
   FaCheck,
   FaCreditCard,
+  FaLock,
   FaPlus,
   FaTrash,
   FaExclamationTriangle,
@@ -12,7 +13,7 @@ import {
 } from "react-icons/fa";
 
 interface SavedCardsProps {
-  onSelectCard: (card: SavedCard) => void;
+  onSelectCard: (card: SavedCard, cvc: string) => void;
   selectedToken: string | null;
   onAddNewCard: () => void;
 }
@@ -25,6 +26,7 @@ export default function SavedCards({
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [cvcValues, setCvcValues] = useState<Record<string, string>>({});
   const [verifyingToken, setVerifyingToken] = useState<string | null>(null);
   const [verifyValue, setVerifyValue] = useState("");
   const [verifyError, setVerifyError] = useState<string | null>(null);
@@ -45,7 +47,7 @@ export default function SavedCards({
         // Auto-select first valid card only
         if (!selectedToken) {
           const firstValid = allCards.find((c) => c.status === "valid");
-          if (firstValid) onSelectCard(firstValid);
+          if (firstValid) onSelectCard(firstValid, "");
         }
       }
     } catch (err) {
@@ -75,7 +77,7 @@ export default function SavedCards({
             (c) => c.token !== token && c.status === "valid",
           );
           if (remaining.length > 0) {
-            onSelectCard(remaining[0]);
+            onSelectCard(remaining[0], "");
           }
         }
       }
@@ -113,7 +115,7 @@ export default function SavedCards({
         );
         setVerifyingToken(null);
         setVerifyValue("");
-        onSelectCard({ ...card, status: "valid" });
+        onSelectCard({ ...card, status: "valid" }, "");
       } else {
         setVerifyError(
           data.error || "Monto incorrecto. Revisa tu estado de cuenta.",
@@ -154,51 +156,97 @@ export default function SavedCards({
       {/* Valid cards */}
       {validCards.length > 0 && (
         <div className="space-y-3">
-          {validCards.map((card) => (
-            <div
-              key={card.token}
-              onClick={() => onSelectCard(card)}
-              className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                selectedToken === card.token
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-border-default hover:border-border-strong"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <FaCreditCard
-                    className={`w-5 h-5 ${getCardColor(card.type)}`}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-text-main">
-                        {getCardBrandName(card.type)}{" "}
-                        <span className="font-mono">****{card.number}</span>
-                      </span>
-                      {selectedToken === card.token && (
-                        <FaCheck className="w-3.5 h-3.5 text-primary" />
-                      )}
+          {validCards.map((card) => {
+            const isSelected = selectedToken === card.token;
+            const cvc = cvcValues[card.token] || "";
+            const maxCvc = card.type === "ax" ? 4 : 3;
+
+            return (
+              <div
+                key={card.token}
+                onClick={() => {
+                  onSelectCard(card, cvc);
+                  if (!isSelected) {
+                    setCvcValues((prev) => ({ ...prev, [card.token]: "" }));
+                  }
+                }}
+                className={`border rounded-lg cursor-pointer transition-all duration-200 ${
+                  isSelected
+                    ? "border-primary bg-primary/5 ring-1 ring-primary"
+                    : "border-border-default hover:border-border-strong"
+                }`}
+              >
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FaCreditCard
+                      className={`w-5 h-5 ${getCardColor(card.type)}`}
+                    />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-text-main">
+                          {getCardBrandName(card.type)}{" "}
+                          <span className="font-mono">****{card.number}</span>
+                        </span>
+                        {isSelected && (
+                          <FaCheck className="w-3.5 h-3.5 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-text-main/45">
+                        {card.holder_name} · Exp {card.expiry_month}/
+                        {card.expiry_year}
+                      </p>
                     </div>
-                    <p className="text-xs text-text-main/45">
-                      {card.holder_name} · Exp {card.expiry_month}/
-                      {card.expiry_year}
-                    </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(card.token);
+                    }}
+                    disabled={deleting === card.token}
+                    className="text-text-main/30 hover:text-error p-1 disabled:opacity-50 transition-colors cursor-pointer"
+                    title="Eliminar tarjeta"
+                  >
+                    <FaTrash className="w-3 h-3" />
+                  </button>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete(card.token);
-                  }}
-                  disabled={deleting === card.token}
-                  className="text-text-main/30 hover:text-error p-1 disabled:opacity-50 transition-colors cursor-pointer"
-                  title="Eliminar tarjeta"
-                >
-                  <FaTrash className="w-3 h-3" />
-                </button>
+
+                {/* CVC input — appears inline when card is selected */}
+                {isSelected && (
+                  <div className="px-4 pb-4 pt-0 border-t border-primary/15 animate-[fadeSlideDown_200ms_ease-out]">
+                    <div className="flex items-center gap-3 pt-3">
+                      <FaLock className="w-3 h-3 text-text-main/30 shrink-0" />
+                      <label
+                        htmlFor={`cvc-${card.token}`}
+                        className="text-xs text-text-main/50 shrink-0"
+                      >
+                        Código de seguridad
+                      </label>
+                      <input
+                        id={`cvc-${card.token}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={maxCvc}
+                        autoComplete="cc-csc"
+                        placeholder={maxCvc === 4 ? "····" : "···"}
+                        value={cvc}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          setCvcValues((prev) => ({
+                            ...prev,
+                            [card.token]: val,
+                          }));
+                          onSelectCard(card, val);
+                        }}
+                        autoFocus
+                        className="w-16 text-center font-mono text-sm tracking-[0.25em] border border-border-default rounded-lg py-2 bg-background text-text-main placeholder:text-text-main/20 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -100,7 +100,11 @@ export default function ConfirmacionPage() {
         {/* Email notice */}
         <div className="flex items-center justify-center gap-2 text-text-main/40 text-sm mb-6">
           <FaEnvelope className="w-4 h-4" />
-          <span>Revisa tu correo para más detalles</span>
+          {searchParams.get("emailSent") === "false" ? (
+            <span>No pudimos enviar el correo de confirmaci&oacute;n. Puedes ver los detalles en Mis Pedidos.</span>
+          ) : (
+            <span>Revisa tu correo para m&aacute;s detalles</span>
+          )}
         </div>
 
         {/* CTAs */}
