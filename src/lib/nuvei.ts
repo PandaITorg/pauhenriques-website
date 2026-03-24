@@ -168,6 +168,9 @@ export async function debitWithToken(params: {
   cardToken: string;
   cvc?: string;
   vat?: number;
+  taxableAmount?: number;
+  installments?: number;
+  installmentsType?: number;
   browserInfo?: {
     accept_header: string;
     user_agent: string;
@@ -182,17 +185,26 @@ export async function debitWithToken(params: {
   };
   termUrl?: string;
 }) {
+  const order: Record<string, unknown> = {
+    amount: params.amount,
+    description: params.description,
+    dev_reference: params.devReference,
+    vat: params.vat ?? 0,
+    taxable_amount: params.taxableAmount ?? (params.amount - (params.vat ?? 0)),
+    tax_percentage: 15,
+  };
+
+  if (params.installments && params.installments > 0) {
+    order.installments = params.installments;
+    order.installments_type = params.installmentsType ?? 0;
+  }
+
   const body: Record<string, unknown> = {
     user: {
       id: params.userId,
       email: params.userEmail,
     },
-    order: {
-      amount: params.amount,
-      description: params.description,
-      dev_reference: params.devReference,
-      vat: params.vat ?? 0,
-    },
+    order,
     card: {
       token: params.cardToken,
       ...(params.cvc ? { cvc: params.cvc } : {}),

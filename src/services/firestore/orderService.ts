@@ -30,6 +30,8 @@ export async function createOrder(params: {
   couponCode?: string;
   promotionId?: string;
   discountType?: PromotionType;
+  installments?: number;
+  installmentsType?: number;
 }): Promise<string> {
   const orderData = {
     ...params,

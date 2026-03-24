@@ -29,6 +29,11 @@ export async function sendPaymentConfirmation(
     return { success: false };
   }
 
+  if (!params.to || !params.to.includes("@")) {
+    console.warn("[email] Invalid recipient email, skipping:", params.to);
+    return { success: false };
+  }
+
   try {
     const { error } = await resend.emails.send({
       from: FROM_EMAIL,

@@ -79,6 +79,8 @@ interface ChargeRequestBody {
   userId: string;
   userEmail: string;
   browserInfo?: BrowserInfo;
+  installments?: number;
+  installmentsType?: number;
 }
 
 export async function POST(request: NextRequest) {
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: ChargeRequestBody = await request.json();
-    const { token, cvc, orderId, amount, vat, description, userId, userEmail, browserInfo } = body;
+    const { token, cvc, orderId, amount, vat, description, userId, userEmail, browserInfo, installments, installmentsType } = body;
 
     console.log("[charge] Request:", { token: token?.substring(0, 10) + "...", orderId, amount, userId: userId?.substring(0, 8) + "..." });
 
@@ -231,6 +233,7 @@ export async function POST(request: NextRequest) {
       : undefined;
 
     // Call Nuvei debit with token (include 3DS params if browser info provided)
+    const discountedSubtotalForTax = amount - (vat ?? 0);
     const nuveiData = await debitWithToken({
       userId,
       userEmail,
@@ -240,6 +243,8 @@ export async function POST(request: NextRequest) {
       cardToken: token,
       ...(cvc ? { cvc } : {}),
       vat: vat ?? 0,
+      taxableAmount: discountedSubtotalForTax,
+      ...(installments ? { installments, installmentsType: installmentsType ?? 0 } : {}),
       ...(enrichedBrowserInfo ? { browserInfo: enrichedBrowserInfo, termUrl } : {}),
     });
     console.log("[charge] Nuvei debit response:", JSON.stringify({
@@ -265,6 +270,7 @@ export async function POST(request: NextRequest) {
           status: "paid",
           paymentTransactionId: nuveiData.transaction.id,
           authorizationCode: nuveiData.transaction.authorization_code || null,
+          ...(installments ? { installments, installmentsType: installmentsType ?? 0 } : {}),
           chargeResponseAt: new Date(),
           updatedAt: new Date(),
         });
