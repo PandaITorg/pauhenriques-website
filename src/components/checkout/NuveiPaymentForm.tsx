@@ -368,9 +368,9 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
                       setTimeout(() => handleScriptReady(), 100);
                     } else {
                       setError({
-                        variant: "system",
+                        variant: "rejected",
                         title: "No se pudo eliminar",
-                        message: `Error: ${data.error || data.detail || res.status}. Contacta soporte.`,
+                        message: "El procesador de pagos no permitió eliminar esta tarjeta. Intenta con otra tarjeta o contacta a tu banco.",
                       });
                     }
                   } catch {
