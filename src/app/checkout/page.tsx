@@ -360,7 +360,8 @@ export default function CheckoutPage() {
     setSelectedCardInfo(null);
     setIsNewlyTokenized(true);
     setPaymentMode("saved");
-    // Fetch updated card list to get full card info for the newly added token
+    setStep("confirm");
+    // Fetch card details in background to show real info in confirm step
     try {
       const res = await fetch("/api/nuvei/cards");
       if (res.ok) {
@@ -370,8 +371,7 @@ export default function CheckoutPage() {
           setSelectedCardInfo(newCard);
         }
       }
-    } catch { /* proceed without card info */ }
-    setStep("confirm");
+    } catch { /* show fallback "Nueva tarjeta" text */ }
   };
 
   const handleTokenError = (error: string) => {
