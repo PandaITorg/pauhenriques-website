@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
   try {
     const result = await listCards(decoded.uid);
 
-    // Filter to only valid/review cards
+    // Log all cards for debugging (remove after production validation)
+    console.log("[cards/GET] Raw Nuvei response:", JSON.stringify(result.cards?.map(c => ({ token: c.token?.slice(-6), status: c.status, type: c.type, number: c.number }))));
+
+    // Filter to only valid/review/pending cards
     const cards = (result.cards || []).filter(
       (c) => c.status === "valid" || c.status === "review" || c.status === "pending",
     );

@@ -57,6 +57,7 @@ interface CardError {
   variant: ErrorVariant;
   title: string;
   message: string;
+  duplicateToken?: string;
 }
 
 export interface TokenizedCardInfo {
@@ -71,7 +72,6 @@ interface NuveiPaymentFormProps {
   email: string;
   onTokenSuccess: (token: string, cardInfo: TokenizedCardInfo) => void;
   onTokenError: (error: string) => void;
-  onGoToSavedCards?: () => void;
   disabled?: boolean;
 }
 
@@ -84,11 +84,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   email,
   onTokenSuccess,
   onTokenError,
-  onGoToSavedCards,
 }) => {
   const [sdkReady, setSdkReady] = useState(false);
   const [sdkTimedOut, setSdkTimedOut] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeletingDuplicate, setIsDeletingDuplicate] = useState(false);
   const [error, setError] = useState<CardError | null>(null);
   const sdkInitRef = useRef(false);
   const pgSdkRef = useRef<PaymentGatewayInstance | null>(null);
@@ -172,11 +172,23 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
 
       if (response.error) {
         console.log("[NuveiPaymentForm] SDK error response:", JSON.stringify(response.error));
-        setError({
-          variant: "rejected",
-          title: "Tarjeta no aceptada",
-          message: "No se pudo registrar esta tarjeta. Verifica los datos o intenta con otra.",
-        });
+        const errorType = response.error?.type || "";
+        if (errorType.toLowerCase().includes("card already added")) {
+          // Extract token from "Card already added: TOKEN_HERE"
+          const tokenMatch = errorType.match(/Card already added:\s*(\S+)/i);
+          setError({
+            variant: "duplicate",
+            title: "Tarjeta ya registrada",
+            message: "Esta tarjeta ya existe en tu cuenta pero no se puede usar. Puedes eliminarla y volver a agregarla.",
+            duplicateToken: tokenMatch?.[1],
+          });
+        } else {
+          setError({
+            variant: "rejected",
+            title: "Tarjeta no aceptada",
+            message: "No se pudo registrar esta tarjeta. Verifica los datos o intenta con otra.",
+          });
+        }
         return;
       }
 
@@ -334,13 +346,44 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
             </div>
           </div>
           <div className="flex gap-3 mt-4 pt-3 border-t border-border-subtle">
-            {error.variant === "duplicate" && onGoToSavedCards ? (
+            {error.variant === "duplicate" && error.duplicateToken ? (
               <button
                 type="button"
-                onClick={onGoToSavedCards}
-                className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm cursor-pointer"
+                disabled={isDeletingDuplicate}
+                onClick={async () => {
+                  setIsDeletingDuplicate(true);
+                  try {
+                    const res = await fetch("/api/nuvei/cards", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ token: error.duplicateToken }),
+                    });
+                    if (res.ok) {
+                      setError(null);
+                      // Re-initialize SDK form so user can add again
+                      sdkInitRef.current = false;
+                      setSdkReady(false);
+                      setTimeout(() => handleScriptReady(), 100);
+                    } else {
+                      setError({
+                        variant: "system",
+                        title: "No se pudo eliminar",
+                        message: "Intenta de nuevo o contacta soporte.",
+                      });
+                    }
+                  } catch {
+                    setError({
+                      variant: "system",
+                      title: "Error de conexión",
+                      message: "No se pudo conectar al servidor. Intenta de nuevo.",
+                    });
+                  } finally {
+                    setIsDeletingDuplicate(false);
+                  }
+                }}
+                className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                Ver tarjetas guardadas
+                {isDeletingDuplicate ? "Eliminando..." : "Eliminar y reintentar"}
               </button>
             ) : (
               <button

@@ -983,7 +983,6 @@ export default function CheckoutPage() {
                       email={user.email || ""}
                       onTokenSuccess={handleTokenSuccess}
                       onTokenError={handleTokenError}
-                      onGoToSavedCards={() => setPaymentMode("saved")}
                       disabled={processingPayment}
                     />
                   </div>
