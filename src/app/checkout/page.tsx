@@ -129,6 +129,7 @@ export default function CheckoutPage() {
     null,
   );
   const [savedCardCvc, setSavedCardCvc] = useState("");
+  const [isNewlyTokenized, setIsNewlyTokenized] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   // Installments / diferidos
@@ -357,6 +358,7 @@ export default function CheckoutPage() {
   const handleTokenSuccess = async (token: string) => {
     setSelectedCardToken(token);
     setSelectedCardInfo(null);
+    setIsNewlyTokenized(true);
     setPaymentMode("saved");
     // Fetch updated card list to get full card info for the newly added token
     try {
@@ -933,6 +935,7 @@ export default function CheckoutPage() {
                         setSelectedCardToken(card.token);
                         setSelectedCardInfo(card);
                         setSavedCardCvc(cvc);
+                        setIsNewlyTokenized(false);
                       }}
                       selectedToken={selectedCardToken}
                       onAddNewCard={() => {
@@ -944,7 +947,7 @@ export default function CheckoutPage() {
                     {selectedCardToken && (
                       <button
                         onClick={() => setStep("confirm")}
-                        disabled={!savedCardCvc}
+                        disabled={!isNewlyTokenized && !savedCardCvc}
                         className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30"
                       >
                         Revisar pedido →
@@ -1194,7 +1197,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     onClick={handleConfirmPayment}
-                    disabled={processingPayment || !selectedCardToken || (paymentMode === "saved" && !savedCardCvc)}
+                    disabled={processingPayment || !selectedCardToken || (!isNewlyTokenized && paymentMode === "saved" && !savedCardCvc)}
                     className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 active:scale-[0.97]"
                   >
                     {processingPayment ? (

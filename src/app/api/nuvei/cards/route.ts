@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Filter to only valid/review cards
     const cards = (result.cards || []).filter(
-      (c) => c.status === "valid" || c.status === "review",
+      (c) => c.status === "valid" || c.status === "review" || c.status === "pending",
     );
 
     // Check Firestore for locally verified cards (Nuvei may still report "review")
