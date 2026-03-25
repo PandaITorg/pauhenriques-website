@@ -52,6 +52,9 @@ export async function nuveiRequest<T>(
   }
 
   const response = await fetch(url, options);
+  if (!response.ok) {
+    console.error(`[nuvei] ${method} ${path} failed with status ${response.status}`);
+  }
   return response.json() as Promise<T>;
 }
 

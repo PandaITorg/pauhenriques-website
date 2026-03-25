@@ -76,6 +76,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     const result = await deleteCard(token, decoded.uid);
+    console.log("[cards/DELETE] Nuvei response:", JSON.stringify(result));
+
+    // Check if Nuvei returned an error
+    if (result && (result as any).error) {
+      console.error("[cards/DELETE] Nuvei delete failed:", JSON.stringify(result));
+      return NextResponse.json(
+        { error: "No se pudo eliminar la tarjeta en Nuvei", detail: result },
+        { status: 400 },
+      );
+    }
 
     // Also remove from verified cards if exists
     if (dbAdmin) {

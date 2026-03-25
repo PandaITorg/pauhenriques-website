@@ -358,7 +358,9 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ token: error.duplicateToken }),
                     });
-                    if (res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    console.log("[NuveiPaymentForm] Delete response:", res.status, JSON.stringify(data));
+                    if (res.ok && !data.error) {
                       setError(null);
                       // Re-initialize SDK form so user can add again
                       sdkInitRef.current = false;
@@ -368,7 +370,7 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
                       setError({
                         variant: "system",
                         title: "No se pudo eliminar",
-                        message: "Intenta de nuevo o contacta soporte.",
+                        message: `Error: ${data.error || data.detail || res.status}. Contacta soporte.`,
                       });
                     }
                   } catch {
