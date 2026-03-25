@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { debitWithToken } from "@/lib/nuvei";
-import { sendPaymentConfirmation } from "@/lib/email";
+import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -418,23 +418,40 @@ export async function POST(request: NextRequest) {
     // 3DS frictionless failure — map authentication status to user message
     const threeDSStatus = nuveiData["3ds"]?.authentication?.status;
     if (threeDSStatus && THREEDS_AUTH_MESSAGES[threeDSStatus]) {
+      const threeDSErrorMsg = THREEDS_AUTH_MESSAGES[threeDSStatus];
       if (dbAdmin) {
         const currentOrder = await dbAdmin.collection("orders").doc(orderId).get();
-        if (currentOrder.data()?.status === "pending") {
+        const orderData = currentOrder.data();
+        if (orderData?.status === "pending") {
           await dbAdmin.collection("orders").doc(orderId).update({
             status: "failed",
             chargeResponseAt: new Date(),
             updatedAt: new Date(),
           });
         }
+        if (userEmail && orderData) {
+          sendPaymentFailed({
+            to: userEmail,
+            customerName: orderData.shippingAddress?.fullName || "",
+            orderId,
+            errorMessage: threeDSErrorMsg,
+            items: orderData.items || [],
+            total: orderData.total || amount,
+          }).catch(() => {});
+        }
       }
       return NextResponse.json(
-        { error: THREEDS_AUTH_MESSAGES[threeDSStatus] },
+        { error: threeDSErrorMsg },
         { status: 400 },
       );
     }
 
     // Generic charge failed — mark as failed but let webhook override if it has different info
+    const failedErrorMsg = getNuveiUserMessage(
+      nuveiData.transaction?.status_detail,
+      nuveiData.transaction?.message || nuveiData.error?.description,
+    );
+
     if (dbAdmin) {
       const currentOrder = await dbAdmin.collection("orders").doc(orderId).get();
       const currentStatus = currentOrder.data()?.status;
@@ -446,15 +463,23 @@ export async function POST(request: NextRequest) {
           updatedAt: new Date(),
         });
       }
+
+      // Send failure email (non-blocking)
+      const orderData = currentOrder.data();
+      if (userEmail && orderData) {
+        sendPaymentFailed({
+          to: userEmail,
+          customerName: orderData.shippingAddress?.fullName || "",
+          orderId,
+          errorMessage: failedErrorMsg,
+          items: orderData.items || [],
+          total: orderData.total || amount,
+        }).catch(() => {});
+      }
     }
 
     return NextResponse.json(
-      {
-        error: getNuveiUserMessage(
-          nuveiData.transaction?.status_detail,
-          nuveiData.transaction?.message || nuveiData.error?.description,
-        ),
-      },
+      { error: failedErrorMsg },
       { status: 400 },
     );
   } catch (error) {
