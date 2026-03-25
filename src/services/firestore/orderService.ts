@@ -26,6 +26,8 @@ export async function createOrder(params: {
   shippingAddress: ShippingAddress;
   paymentToken?: string;
   paymentTransactionId?: string;
+  cardBrand?: string;
+  cardLast4?: string;
   discount?: number;
   couponCode?: string;
   promotionId?: string;

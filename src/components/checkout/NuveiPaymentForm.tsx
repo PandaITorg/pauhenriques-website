@@ -59,10 +59,17 @@ interface CardError {
   message: string;
 }
 
+export interface TokenizedCardInfo {
+  type?: string;
+  number?: string;
+  expiry_year?: string;
+  expiry_month?: string;
+}
+
 interface NuveiPaymentFormProps {
   uid: string;
   email: string;
-  onTokenSuccess: (token: string) => void;
+  onTokenSuccess: (token: string, cardInfo: TokenizedCardInfo) => void;
   onTokenError: (error: string) => void;
   onGoToSavedCards?: () => void;
   disabled?: boolean;
@@ -188,7 +195,12 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
       ) {
         if (response.card.token) {
           setError(null);
-          onTokenSuccess(response.card.token);
+          onTokenSuccess(response.card.token, {
+            type: response.card.type,
+            number: response.card.number,
+            expiry_year: response.card.expiry_year,
+            expiry_month: response.card.expiry_month,
+          });
         } else {
           setError({
             variant: "system",

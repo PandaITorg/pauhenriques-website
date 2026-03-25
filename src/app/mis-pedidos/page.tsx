@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { getOrdersByUser } from "@/services/firestore/orderService";
 import { Order, OrderStatus } from "@/types/order";
+import { getCardBrandName } from "@/types/card";
 import {
   FaBox,
   FaClock,
@@ -230,19 +231,19 @@ function OrderDrawer({
               Información de pago
             </h3>
             <div className="bg-surface-elevated rounded-lg p-4 text-sm space-y-2">
-              {order.paymentTransactionId && (
+              {(order.cardBrand || order.cardLast4) && (
                 <div className="flex justify-between">
-                  <span className="text-text-main/50">Transaction ID</span>
+                  <span className="text-text-main/50">Tarjeta</span>
                   <span className="font-mono text-text-main text-xs">
-                    {order.paymentTransactionId}
+                    {order.cardBrand ? getCardBrandName(order.cardBrand) : ""}{order.cardLast4 ? ` ····${order.cardLast4}` : ""}
                   </span>
                 </div>
               )}
-              {order.paymentToken && (
+              {order.paymentTransactionId && (
                 <div className="flex justify-between">
-                  <span className="text-text-main/50">Token</span>
+                  <span className="text-text-main/50">ID Transacción</span>
                   <span className="font-mono text-text-main text-xs">
-                    ····{order.paymentToken.slice(-8)}
+                    {order.paymentTransactionId}
                   </span>
                 </div>
               )}

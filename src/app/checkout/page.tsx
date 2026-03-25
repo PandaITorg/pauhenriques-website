@@ -355,23 +355,32 @@ export default function CheckoutPage() {
     return false;
   }
 
-  const handleTokenSuccess = async (token: string) => {
+  const handleTokenSuccess = async (token: string, cardInfo: import("@/components/checkout/NuveiPaymentForm").TokenizedCardInfo) => {
     setSelectedCardToken(token);
-    setSelectedCardInfo(null);
     setIsNewlyTokenized(true);
     setPaymentMode("saved");
+    // Build a synthetic card info from SDK data so confirm step never shows "Nueva tarjeta agregada"
+    setSelectedCardInfo({
+      token,
+      type: cardInfo.type ?? "",
+      number: cardInfo.number ?? "",
+      expiry_year: cardInfo.expiry_year ?? "",
+      expiry_month: cardInfo.expiry_month ?? "",
+      holder_name: "",
+      bin: "",
+      status: "valid",
+      transaction_reference: "",
+    });
     setStep("confirm");
-    // Fetch card details in background to show real info in confirm step
+    // Try to enrich with full data from API in background (has holder_name, etc.)
     try {
       const res = await fetch("/api/nuvei/cards");
       if (res.ok) {
         const data = await res.json();
         const newCard = (data.cards || []).find((c: SavedCard) => c.token === token);
-        if (newCard) {
-          setSelectedCardInfo(newCard);
-        }
+        if (newCard) setSelectedCardInfo(newCard);
       }
-    } catch { /* show fallback "Nueva tarjeta" text */ }
+    } catch { /* keep SDK-derived info */ }
   };
 
   const handleTokenError = (error: string) => {
@@ -407,6 +416,8 @@ export default function CheckoutPage() {
         total,
         shippingAddress: shipping,
         paymentToken: selectedCardToken,
+        ...(selectedCardInfo?.type && { cardBrand: selectedCardInfo.type }),
+        ...(selectedCardInfo?.number && { cardLast4: selectedCardInfo.number }),
         ...(appliedCoupon && {
           discount,
           couponCode: appliedCoupon.code,
@@ -488,6 +499,9 @@ export default function CheckoutPage() {
         // Don't reset paymentLockRef — payment is still in progress via 3DS
       } else {
         const errorMsg = data.error || "Error al procesar el pago.";
+        if (orderId) {
+          try { await markOrderFailed(orderId); } catch { /* best effort */ }
+        }
         paymentLockRef.current = false;
         setProcessingPayment(false);
         setPaymentFailed(errorMsg);
@@ -1039,7 +1053,7 @@ export default function CheckoutPage() {
                       Método de Pago
                     </h3>
                     <button
-                      onClick={() => setStep("payment")}
+                      onClick={() => { setStep("payment"); setPaymentError(null); }}
                       className="text-xs text-primary hover:text-primary-hover underline underline-offset-2 transition-colors"
                     >
                       Cambiar
@@ -1189,7 +1203,7 @@ export default function CheckoutPage() {
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setStep("payment")}
+                    onClick={() => { setStep("payment"); setPaymentError(null); }}
                     className="flex items-center justify-center gap-2 flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-xl hover:bg-surface-elevated transition-colors"
                   >
                     <FaArrowLeft className="w-3 h-3" />

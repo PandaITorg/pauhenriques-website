@@ -42,6 +42,8 @@ export interface Order {
   paymentToken?: string;
   paymentTransactionId?: string;
   authorizationCode?: string;
+  cardBrand?: string;
+  cardLast4?: string;
   shippingAddress: ShippingAddress;
   discount?: number;
   couponCode?: string;
