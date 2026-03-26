@@ -12,6 +12,8 @@ const STATUS_LABELS: Record<string, string> = {
   shipped: "Enviado",
   delivered: "Entregado",
   cancelled: "Cancelado",
+  failed: "Fallido",
+  refunded: "Reembolsado",
 };
 
 const STATUS_FLOW = [
@@ -56,6 +58,8 @@ export default function AdminPedidoDetailPage() {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [refunding, setRefunding] = useState(false);
+  const [refundResult, setRefundResult] = useState<{ success?: boolean; error?: string } | null>(null);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -89,6 +93,28 @@ export default function AdminPedidoDetailPage() {
       console.error("Error updating status:", err);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleRefund = async () => {
+    if (!confirm("¿Estás seguro de que deseas reembolsar esta orden? Esta acción no se puede deshacer.")) return;
+    setRefunding(true);
+    setRefundResult(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}/refund`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRefundResult({ success: true });
+        setOrder((prev) => prev ? { ...prev, status: "refunded" } : prev);
+      } else {
+        setRefundResult({ error: data.error || "Error al reembolsar" });
+      }
+    } catch {
+      setRefundResult({ error: "Error de conexión" });
+    } finally {
+      setRefunding(false);
     }
   };
 
@@ -274,13 +300,36 @@ export default function AdminPedidoDetailPage() {
               <h2 className="text-xs font-bold text-text-main/40 uppercase tracking-wider mb-4">
                 Pago
               </h2>
-              <div className="text-sm text-text-main/60">
+              <div className="text-sm text-text-main/60 space-y-2">
                 <p>
                   <span className="text-text-main/40">Transacción:</span>{" "}
                   <span className="font-mono text-text-main">
                     {order.paymentTransactionId}
                   </span>
                 </p>
+                {order.status === "paid" && (
+                  <div className="pt-3 border-t border-border-subtle">
+                    <button
+                      onClick={handleRefund}
+                      disabled={refunding}
+                      className="w-full bg-error/15 hover:bg-error/25 text-error font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm disabled:opacity-50 cursor-pointer"
+                    >
+                      {refunding ? "Procesando reembolso..." : "Reembolsar pago"}
+                    </button>
+                    <p className="text-xs text-text-main/30 mt-2 text-center">
+                      Solo antes del cierre diario (5:50 PM Datafast / 5:00 PM Medianet)
+                    </p>
+                  </div>
+                )}
+                {order.status === "refunded" && (
+                  <p className="text-success font-medium pt-2">Reembolsado</p>
+                )}
+                {refundResult?.success && (
+                  <p className="text-success text-xs font-medium">Reembolso procesado correctamente</p>
+                )}
+                {refundResult?.error && (
+                  <p className="text-error text-xs font-medium">{refundResult.error}</p>
+                )}
               </div>
             </div>
           )}
