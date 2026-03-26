@@ -6,9 +6,56 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
 ---
 
-## [0.10.0-beta] — 2026-03-14 _(versión actual)_
+## [1.0.0-rc.1] — 2026-03-25 _(versión actual)_
 
-> **Estado: Beta** — Flujo 3DS2 completo probado en staging (Modirum). Pendiente certificación con credenciales de producción.
+> **Estado: Release Candidate** — En producción con credenciales Nuvei reales. Pendiente validación completa de transacciones en vivo.
+
+### Added
+- **Credenciales Nuvei producción** (`PAUHENRIQUES-EC-CLIENT` / `PAUHENRIQUES-EC-SERVER`)
+- **Cloud Function para callback 3DS** — resuelve 403 de Firebase App Hosting en POSTs externos del ACS
+- **Polling fallback** para verificación 3DS cuando postMessage no llega
+- **Input CVC para tarjetas guardadas** — requerido por bancos ecuatorianos en producción
+- **Selector de diferidos** en checkout (corriente / con intereses 3-36 meses / sin intereses 3-6 meses)
+- **Email de confirmación de pago** con template HTML branded (via Resend) — incluye transactionId y authorizationCode
+- **Email de pago fallido** con motivo del rechazo y CTA de reintento
+- **Manejo de tarjeta duplicada** — detecta "Card already added" de Nuvei, ofrece eliminar y reintentar
+- **Detección de tarjetas en estado roto** con mensajes de error descriptivos
+- **Campos `cardBrand` y `cardLast4`** guardados en orden — reemplazan token raw en "Mis Pedidos"
+- **Validación de stock, precio y cupón** server-side antes de cobrar (previene cobros con datos desactualizados)
+- **IVA 15%** y `taxable_amount` enviados a Nuvei en cada débito
+- **Parámetro `CLOUD_FUNCTIONS_BASE_URL`** como variable de entorno (elimina URL hardcodeada)
+
+### Changed
+- **Iframe 3DS aumentado** de 450px a 600px de alto y max-w-md a max-w-lg
+- **Email removido de verify API** — Nuvei pidió explícitamente quitarlo
+- **Flujo 3DS endurecido** — polling no auto-aprueba sin postMessage/cres; valida `3ds-pending` antes de escribir
+- **Fire-and-forget de emails** con tracking de `emailSent` para aviso sutil en confirmación
+- **Orden marcada `failed`** en cobros rechazados (antes quedaba en `pending` indefinidamente)
+- **`handleTokenSuccess` avanza a confirm inmediatamente** — fetch de tarjetas en background para evitar flicker
+- **Tarjetas `pending` incluidas** en listado de tarjetas guardadas (tarjetas de débito recién tokenizadas)
+
+### Fixed
+- **Prevención de auto-aprobación 3DS** — polling sin cres en challenge retorna `pending` en vez de llamar verify
+- **XSS en Cloud Function** — orderId y transStatus sanitizados con regex whitelist
+- **postMessage sin target origin** — `"*"` reemplazado por sanitización de valores
+- **TypeError en re-init SDK Nuvei** — limpieza de DOM container antes de re-renderizar formulario
+- **"Nueva tarjeta agregada" genérico** — ahora muestra type/last4/expiry reales del SDK
+- **"No autorizado" fantasma** — paymentError se limpia al volver al paso de pago
+- **Dead code eliminado** — `baseUrl`/`host`/`protocol` no usados en charge route
+- **Campos residuales limpiados** — `threeDSTransStatus`, `isDeviceFingerprint`, `threeDSCres` eliminados de Firestore en éxito
+- **Ternario idéntico `functionsBase`** — reemplazado por `CLOUD_FUNCTIONS_BASE_URL` env var
+
+### Security
+- Sanitización XSS en HTML generado por Cloud Function
+- Validación de `3ds-pending` en callback antes de escribir cres (previene tampering)
+- CVC nunca se loguea ni se guarda en Firestore
+- Session cookie verificada en todos los endpoints de pago
+
+---
+
+## [0.10.0-beta] — 2026-03-14
+
+> **Estado: Beta** — Flujo 3DS2 completo probado en staging (Modirum).
 
 ### Added
 - **Flujo 3DS2 completo** para pagos Nuvei/Paymentez:
@@ -198,12 +245,16 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 ## Roadmap hacia 1.0.0 (Release)
 
 - [x] Flujo 3DS2 completo (frictionless + challenge) probado en staging
-- [ ] Certificación staging con Nuvei (pruebas con todas las tarjetas requeridas)
-- [ ] Migrar a credenciales de producción Nuvei
+- [x] Certificación staging con Nuvei
+- [x] Migrar a credenciales de producción Nuvei
+- [x] Eliminar página de test Nuvei
+- [x] Emails transaccionales (confirmación + fallo)
+- [x] Diferidos (con/sin intereses)
+- [x] CVC para tarjetas guardadas
+- [x] Auditoría de seguridad (XSS, validación server-side, session cookies)
 - [ ] Pagos Nuvei validados en producción con transacciones reales
-- [ ] Eliminar página de test Nuvei
-- [ ] Testing E2E del flujo completo (registro → carrito → checkout → pago)
-- [ ] Admin panel estabilizado y con control de acceso robusto
-- [ ] Auditoría de seguridad (Firestore rules, API routes, middleware)
+- [ ] Resolver tarjeta de débito atrapada con soporte Nuvei
+- [ ] Testing E2E del flujo completo (registro → carrito → checkout → pago → email)
+- [ ] Reembolsos via API integrados en admin panel
 - [ ] Performance audit (Core Web Vitals en verde)
-- [ ] Monitoreo y logging en producción
+- [ ] Monitoreo y alertas en producción
