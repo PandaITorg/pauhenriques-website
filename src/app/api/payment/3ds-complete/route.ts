@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { verifyThreeDS } from "@/lib/nuvei";
-import { sendPaymentConfirmation } from "@/lib/email";
+import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -83,6 +83,18 @@ export async function POST(request: NextRequest) {
         storedTransStatus === "N" ? "Autenticación 3DS rechazada por tu banco." :
         storedTransStatus === "R" ? "Tu banco rechazó la autenticación 3DS." :
         "No se pudo verificar la autenticación 3DS.";
+      // Send failure email (non-blocking)
+      const userEmail = orderData.userEmail || decodedToken.email || "";
+      if (userEmail) {
+        sendPaymentFailed({
+          to: userEmail,
+          customerName: orderData.shippingAddress?.fullName || "",
+          orderId,
+          errorMessage: msg,
+          items: orderData.items || [],
+          total: orderData.total || 0,
+        }).catch(() => {});
+      }
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 
@@ -248,6 +260,19 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       threeDSCres: FieldValue.delete(),
     });
+
+    // Send failure email (non-blocking)
+    const userEmail = orderData.userEmail || decodedToken.email || "";
+    if (userEmail) {
+      sendPaymentFailed({
+        to: userEmail,
+        customerName: orderData.shippingAddress?.fullName || "",
+        orderId,
+        errorMessage: "Pago rechazado tras autenticación 3DS.",
+        items: orderData.items || [],
+        total: orderData.total || 0,
+      }).catch(() => {});
+    }
 
     return NextResponse.json(
       { error: "Pago rechazado tras autenticación 3DS." },

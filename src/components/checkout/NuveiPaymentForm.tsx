@@ -392,12 +392,12 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
                 type="button"
                 onClick={() => {
                   setError(null);
-                  // Re-initialize SDK form
+                  // Clean DOM container and re-initialize SDK form
+                  const container = document.getElementById(CONTAINER_ID);
+                  if (container) container.innerHTML = "";
                   sdkInitRef.current = false;
                   setSdkReady(false);
-                  setTimeout(() => {
-                    handleScriptReady();
-                  }, 100);
+                  setTimeout(() => handleScriptReady(), 100);
                 }}
                 className="flex-1 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm cursor-pointer inline-flex items-center justify-center gap-2"
               >

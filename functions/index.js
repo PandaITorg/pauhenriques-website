@@ -58,6 +58,9 @@ exports.threeDSCallback = onRequest(
     }
 
     // Return HTML that sends postMessage to the parent checkout window
+    // Sanitize values to prevent XSS — only allow alphanumeric, hyphens, underscores
+    const safeOrderId = String(orderId).replace(/[^a-zA-Z0-9_-]/g, "");
+    const safeTransStatus = String(transStatus).replace(/[^a-zA-Z0-9]/g, "");
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>3DS Verification</title></head>
 <body>
@@ -65,8 +68,8 @@ exports.threeDSCallback = onRequest(
 (function() {
   var message = {
     type: "3DS_COMPLETE",
-    orderId: "${orderId.replace(/"/g, "")}",
-    transStatus: "${transStatus.replace(/"/g, "")}"
+    orderId: "${safeOrderId}",
+    transStatus: "${safeTransStatus}"
   };
   try {
     if (window.parent && window.parent !== window) {
