@@ -80,13 +80,26 @@ export default function AdminPedidosPage() {
   };
 
   const inputClass =
-    "bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
+    "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-text-main">Pedidos</h1>
+      {/* ── Header with gradient ── */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/40 to-background" />
+        <div className="relative px-5 lg:px-8 pt-6 pb-4 md:pt-8 md:pb-6">
+          <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-1">
+            Gestion
+          </span>
+          <h1 className="text-2xl font-semibold text-text-main">Pedidos</h1>
+        </div>
       </div>
+
+      {/* ── Separator ── */}
+      <div className="h-px bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      {/* ── Content ── */}
+      <div className="px-5 lg:px-8 py-6">
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -195,6 +208,7 @@ export default function AdminPedidosPage() {
             </table>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

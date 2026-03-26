@@ -19,10 +19,10 @@ const DesktopNav: React.FC<DesktopNavProps> = ({ navLinks, currentPath }) => {
           <Link
             key={link.href}
             href={link.href}
-            className={`relative px-4 py-2 text-[13px] font-medium tracking-[0.08em] uppercase transition-colors duration-300 ${
+            className={`relative px-4 py-2 text-[13px] font-medium tracking-[0.08em] uppercase transition-all duration-300 cursor-pointer ${
               isActive
                 ? "text-primary"
-                : "text-text-main/70 hover:text-primary"
+                : "text-text-main/70 hover:text-primary active:scale-[0.97] active:opacity-80"
             }`}
           >
             {link.text}

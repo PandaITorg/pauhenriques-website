@@ -106,7 +106,7 @@ const Header = () => {
                 <div className="relative hidden md:block" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-semibold text-sm transition-all duration-300 hover:bg-primary/30 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary font-semibold text-sm transition-all duration-300 hover:bg-primary/30 hover:border-primary/50 active:scale-[0.95] cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
                     aria-label="Menu de usuario"
                     aria-expanded={isDropdownOpen}
                   >
@@ -136,21 +136,21 @@ const Header = () => {
                       <Link
                         href="/mi-cuenta"
                         onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-text-main/80 hover:text-primary hover:bg-primary/5 transition-colors"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-text-main/80 hover:text-primary hover:bg-primary/5 active:opacity-80 cursor-pointer transition-colors"
                       >
                         Mi cuenta
                       </Link>
                       <Link
                         href="/mis-pedidos"
                         onClick={() => setIsDropdownOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-text-main/80 hover:text-primary hover:bg-primary/5 transition-colors"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-text-main/80 hover:text-primary hover:bg-primary/5 active:opacity-80 cursor-pointer transition-colors"
                       >
                         Mis pedidos
                       </Link>
                       <div className="h-px bg-border-subtle mx-3 my-1" />
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-error/80 hover:text-error hover:bg-error/5 transition-colors text-left"
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-error/80 hover:text-error hover:bg-error/5 active:opacity-80 cursor-pointer transition-colors text-left"
                       >
                         Cerrar sesion
                       </button>
@@ -160,7 +160,7 @@ const Header = () => {
               ) : (
                 <Link
                   href="/sign-in"
-                  className="hidden md:inline-flex items-center px-5 py-2 rounded-full text-[13px] font-medium tracking-wide uppercase border border-primary/40 text-primary transition-all duration-300 hover:bg-primary hover:text-bosque-profundo-900 hover:border-primary hover:shadow-(--shadow-glow-primary)"
+                  className="hidden md:inline-flex items-center px-5 py-2 rounded-full text-[13px] font-medium tracking-wide uppercase border border-primary/40 text-primary transition-all duration-300 hover:bg-primary hover:text-bosque-profundo-900 hover:border-primary hover:shadow-(--shadow-glow-primary) active:scale-[0.97] active:opacity-80 cursor-pointer"
                 >
                   Ingresar
                 </Link>
@@ -171,7 +171,7 @@ const Header = () => {
           {/* Mobile hamburger */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 -mr-1 min-w-11 min-h-11 flex items-center justify-center relative"
+            className="md:hidden p-2 -mr-1 min-w-11 min-h-11 flex items-center justify-center relative cursor-pointer"
             aria-label={isMenuOpen ? "Cerrar menu" : "Abrir menu"}
           >
             <div className="w-6 h-5 relative flex flex-col justify-between">

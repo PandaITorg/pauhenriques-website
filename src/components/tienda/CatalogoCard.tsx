@@ -19,13 +19,25 @@ const CatalogoCard = ({ product, onQuickView }: CatalogoCardProps) => {
     `Hola Pau, quiero conocer más sobre "${product.name}".`,
   )}`;
 
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onQuickView(product);
+  };
+
+  const handleWhatsApp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open(whatsappLink, "_blank", "noopener,noreferrer");
+  };
+
   return (
-    <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden flex flex-col group hover:border-warm-600/40 transition-all duration-300 hover:shadow-[--shadow-glow-primary]">
+    <Link
+      href={`/tienda/${product.id}`}
+      className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden flex flex-col group hover:border-warm-600/40 transition-all duration-300 hover:shadow-[--shadow-glow-primary]"
+    >
       {/* Image — taller aspect for editorial feel */}
-      <div
-        className="relative w-full aspect-3/4 cursor-pointer overflow-hidden"
-        onClick={() => onQuickView(product)}
-      >
+      <div className="relative w-full aspect-3/4 overflow-hidden">
         {hasImage ? (
           <Image
             src={firstImage}
@@ -38,12 +50,13 @@ const CatalogoCard = ({ product, onQuickView }: CatalogoCardProps) => {
           <ProductPlaceholder className="w-full h-full" />
         )}
 
-        {/* Warm overlay on hover */}
-        <div className="absolute inset-0 bg-warm-950/0 group-hover:bg-warm-950/30 transition-colors duration-300 flex items-center justify-center">
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-text-inverted text-sm font-medium px-4 py-2 rounded-full flex items-center gap-2">
-            <FaEye className="w-3.5 h-3.5" /> Vista rápida
-          </span>
-        </div>
+        {/* Quick view button — bottom-right, desktop only */}
+        <button
+          onClick={handleQuickView}
+          className="hidden md:flex absolute bottom-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm text-text-inverted text-xs font-medium px-3 py-1.5 rounded-full items-center gap-1.5 hover:bg-white cursor-pointer"
+        >
+          <FaEye className="w-3 h-3" /> Vista rápida
+        </button>
 
         {/* Badge */}
         <span className="absolute top-2.5 left-2.5 bg-warm-700 text-warm-100 text-[11px] font-semibold px-2.5 py-1 rounded-full">
@@ -51,8 +64,8 @@ const CatalogoCard = ({ product, onQuickView }: CatalogoCardProps) => {
         </span>
       </div>
 
-      {/* Content — links to detail page */}
-      <Link href={`/tienda/${product.id}`} className="p-4 flex flex-col grow">
+      {/* Content */}
+      <div className="p-4 flex flex-col grow">
         <span className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-1">
           {product.brand}
         </span>
@@ -64,17 +77,14 @@ const CatalogoCard = ({ product, onQuickView }: CatalogoCardProps) => {
         </p>
 
         {/* CTA — WhatsApp */}
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="mt-auto w-full bg-whatsapp text-white font-semibold py-2.5 px-4 rounded-lg text-sm text-center transition-all duration-200 flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.97]"
+        <button
+          onClick={handleWhatsApp}
+          className="mt-auto w-full bg-whatsapp text-white font-semibold py-2.5 px-4 rounded-lg text-sm text-center transition-all duration-200 flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.97] cursor-pointer"
         >
           <FaWhatsapp className="w-4 h-4" /> Consultar por WhatsApp
-        </a>
-      </Link>
-    </div>
+        </button>
+      </div>
+    </Link>
   );
 };
 

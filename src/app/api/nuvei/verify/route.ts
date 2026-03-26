@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/firebase-admin";
+import { auth, dbAdmin } from "@/lib/firebase-admin";
 import { verifyCard } from "@/lib/nuvei";
 
 export const dynamic = "force-dynamic";
@@ -23,19 +23,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { cardToken, value } = await request.json();
+    const { cardToken, transactionReference, value } = await request.json();
 
-    if (!cardToken || !value) {
+    if ((!cardToken && !transactionReference) || !value) {
       return NextResponse.json(
-        { error: "cardToken y value son requeridos" },
+        { error: "transactionReference y value son requeridos" },
         { status: 400 },
       );
     }
 
     const result = await verifyCard({
       userId: decodedToken.uid,
-      userEmail: decodedToken.email || "",
-      cardToken,
+      transactionReference: transactionReference || cardToken,
       value,
     });
 
@@ -44,6 +43,20 @@ export async function POST(request: NextRequest) {
         { error: result.error.description || "Error de verificación" },
         { status: 400 },
       );
+    }
+
+    // Persist verified status in Firestore so it survives page reloads
+    if (dbAdmin && cardToken) {
+      try {
+        await dbAdmin
+          .collection("users")
+          .doc(decodedToken.uid)
+          .collection("verifiedCards")
+          .doc(cardToken)
+          .set({ verifiedAt: new Date() });
+      } catch (err) {
+        console.error("Failed to persist verified card:", err);
+      }
     }
 
     return NextResponse.json({

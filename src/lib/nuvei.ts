@@ -9,6 +9,7 @@ function getBaseUrl(): string {
     : `https://ccapi-stg.${NUVEI_DOMAIN}`;
 }
 
+
 function getServerCredentials() {
   const appCode = process.env.NUVEI_SERVER_APP_CODE;
   const appKey = process.env.NUVEI_SERVER_APP_KEY;
@@ -51,6 +52,9 @@ export async function nuveiRequest<T>(
   }
 
   const response = await fetch(url, options);
+  if (!response.ok) {
+    console.error(`[nuvei] ${method} ${path} failed with status ${response.status}`);
+  }
   return response.json() as Promise<T>;
 }
 
@@ -89,8 +93,7 @@ export async function refundTransaction(transactionId: string) {
 
 export async function verifyCard(params: {
   userId: string;
-  userEmail: string;
-  cardToken: string;
+  transactionReference: string;
   value: string;
 }) {
   return nuveiRequest<{
@@ -108,13 +111,55 @@ export async function verifyCard(params: {
   }>("/v2/transaction/verify/", "POST", {
     user: {
       id: params.userId,
-      email: params.userEmail,
     },
-    card: {
-      token: params.cardToken,
+    transaction: {
+      id: params.transactionReference,
     },
+    type: "BY_AMOUNT",
     value: params.value,
   });
+}
+
+export interface ThreeDSResponse {
+  authentication: {
+    status: string;
+    return_code: string;
+    return_message?: string;
+    cavv?: string;
+    eci?: string;
+    xid?: string;
+    reference_id?: string;
+  };
+  browser_response: {
+    hidden_iframe?: string;
+    challenge_request?: string;
+  };
+  sdk_response?: {
+    acs_trans_id?: string;
+    acs_reference_number?: string;
+  };
+}
+
+export interface DebitResponse {
+  transaction?: {
+    status: string;
+    current_status: string;
+    id: string;
+    message: string | null;
+    status_detail: number;
+    authorization_code: string | null;
+  };
+  card?: {
+    bin: string;
+    type: string;
+    number: string;
+  };
+  "3ds"?: ThreeDSResponse;
+  error?: {
+    type: string;
+    help: string;
+    description: string;
+  };
 }
 
 export async function debitWithToken(params: {
@@ -124,40 +169,81 @@ export async function debitWithToken(params: {
   description: string;
   devReference: string;
   cardToken: string;
+  cvc?: string;
   vat?: number;
+  taxableAmount?: number;
+  installments?: number;
+  installmentsType?: number;
+  browserInfo?: {
+    accept_header: string;
+    user_agent: string;
+    language: string;
+    timezone_offset: number;
+    screen_width: number;
+    screen_height: number;
+    color_depth: number;
+    js_enabled: boolean;
+    java_enabled: boolean;
+    ip_address?: string;
+  };
+  termUrl?: string;
 }) {
-  return nuveiRequest<{
-    transaction?: {
-      status: string;
-      current_status: string;
-      id: string;
-      message: string | null;
-      status_detail: number;
-      authorization_code: string | null;
-    };
-    card?: {
-      bin: string;
-      type: string;
-      number: string;
-    };
-    error?: {
-      type: string;
-      help: string;
-      description: string;
-    };
-  }>("/v2/transaction/debit/", "POST", {
+  const order: Record<string, unknown> = {
+    amount: params.amount,
+    description: params.description,
+    dev_reference: params.devReference,
+    vat: params.vat ?? 0,
+    taxable_amount: params.taxableAmount ?? (params.amount - (params.vat ?? 0)),
+    tax_percentage: 15,
+  };
+
+  if (params.installments && params.installments > 0) {
+    order.installments = params.installments;
+    order.installments_type = params.installmentsType ?? 0;
+  }
+
+  const body: Record<string, unknown> = {
     user: {
       id: params.userId,
       email: params.userEmail,
     },
-    order: {
-      amount: params.amount,
-      description: params.description,
-      dev_reference: params.devReference,
-      vat: params.vat ?? 0,
-    },
+    order,
     card: {
       token: params.cardToken,
+      ...(params.cvc ? { cvc: params.cvc } : {}),
     },
-  });
+  };
+
+  if (params.browserInfo && params.termUrl) {
+    body.extra_params = {
+      threeDS2_data: {
+        term_url: params.termUrl,
+        device_type: "browser",
+      },
+      browser_info: params.browserInfo,
+    };
+  }
+
+  return nuveiRequest<DebitResponse>("/v2/transaction/debit/", "POST", body);
+}
+
+// --- 3DS Verify API ---
+
+export interface VerifyThreeDSParams {
+  transactionId: string;
+  userId: string;
+  type: "AUTHENTICATION_CONTINUE" | "BY_CRES" | "BY_OTP";
+  value?: string;
+}
+
+export async function verifyThreeDS(params: VerifyThreeDSParams): Promise<DebitResponse> {
+  const body: Record<string, unknown> = {
+    user: {
+      id: params.userId,
+    },
+    transaction: { id: params.transactionId },
+    type: params.type,
+    value: params.value ?? "",
+  };
+  return nuveiRequest<DebitResponse>("/v2/transaction/verify/", "POST", body);
 }

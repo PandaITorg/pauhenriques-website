@@ -150,58 +150,72 @@ export default function TiendaClient() {
   return (
     <>
       <TiendaSchema />
-      <div className="min-h-screen bg-background py-6 md:py-10 px-4 sm:px-6">
-        <div className="container mx-auto">
-          {/* Header */}
-          <div className="text-center mb-8 md:mb-10">
-            <h1 className="font-cormorant text-3xl md:text-4xl font-semibold text-text-main mb-2">
-              Tienda{" "}
-              <span className="font-dancing-script text-primary text-[1.1em]">
-                Toxic Free
+      <div className="min-h-screen bg-background">
+        {/* ── Hero header with warm gradient ── */}
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-b from-warm-950/60 via-background to-background" />
+
+          <div className="relative max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 pt-12 pb-8 md:pt-20 md:pb-12">
+            {/* Title */}
+            <div className="text-center mb-8 md:mb-10">
+              <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-3">
+                Productos para tu bienestar
               </span>
-            </h1>
-            <p className="text-text-main/50 text-sm md:text-base">
-              Productos para una vida más saludable y libre de tóxicos
-            </p>
-          </div>
+              <h1 className="font-cormorant text-3xl sm:text-4xl md:text-5xl font-semibold text-text-main mb-3">
+                Tienda{" "}
+                <span className="font-dancing-script text-primary text-[1.1em]">
+                  Toxic Free
+                </span>
+              </h1>
+              <p className="text-text-main/50 text-sm md:text-base max-w-lg mx-auto">
+                Productos para una vida más saludable y libre de tóxicos
+              </p>
+            </div>
 
-          {/* Tabs */}
-          <div className="flex justify-center gap-2 mb-6">
-            <button
-              onClick={() => {
-                setActiveTab("compra");
-                setSelectedCategory(null);
-              }}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
-                activeTab === "compra"
-                  ? "bg-primary text-white shadow-md shadow-primary/20"
-                  : "bg-surface-card text-text-main/50 border border-border-subtle hover:border-border-default"
-              }`}
-            >
-              <HiOutlineShoppingBag className="w-4 h-4" />
-              Compra Online
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("catalogo");
-                setSelectedCategory(null);
-              }}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
-                activeTab === "catalogo"
-                  ? "bg-warm-700 text-warm-50 shadow-md shadow-warm-900/30"
-                  : "bg-surface-card text-text-main/50 border border-border-subtle hover:border-border-default"
-              }`}
-            >
-              <FaBookOpen className="w-3.5 h-3.5" />
-              Catálogo Carico
-            </button>
-          </div>
+            {/* Tabs */}
+            <div className="flex justify-center gap-2 mb-6">
+              <button
+                onClick={() => {
+                  setActiveTab("compra");
+                  setSelectedCategory(null);
+                }}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                  activeTab === "compra"
+                    ? "bg-primary text-white shadow-md shadow-primary/20"
+                    : "bg-surface-card text-text-main/50 border border-border-subtle hover:border-border-default"
+                }`}
+              >
+                <HiOutlineShoppingBag className="w-4 h-4" />
+                Compra Online
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("catalogo");
+                  setSelectedCategory(null);
+                }}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                  activeTab === "catalogo"
+                    ? "bg-warm-700 text-warm-50 shadow-md shadow-warm-900/30"
+                    : "bg-surface-card text-text-main/50 border border-border-subtle hover:border-border-default"
+                }`}
+              >
+                <FaBookOpen className="w-3.5 h-3.5" />
+                Catálogo Carico
+              </button>
+            </div>
 
-          {/* Search */}
-          <div className="flex justify-center mb-6">
-            <SearchBar onSearch={handleSearch} />
+            {/* Search */}
+            <div className="flex justify-center">
+              <SearchBar onSearch={handleSearch} />
+            </div>
           </div>
+        </section>
 
+        {/* ── Separator ── */}
+        <div className="h-px max-w-7xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+        {/* ── Product grid section ── */}
+        <section className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-8 md:py-12">
           {/* Category filter (mobile pills) */}
           <div className="mb-6">
             <CategoryFilter
@@ -214,7 +228,7 @@ export default function TiendaClient() {
 
           {/* Main content */}
           <div className="flex gap-8">
-            {/* Desktop sidebar — hidden on mobile (pills shown above instead) */}
+            {/* Desktop sidebar */}
             <CategoryFilter
               selectedCategory={selectedCategory}
               onCategorySelect={setSelectedCategory}
@@ -225,7 +239,7 @@ export default function TiendaClient() {
             {/* Product grid */}
             <div className="grow">
               {loading ? (
-                <div className={`grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6`}>
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                   {Array.from({ length: 8 }).map((_, i) =>
                     isCatalogo ? (
                       <CatalogoCardSkeleton key={i} />
@@ -265,7 +279,7 @@ export default function TiendaClient() {
               )}
             </div>
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Quick View Drawer */}

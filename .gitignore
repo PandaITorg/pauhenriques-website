@@ -32,6 +32,9 @@ dist-ssr
 out/W
 
 
+# Docs internos
+docs/
+
 # Documentacion Nuvei y plan
 .nuvei
 .plan

@@ -15,6 +15,19 @@ const nextConfig = {
       },
     ],
   },
+  // Allow cross-origin POST from bank ACS to 3DS callback
+  async headers() {
+    return [
+      {
+        source: "/api/payment/3ds-callback",
+        headers: [
+          { key: "Access-Control-Allow-Origin", value: "*" },
+          { key: "Access-Control-Allow-Methods", value: "GET, POST, OPTIONS" },
+          { key: "Access-Control-Allow-Headers", value: "Content-Type" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

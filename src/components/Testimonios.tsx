@@ -81,20 +81,20 @@ const TestimonialCard = React.forwardRef<
         className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md mr-3 sm:mr-4"
       />
       <div className="min-w-0">
-        <h3 className="font-bold text-base sm:text-lg text-gray-800">
+        <h3 className="font-bold text-base sm:text-lg text-text-inverted">
           {testimonial.name}
         </h3>
         {testimonial.title && (
-          <p className="text-sm text-gray-500">{testimonial.title}</p>
+          <p className="text-sm text-text-inverted/60">{testimonial.title}</p>
         )}
         {testimonial.product && (
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-text-inverted/45 mt-0.5">
             {testimonial.product}
           </p>
         )}
       </div>
     </div>
-    <p className="text-sm sm:text-base text-gray-600 italic leading-relaxed">
+    <p className="text-sm sm:text-base text-text-inverted/70 italic leading-relaxed">
       &ldquo;{testimonial.text}&rdquo;
     </p>
   </div>
@@ -154,7 +154,7 @@ const Testimonios: React.FC = () => {
   return (
     <section className="bg-background py-12 md:py-24">
       <div className="container mx-auto text-center mb-8 md:mb-12 px-5">
-        <h2 className="text-3xl md:text-4xl font-bold text-text-main">
+        <h2 className="font-cormorant text-3xl md:text-4xl font-semibold text-text-main">
           Testimonios que Inspiran
         </h2>
         <p className="text-base md:text-lg text-text-main/60 mt-2">

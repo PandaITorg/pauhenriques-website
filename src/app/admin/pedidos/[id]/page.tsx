@@ -122,25 +122,36 @@ export default function AdminPedidoDetailPage() {
   const currentIndex = STATUS_FLOW.indexOf(order.status);
 
   return (
-    <div className="max-w-4xl">
+    <div>
+      {/* ── Header ── */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-linear-to-b from-warm-950/40 to-background" />
+        <div className="relative px-5 lg:px-8 pt-6 pb-4 md:pt-8 md:pb-6">
+          <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-1">
+            Pedidos
+          </span>
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-semibold text-text-main">
+              Orden{" "}
+              <span className="font-mono text-text-main/60">
+                {orderId.slice(0, 8)}...
+              </span>
+            </h1>
+            <span className="text-sm text-text-main/40">
+              {formatDate(order.createdAt)}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="h-px bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      <div className="px-5 lg:px-8 py-6 max-w-4xl">
       <Link
         href="/admin/pedidos"
         className="inline-flex items-center gap-2 text-sm text-text-main/50 hover:text-text-main transition-colors mb-6"
       >
         <FaArrowLeft className="w-3 h-3" /> Volver a Pedidos
       </Link>
-
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold text-text-main">
-          Orden{" "}
-          <span className="font-mono text-text-main/60">
-            {orderId.slice(0, 8)}...
-          </span>
-        </h1>
-        <span className="text-sm text-text-main/40">
-          {formatDate(order.createdAt)}
-        </span>
-      </div>
 
       {/* Status timeline */}
       <div className="bg-surface-card border border-border-subtle rounded-xl p-6 mb-6">
@@ -274,6 +285,7 @@ export default function AdminPedidoDetailPage() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

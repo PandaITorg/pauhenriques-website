@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { InfrrarrojoProduct } from "@/types/product";
+import { useToastStore } from "./toast.store";
 
 export interface CartItem extends InfrrarrojoProduct {
   quantity: number;
@@ -41,6 +42,11 @@ export const useCartStore = create<CartState>()(
         } else {
           set({ items: [...currentItems, { ...product, quantity: 1 }] });
         }
+
+        useToastStore.getState().addToast({
+          message: `${product.name} agregado al carrito`,
+          type: "success",
+        });
       },
 
       removeItem: (productId) => {

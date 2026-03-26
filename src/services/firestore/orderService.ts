@@ -4,6 +4,7 @@ import {
   addDoc,
   getDoc,
   getDocs,
+  updateDoc,
   query,
   where,
   orderBy,
@@ -11,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Order, OrderItem, ShippingAddress, OrderStatus } from "@/types/order";
+import type { PromotionType } from "@/types/promotion";
 
 const ORDERS_COLLECTION = "orders";
 
@@ -24,6 +26,14 @@ export async function createOrder(params: {
   shippingAddress: ShippingAddress;
   paymentToken?: string;
   paymentTransactionId?: string;
+  cardBrand?: string;
+  cardLast4?: string;
+  discount?: number;
+  couponCode?: string;
+  promotionId?: string;
+  discountType?: PromotionType;
+  installments?: number;
+  installmentsType?: number;
 }): Promise<string> {
   const orderData = {
     ...params,
@@ -37,6 +47,14 @@ export async function createOrder(params: {
     orderData,
   );
   return docRef.id;
+}
+
+export async function markOrderFailed(orderId: string): Promise<void> {
+  const docRef = doc(db, ORDERS_COLLECTION, orderId);
+  await updateDoc(docRef, {
+    status: "failed" as OrderStatus,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function getOrderById(

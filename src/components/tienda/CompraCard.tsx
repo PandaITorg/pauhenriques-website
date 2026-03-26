@@ -24,6 +24,7 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
   const inStock = infraProduct ? infraProduct.stock > 0 : false;
 
   const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
     if (infraProduct && inStock) {
       addItem(infraProduct);
@@ -32,13 +33,19 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
     }
   };
 
+  const handleQuickView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onQuickView(product);
+  };
+
   return (
-    <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden flex flex-col group hover:border-primary/30 transition-all duration-300 hover:shadow-lg">
+    <Link
+      href={`/tienda/${product.id}`}
+      className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden flex flex-col group hover:border-primary/30 transition-all duration-300 hover:shadow-lg"
+    >
       {/* Image */}
-      <div
-        className="relative w-full aspect-square cursor-pointer overflow-hidden"
-        onClick={() => onQuickView(product)}
-      >
+      <div className="relative w-full aspect-square overflow-hidden">
         {hasImage ? (
           <Image
             src={firstImage}
@@ -51,12 +58,13 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
           <ProductPlaceholder className="w-full h-full" />
         )}
 
-        {/* Quick view overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 text-text-inverted text-sm font-medium px-4 py-2 rounded-full flex items-center gap-2">
-            <FaEye className="w-3.5 h-3.5" /> Vista rápida
-          </span>
-        </div>
+        {/* Quick view button — bottom-right, desktop only */}
+        <button
+          onClick={handleQuickView}
+          className="hidden md:flex absolute bottom-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/90 backdrop-blur-sm text-text-inverted text-xs font-medium px-3 py-1.5 rounded-full items-center gap-1.5 hover:bg-white cursor-pointer"
+        >
+          <FaEye className="w-3 h-3" /> Vista rápida
+        </button>
 
         {/* Stock badge */}
         <span
@@ -70,8 +78,8 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
         </span>
       </div>
 
-      {/* Content — links to detail page */}
-      <Link href={`/tienda/${product.id}`} className="p-4 flex flex-col grow">
+      {/* Content */}
+      <div className="p-4 flex flex-col grow">
         <span className="text-[11px] font-semibold text-text-main/45 uppercase tracking-wider mb-1">
           {product.brand}
         </span>
@@ -113,8 +121,8 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
             </>
           )}
         </button>
-      </Link>
-    </div>
+      </div>
+    </Link>
   );
 };
 

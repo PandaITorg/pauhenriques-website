@@ -10,7 +10,7 @@ const Legal = () => {
         <li>
           <Link
             href="/politica-privacidad"
-            className="text-sm text-text-main/50 hover:text-primary transition-colors duration-300"
+            className="text-sm text-text-main/50 hover:text-primary active:opacity-80 cursor-pointer transition-colors duration-300"
           >
             Privacidad
           </Link>
@@ -18,7 +18,7 @@ const Legal = () => {
         <li>
           <Link
             href="/terminos-servicio"
-            className="text-sm text-text-main/50 hover:text-primary transition-colors duration-300"
+            className="text-sm text-text-main/50 hover:text-primary active:opacity-80 cursor-pointer transition-colors duration-300"
           >
             Terminos
           </Link>

@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { PromotionType } from "./promotion";
 
 export type OrderStatus =
   | "pending"
@@ -6,7 +7,10 @@ export type OrderStatus =
   | "paid"
   | "shipped"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "failed"
+  | "3ds-pending"
+  | "otp-pending";
 
 export interface OrderItem {
   productId: string;
@@ -38,7 +42,13 @@ export interface Order {
   paymentToken?: string;
   paymentTransactionId?: string;
   authorizationCode?: string;
+  cardBrand?: string;
+  cardLast4?: string;
   shippingAddress: ShippingAddress;
+  discount?: number;
+  couponCode?: string;
+  promotionId?: string;
+  discountType?: PromotionType;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

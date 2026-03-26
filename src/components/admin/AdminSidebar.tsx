@@ -6,6 +6,7 @@ import {
   FaBox,
   FaClipboardList,
   FaTachometerAlt,
+  FaTag,
   FaBars,
   FaTimes,
   FaExternalLinkAlt,
@@ -16,6 +17,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: FaTachometerAlt },
   { href: "/admin/productos", label: "Productos", icon: FaBox },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
+  { href: "/admin/promociones", label: "Promociones", icon: FaTag },
 ];
 
 export default function AdminSidebar() {
@@ -29,18 +31,26 @@ export default function AdminSidebar() {
 
   const nav = (
     <nav className="flex flex-col h-full p-4">
-      <div className="text-xs font-bold text-text-main/40 uppercase tracking-wider mb-4 px-3">
-        Admin Panel
+      {/* Branding */}
+      <div className="px-3 mb-6">
+        <p className="font-cormorant text-lg font-semibold text-text-main">
+          Pau Henriques
+        </p>
+        <p className="text-[10px] font-medium tracking-[0.15em] uppercase text-primary/60">
+          Admin Panel
+        </p>
       </div>
+
+      {/* Nav items */}
       <div className="flex flex-col gap-1">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
               isActive(item.href)
-                ? "bg-primary text-white"
+                ? "bg-primary text-white shadow-(--shadow-glow-primary)"
                 : "text-text-main/60 hover:bg-surface-elevated hover:text-text-main"
             }`}
           >
@@ -55,7 +65,7 @@ export default function AdminSidebar() {
         <Link
           href="/"
           onClick={() => setOpen(false)}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-text-main/40 hover:text-text-main/60 transition-colors"
+          className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-text-main/40 hover:text-text-main/60 hover:bg-surface-elevated transition-colors"
         >
           <FaExternalLinkAlt className="w-3.5 h-3.5" />
           Ver sitio
@@ -66,15 +76,16 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile toggle */}
+      {/* Mobile toggle — larger touch target (44x44) */}
       <button
         onClick={() => setOpen(!open)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-surface-card border border-border-subtle rounded-lg p-2.5 text-text-main/60"
+        className="lg:hidden fixed top-3 left-3 z-50 w-11 h-11 bg-surface-card border border-border-subtle rounded-xl flex items-center justify-center text-text-main/60 hover:text-text-main transition-colors cursor-pointer"
+        aria-label={open ? "Cerrar menu" : "Abrir menu"}
       >
         {open ? (
-          <FaTimes className="w-5 h-5" />
+          <FaTimes className="w-4.5 h-4.5" />
         ) : (
-          <FaBars className="w-5 h-5" />
+          <FaBars className="w-4.5 h-4.5" />
         )}
       </button>
 
@@ -88,7 +99,7 @@ export default function AdminSidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static top-0 left-0 h-full w-60 bg-surface-card border-r border-border-subtle z-40 transition-transform lg:translate-x-0 ${
+        className={`fixed lg:static top-0 left-0 h-full w-64 bg-surface-card border-r border-border-subtle z-40 transition-transform duration-200 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

@@ -18,7 +18,7 @@ const Nav = () => {
           <li key={link.href}>
             <Link
               href={link.href}
-              className="text-sm text-text-main/50 hover:text-primary transition-colors duration-300"
+              className="text-sm text-text-main/50 hover:text-primary active:opacity-80 cursor-pointer transition-colors duration-300"
             >
               {link.text}
             </Link>
