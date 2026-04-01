@@ -70,7 +70,7 @@ export interface TokenizedCardInfo {
 interface NuveiPaymentFormProps {
   uid: string;
   email: string;
-  onTokenSuccess: (token: string, cardInfo: TokenizedCardInfo) => void;
+  onTokenSuccess: (token: string, cardInfo: TokenizedCardInfo, saveCard: boolean) => void;
   onTokenError: (error: string) => void;
   disabled?: boolean;
 }
@@ -90,8 +90,13 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeletingDuplicate, setIsDeletingDuplicate] = useState(false);
   const [error, setError] = useState<CardError | null>(null);
+  const [saveCard, setSaveCard] = useState(true);
   const sdkInitRef = useRef(false);
   const pgSdkRef = useRef<PaymentGatewayInstance | null>(null);
+  const saveCardRef = useRef(true);
+
+  // Keep ref in sync for use inside memoized callback
+  useEffect(() => { saveCardRef.current = saveCard; }, [saveCard]);
 
   // Timeout: if SDK hasn't loaded in 15s, show a helpful message
   useEffect(() => {
@@ -212,7 +217,7 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
             number: response.card.number,
             expiry_year: response.card.expiry_year,
             expiry_month: response.card.expiry_month,
-          });
+          }, saveCardRef.current);
         } else {
           setError({
             variant: "system",
@@ -443,21 +448,34 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
           )}
 
           {sdkReady && (
-            <button
-              type="button"
-              onClick={handlePay}
-              disabled={isProcessing}
-              className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.97] cursor-pointer"
-            >
-              {isProcessing ? (
-                <>
-                  <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
-                  Verificando...
-                </>
-              ) : (
-                "Agregar Tarjeta"
-              )}
-            </button>
+            <>
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={saveCard}
+                  onChange={(e) => setSaveCard(e.target.checked)}
+                  className="w-4 h-4 rounded border-border-default text-primary focus:ring-primary/30 cursor-pointer accent-primary"
+                />
+                <span className="text-sm text-text-main/60">
+                  Guardar tarjeta para futuras compras
+                </span>
+              </label>
+              <button
+                type="button"
+                onClick={handlePay}
+                disabled={isProcessing}
+                className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-[0.97] cursor-pointer"
+              >
+                {isProcessing ? (
+                  <>
+                    <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
+                    Verificando...
+                  </>
+                ) : (
+                  saveCard ? "Agregar Tarjeta" : "Continuar con pago"
+                )}
+              </button>
+            </>
           )}
         </>
       )}

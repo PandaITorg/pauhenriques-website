@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
-import { debitWithToken } from "@/lib/nuvei";
+import { debitWithToken, deleteCard } from "@/lib/nuvei";
 import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -81,6 +81,7 @@ interface ChargeRequestBody {
   browserInfo?: BrowserInfo;
   installments?: number;
   installmentsType?: number;
+  deleteCardAfterPayment?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -309,6 +310,13 @@ export async function POST(request: NextRequest) {
           vat: orderInfo?.vat || vat,
           total: amount,
         }).catch(() => ({ success: false }));
+
+        // Delete card from Nuvei if user chose not to save it
+        if (body.deleteCardAfterPayment && token) {
+          deleteCard(token, userId).catch((err) =>
+            console.error("[charge] Failed to delete card after payment:", err)
+          );
+        }
 
         return NextResponse.json({
           success: true,

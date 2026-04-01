@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
-import { verifyThreeDS } from "@/lib/nuvei";
+import { verifyThreeDS, deleteCard } from "@/lib/nuvei";
 import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
@@ -215,6 +215,13 @@ export async function POST(request: NextRequest) {
         vat: orderData.vat || 0,
         total: orderData.total,
       }).catch(() => ({ success: false }));
+
+      // Delete card from Nuvei if user chose not to save it
+      if (orderData.deleteCardAfterPayment && orderData.paymentToken) {
+        deleteCard(orderData.paymentToken, orderData.userId).catch((err) =>
+          console.error("[3ds-complete] Failed to delete card after payment:", err)
+        );
+      }
 
       return NextResponse.json({
         success: true,
