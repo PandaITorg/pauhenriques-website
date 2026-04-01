@@ -36,8 +36,10 @@ export async function nuveiRequest<T>(
   method: "GET" | "POST",
   body?: Record<string, unknown>,
 ): Promise<T> {
+  const { appCode } = getServerCredentials();
   const url = `${getBaseUrl()}${path}`;
   const authToken = generateAuthToken();
+  console.log(`[nuvei] ${method} ${url} | env=${process.env.NUVEI_ENV} | appCode=${appCode}`);
 
   const options: RequestInit = {
     method,
