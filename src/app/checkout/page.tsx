@@ -130,6 +130,7 @@ export default function CheckoutPage() {
   );
   const [savedCardCvc, setSavedCardCvc] = useState("");
   const [isNewlyTokenized, setIsNewlyTokenized] = useState(false);
+  const [deleteCardAfterPayment, setDeleteCardAfterPayment] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
   // Installments / diferidos
@@ -355,9 +356,10 @@ export default function CheckoutPage() {
     return false;
   }
 
-  const handleTokenSuccess = async (token: string, cardInfo: import("@/components/checkout/NuveiPaymentForm").TokenizedCardInfo) => {
+  const handleTokenSuccess = async (token: string, cardInfo: import("@/components/checkout/NuveiPaymentForm").TokenizedCardInfo, saveCard: boolean = true) => {
     setSelectedCardToken(token);
     setIsNewlyTokenized(true);
+    setDeleteCardAfterPayment(!saveCard);
     setPaymentMode("saved");
     // Build a synthetic card info from SDK data so confirm step never shows "Nueva tarjeta agregada"
     setSelectedCardInfo({
@@ -428,6 +430,7 @@ export default function CheckoutPage() {
           installments: installmentsCount,
           installmentsType,
         }),
+        ...(deleteCardAfterPayment && { deleteCardAfterPayment: true }),
       });
 
       const browserInfo = {
@@ -456,6 +459,7 @@ export default function CheckoutPage() {
           userEmail: user.email,
           browserInfo,
           ...(installmentsCount > 0 ? { installments: installmentsCount, installmentsType } : {}),
+          ...(deleteCardAfterPayment ? { deleteCardAfterPayment: true } : {}),
         }),
       });
 

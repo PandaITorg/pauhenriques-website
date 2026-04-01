@@ -34,6 +34,7 @@ export async function createOrder(params: {
   discountType?: PromotionType;
   installments?: number;
   installmentsType?: number;
+  deleteCardAfterPayment?: boolean;
 }): Promise<string> {
   const orderData = {
     ...params,
