@@ -19,18 +19,25 @@ interface ProductRow {
 export default function AdminProductosPage() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
 
   const fetchProducts = async () => {
+    setError(null);
     try {
       const res = await fetch("/api/admin/products");
       if (res.ok) {
-        setProducts(await res.json());
+        const data = await res.json();
+        setProducts(data);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(`Error ${res.status}: ${body.error ?? res.statusText}`);
       }
     } catch (err) {
       console.error("Error fetching products:", err);
+      setError("No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
     }
@@ -126,6 +133,17 @@ export default function AdminProductosPage() {
         {loading ? (
           <div className="p-8 text-center">
             <div className="simple-spinner mx-auto" />
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <p className="text-error text-sm font-medium mb-2">Error al cargar productos</p>
+            <p className="text-text-main/50 text-xs">{error}</p>
+            <button
+              onClick={fetchProducts}
+              className="mt-4 text-xs text-primary hover:underline"
+            >
+              Reintentar
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-text-main/50">
