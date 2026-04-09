@@ -39,7 +39,9 @@ export async function nuveiRequest<T>(
   const { appCode } = getServerCredentials();
   const url = `${getBaseUrl()}${path}`;
   const authToken = generateAuthToken();
-  console.log(`[nuvei] ${method} ${url} | env=${process.env.NUVEI_ENV} | appCode=${appCode}`);
+  // Temporary debug log — remove after production validation with Anthony
+  const { appKey } = getServerCredentials();
+  console.log(`[nuvei] ${method} ${url} | env=${process.env.NUVEI_ENV} | appCode=${appCode} | appKey=${appKey.slice(0, 6)}...${appKey.slice(-4)} | authToken=${authToken.slice(0, 30)}...`);
 
   const options: RequestInit = {
     method,
