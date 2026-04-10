@@ -44,7 +44,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <AnnouncementBanner />
       <AdminBanner />
       <Header />
-      <main className={isHomePage ? "bg-tertiary" : "bg-tertiary"}>
+      <main className={pathname.startsWith("/plan-novios") ? "" : "bg-tertiary"}>
         {children}
       </main>
       {!isHomePage && <Footer />}

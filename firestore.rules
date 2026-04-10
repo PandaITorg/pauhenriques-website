@@ -40,5 +40,27 @@ service cloud.firestore {
       allow update: if false; // Solo via Admin SDK
       allow delete: if false;
     }
+
+    // Plan Novios — registro de bodas
+    match /planNovios/{planId} {
+      allow read: if true; // Público (landing page, contribucion invitados)
+      allow create: if request.auth != null; // Usuario registrado crea su plan
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if false;
+
+      // Contribuciones — solo lectura por el dueño del plan, escritura via Admin SDK
+      match /contributions/{contributionId} {
+        allow read: if request.auth != null
+          && request.auth.uid == get(/databases/$(database)/documents/planNovios/$(planId)).data.userId;
+        allow write: if false; // Solo via Admin SDK (pagos server-side)
+      }
+
+      // Canjes — solo lectura por el dueño del plan, escritura via Admin SDK
+      match /redemptions/{redemptionId} {
+        allow read: if request.auth != null
+          && request.auth.uid == get(/databases/$(database)/documents/planNovios/$(planId)).data.userId;
+        allow write: if false; // Solo via Admin SDK (admin registra canjes)
+      }
+    }
   }
 }

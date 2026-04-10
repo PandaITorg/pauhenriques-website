@@ -50,7 +50,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect authenticated user routes
-  const protectedPaths = ["/checkout", "/mi-cuenta", "/mis-pedidos"];
+  const protectedPaths = ["/checkout", "/mi-cuenta", "/mis-pedidos", "/plan-novios/registrar", "/plan-novios/mi-plan"];
   if (protectedPaths.some((p) => pathname.startsWith(p))) {
     const decoded = await verifySession(request);
 
@@ -67,5 +67,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/checkout/:path*", "/admin/:path*", "/mi-cuenta", "/mis-pedidos"],
+  matcher: ["/checkout/:path*", "/admin/:path*", "/mi-cuenta", "/mis-pedidos", "/plan-novios/registrar", "/plan-novios/mi-plan"],
 };
