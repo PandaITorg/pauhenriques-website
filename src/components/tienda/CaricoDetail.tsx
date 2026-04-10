@@ -79,7 +79,7 @@ export default function CaricoDetail({ product, related }: CaricoDetailProps) {
             <ProductPlaceholder className="w-full h-full" />
           )}
           {/* Warm gradient overlay at bottom */}
-          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/80 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-background/80 to-transparent" />
           <span className="absolute top-4 left-4 bg-warm-700 text-warm-100 text-xs font-semibold px-3 py-1.5 rounded-full">
             Asesoría
           </span>

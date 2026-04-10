@@ -22,6 +22,7 @@ const Header = () => {
   const navLinks = [
     { href: "/podcast", text: "Podcast" },
     { href: "/tienda", text: "Tienda" },
+    { href: "/plan-novios", text: "Plan Novios" },
     { href: "/sobre-mi", text: "Sobre Mi" },
   ];
 
@@ -146,6 +147,13 @@ const Header = () => {
                         className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-text-main/80 hover:text-primary hover:bg-primary/5 active:opacity-80 cursor-pointer transition-colors"
                       >
                         Mis pedidos
+                      </Link>
+                      <Link
+                        href="/plan-novios/mi-plan"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[14px] text-text-main/80 hover:text-primary hover:bg-primary/5 active:opacity-80 cursor-pointer transition-colors"
+                      >
+                        Mi Plan Novios
                       </Link>
                       <div className="h-px bg-border-subtle mx-3 my-1" />
                       <button

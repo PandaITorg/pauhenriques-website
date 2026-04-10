@@ -132,6 +132,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 <span className="h-px w-4 bg-text-main/10" />
                 <span className="text-base">Mis pedidos</span>
               </Link>
+              <Link
+                href="/plan-novios/mi-plan"
+                className="flex items-center gap-4 py-3.5 text-text-main/70 active:text-primary transition-colors"
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="h-px w-4 bg-text-main/10" />
+                <span className="text-base">Mi Plan Novios</span>
+              </Link>
               <button
                 onClick={async () => {
                   setIsOpen(false);
