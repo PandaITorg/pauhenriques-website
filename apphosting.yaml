@@ -42,6 +42,11 @@ env:
   - variable: NUVEI_ENV
     value: "prod"
 
+  # Nuvei Proxy — Cloud Function that forwards requests to Nuvei
+  # Workaround: Cloud Run (App Hosting) gets 500 from Nuvei, Cloud Functions work
+  - variable: NUVEI_PROXY_URL
+    value: "https://us-central1-pau-henriques-web-v1.cloudfunctions.net/nuveiProxy"
+
   # Email — Resend
   - variable: RESEND_API_KEY
     secret: "resend-api-key"

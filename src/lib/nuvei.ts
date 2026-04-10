@@ -31,17 +31,45 @@ export function generateAuthToken(): string {
   );
 }
 
+function getProxyUrl(): string | null {
+  return process.env.NUVEI_PROXY_URL || null;
+}
+
 export async function nuveiRequest<T>(
   path: string,
   method: "GET" | "POST",
   body?: Record<string, unknown>,
 ): Promise<T> {
-  const { appCode } = getServerCredentials();
-  const url = `${getBaseUrl()}${path}`;
   const authToken = generateAuthToken();
-  // Temporary debug log — remove after production validation with Anthony
-  const { appKey } = getServerCredentials();
-  console.log(`[nuvei] ${method} ${url} | env=${process.env.NUVEI_ENV} | appCode=${appCode} | appKey=${appKey.slice(0, 6)}...${appKey.slice(-4)} | authToken=${authToken.slice(0, 30)}...`);
+  const proxyUrl = getProxyUrl();
+
+  // Use Cloud Function proxy if configured (workaround for Cloud Run / Nuvei incompatibility)
+  if (proxyUrl) {
+    console.log(`[nuvei] ${method} ${path} via proxy`);
+    const proxyResponse = await fetch(proxyUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-nuvei-auth-token": authToken,
+        "x-nuvei-env": process.env.NUVEI_ENV || "stg",
+      },
+      body: JSON.stringify({ path, method, body }),
+    });
+    if (!proxyResponse.ok) {
+      const errorBody = await proxyResponse.text();
+      console.error(`[nuvei] ${method} ${path} proxy failed with status ${proxyResponse.status}. Body: ${errorBody}`);
+      try {
+        return JSON.parse(errorBody) as T;
+      } catch {
+        throw new Error(`Nuvei proxy ${method} ${path} failed: ${proxyResponse.status}`);
+      }
+    }
+    return proxyResponse.json() as Promise<T>;
+  }
+
+  // Direct call (works from local dev, fails from Cloud Run in production)
+  const url = `${getBaseUrl()}${path}`;
+  console.log(`[nuvei] ${method} ${url} | env=${process.env.NUVEI_ENV}`);
 
   const options: RequestInit = {
     method,
