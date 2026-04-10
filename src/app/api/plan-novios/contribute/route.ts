@@ -7,6 +7,13 @@ import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
+const BillingDataSchema = z.object({
+  name: z.string().min(2).max(100),
+  cedula: z.string().min(10).max(13),
+  address: z.string().min(5).max(300),
+  phone: z.string().min(7).max(15),
+});
+
 const ContributeSchema = z.object({
   planId: z.string().min(1),
   slug: z.string().min(1),
@@ -16,6 +23,7 @@ const ContributeSchema = z.object({
   amount: z.number().min(1).max(10000),
   token: z.string().min(1),
   cvc: z.string().optional(),
+  billingData: BillingDataSchema.optional(),
   browserInfo: z
     .object({
       accept_header: z.string(),
@@ -94,7 +102,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { planId, slug, guestName, guestEmail, guestMessage, amount, token, cvc, browserInfo } = parsed.data;
+    const { planId, slug, guestName, guestEmail, guestMessage, amount, token, cvc, billingData, browserInfo } = parsed.data;
 
     // Validate plan exists and is active
     const planDoc = await dbAdmin.collection("planNovios").doc(planId).get();
@@ -127,6 +135,7 @@ export async function POST(request: NextRequest) {
       currency: "USD",
       status: "pending",
       authenticatedUserId: authenticatedUserId || null,
+      billingData: billingData || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
