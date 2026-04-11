@@ -1,5 +1,5 @@
 import { FaTiktok, FaWhatsapp, FaInstagram } from "react-icons/fa";
-import { HiOutlineShoppingBag } from "react-icons/hi2";
+import { HiOutlineShoppingBag, HiOutlineHeart } from "react-icons/hi2";
 import PauNoBg from "@/assets/pau-no-bg.webp";
 import PauHenriquesLightestGreen from "@/assets/pauhenriques-lightest-green.png";
 import type { Metadata } from "next";
@@ -155,6 +155,13 @@ export default function LinkInBioPage() {
           >
             <HiOutlineShoppingBag className="w-5 h-5" />
             Ir a mi Tienda
+          </a>
+          <a
+            href="https://pauhenriques.com/plan-novios"
+            className="bg-primary hover:bg-primary-hover text-white font-semibold py-3.5 px-8 rounded-xl transition-all duration-200 hover:-translate-y-px hover:shadow-(--shadow-glow-primary) active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <HiOutlineHeart className="w-5 h-5" />
+            Plan de Novios
           </a>
           <a
             href="https://pauhenriques.com"
