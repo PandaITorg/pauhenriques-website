@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { User } from "firebase/auth";
 
@@ -25,7 +27,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 }) => {
   return (
     <div
-      className={`md:hidden fixed inset-0 top-16.25 z-40 transition-all duration-400 ${
+      className={`md:hidden fixed inset-0 top-16.25 z-40 transition-all duration-[400ms] ${
         isOpen
           ? "opacity-100 pointer-events-auto"
           : "opacity-0 pointer-events-none"
@@ -33,7 +35,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-bosque-profundo-900/80 backdrop-blur-sm transition-opacity duration-400 ${
+        className={`absolute inset-0 bg-bosque-profundo-900/80 backdrop-blur-sm transition-opacity duration-[400ms] ${
           isOpen ? "opacity-100" : "opacity-0"
         }`}
         onClick={() => setIsOpen(false)}
@@ -41,7 +43,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 
       {/* Menu panel */}
       <div
-        className={`relative bg-bosque-profundo-800/95 backdrop-blur-xl border-t border-primary/10 h-full overflow-y-auto transition-transform duration-400 ease-out ${
+        className={`relative bg-bosque-profundo-800/95 backdrop-blur-xl border-t border-primary/10 h-full overflow-y-auto transition-transform duration-[400ms] ease-out ${
           isOpen ? "translate-y-0" : "-translate-y-4"
         }`}
       >

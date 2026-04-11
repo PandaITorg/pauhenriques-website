@@ -73,6 +73,7 @@ const Header = () => {
   };
 
   return (
+    <>
     <header
       className={`sticky top-0 z-50 transition-all duration-500 ${
         scrolled
@@ -203,15 +204,17 @@ const Header = () => {
         </div>
       </nav>
 
-      <MobileMenu
-        navLinks={navLinks}
-        isOpen={isMenuOpen}
-        setIsOpen={setIsMenuOpen}
-        user={user}
-        onSignOut={handleSignOut}
-        currentPath={pathname}
-      />
     </header>
+
+    <MobileMenu
+      navLinks={navLinks}
+      isOpen={isMenuOpen}
+      setIsOpen={setIsMenuOpen}
+      user={user}
+      onSignOut={handleSignOut}
+      currentPath={pathname}
+    />
+    </>
   );
 };
 
