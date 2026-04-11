@@ -218,10 +218,12 @@ function SignUpContent() {
   }
 
   return (
-    <main className="min-h-screen relative flex items-center justify-center px-4 py-16 bg-background overflow-hidden">
-      {/* Subtle ambient glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-100 bg-primary/4 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/20 to-transparent" />
+    <main className="min-h-screen relative flex items-center justify-center px-4 py-16 bg-background">
+      {/* Decorative — own overflow wrapper so it doesn't interfere with touch events on iOS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-100 bg-primary/4 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-primary/20 to-transparent" />
+      </div>
 
       {/* Form Card */}
       <div className="relative z-10 w-full max-w-lg rounded-2xl bg-surface-card border border-border-subtle p-8 sm:p-10 shadow-[0_24px_64px_rgba(0,0,0,0.25)]">
@@ -468,18 +470,46 @@ function SignUpContent() {
 
           {/* Terms (GDPR — unchecked by default) */}
           <div className="flex items-start gap-3 mb-4">
-            <input
-              type="checkbox"
-              name="acceptTerms"
-              id="acceptTerms"
-              checked={formData.acceptTerms}
-              onChange={handleChange}
-              className="w-4 h-4 mt-0.5 shrink-0 accent-primary cursor-pointer"
-            />
-            <label
-              htmlFor="acceptTerms"
-              className="text-xs text-text-main/50 leading-relaxed cursor-pointer"
+            {/* Custom checkbox button — 44px touch target fixes iOS Safari native checkbox issues */}
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={formData.acceptTerms}
+              aria-label="Aceptar términos y condiciones"
+              onClick={() => {
+                setFormData((prev) => ({ ...prev, acceptTerms: !prev.acceptTerms }));
+                if (errors.acceptTerms)
+                  setErrors((prev) => ({ ...prev, acceptTerms: undefined }));
+                setGlobalError("");
+              }}
+              className="shrink-0 -m-3.5 w-11 h-11 flex items-center justify-center"
             >
+              <div
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all duration-200 ${
+                  formData.acceptTerms
+                    ? "bg-primary border-primary"
+                    : "border-border-default bg-input-bg"
+                }`}
+              >
+                {formData.acceptTerms && (
+                  <svg
+                    className="w-2.5 h-2.5 text-white"
+                    viewBox="0 0 10 8"
+                    fill="none"
+                  >
+                    <path
+                      d="M1 4L3.5 6.5L9 1"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </div>
+            </button>
+            {/* Links outside any <label> — avoids iOS Safari tap ambiguity */}
+            <p className="text-xs text-text-main/50 leading-relaxed pt-0.5">
               Acepto los{" "}
               <Link
                 href="/terminos-servicio"
@@ -497,7 +527,7 @@ function SignUpContent() {
                 Política de Privacidad
               </Link>
               . Entiendo que mis datos serán tratados de forma segura.
-            </label>
+            </p>
           </div>
           {errors.acceptTerms && (
             <p className="-mt-2 mb-4 text-xs text-error flex items-center gap-1.5">
