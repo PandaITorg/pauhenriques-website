@@ -1,8 +1,26 @@
+import { dbAdmin } from '@/lib/firebase-admin';
 import { HeroSlide, HomepageMetric, FeaturedProduct, HomepageContent, Testimonial } from './types';
 
 export async function getActiveSlides(): Promise<HeroSlide[]> {
-  // TODO: Implement Firestore query
-  return [];
+  if (!dbAdmin) return [];
+  try {
+    const snapshot = await dbAdmin
+      .collection('homepage_slides')
+      .where('active', '==', true)
+      .orderBy('order')
+      .get();
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.() ?? new Date(),
+        updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
+      } as HeroSlide;
+    });
+  } catch {
+    return [];
+  }
 }
 
 export async function getActiveMetrics(): Promise<HomepageMetric[]> {

@@ -11,11 +11,13 @@ import {
   FaTimes,
   FaExternalLinkAlt,
   FaGift,
+  FaHome,
 } from "react-icons/fa";
 import { useState } from "react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: FaTachometerAlt },
+  { href: "/admin/homepage", label: "Homepage", icon: FaHome },
   { href: "/admin/productos", label: "Productos", icon: FaBox },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
   { href: "/admin/promociones", label: "Promociones", icon: FaTag },
