@@ -1229,6 +1229,265 @@ footer::before {
   .bento-grid { grid-template-columns: 1fr 1fr; }
   .novios-frame { top: -10px; right: -10px; bottom: 10px; left: 10px; }
 }
+
+/* ===== SOBRE MÍ — 2 columnas ===== */
+.sobre-mi {
+  background: #343d2a;
+  padding: 100px 0;
+  overflow: hidden;
+}
+.sobre-mi .container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: grid;
+  grid-template-columns: 45% 55%;
+  gap: 80px;
+  align-items: center;
+}
+.sobre-mi__photo-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.sobre-mi__photo-frame-offset {
+  position: absolute;
+  inset: 0;
+  border: 2px solid #a68a63;
+  border-radius: 16px;
+  opacity: 0;
+  transform: translate(12px, 12px);
+  pointer-events: none;
+  transition: opacity 0.8s ease 0.5s;
+}
+.sobre-mi__photo-frame-offset.frame-visible { opacity: 0.4; }
+.sobre-mi__photo-placeholder {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: #4f3c25;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sobre-mi__photo-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(166,138,99,0.08) 0%, transparent 60%, rgba(166,138,99,0.05) 100%);
+}
+.sobre-mi__photo-placeholder svg {
+  width: 64px;
+  height: 64px;
+  opacity: 0.25;
+}
+.sobre-mi__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.sobre-mi__tagline {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a68a63;
+}
+.sobre-mi__title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  font-size: 2.1rem;
+  line-height: 1.2;
+  color: #fff;
+}
+.sobre-mi__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sobre-mi__body p {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: rgba(193,196,167,0.75);
+}
+.sobre-mi__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  align-self: flex-start;
+  background: transparent;
+  border: 1.5px solid rgba(193,196,167,0.4);
+  color: #c1c4a7;
+  border-radius: 9999px;
+  padding: 12px 32px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+.sobre-mi__cta:hover {
+  border-color: rgba(193,196,167,0.75);
+  background: rgba(193,196,167,0.06);
+  color: #fff;
+}
+
+/* animation helpers reused */
+.sm-slide-left { opacity: 0; transform: translateX(-48px); transition: opacity 0.7s cubic-bezier(.25,.46,.45,.94), transform 0.7s cubic-bezier(.25,.46,.45,.94); }
+.sm-fade-up    { opacity: 0; transform: translateY(28px);  transition: opacity 0.7s cubic-bezier(.25,.46,.45,.94), transform 0.7s cubic-bezier(.25,.46,.45,.94); }
+.sm-scale-in   { opacity: 0; transform: scale(0.95);       transition: opacity 0.7s cubic-bezier(.25,.46,.45,.94), transform 0.7s cubic-bezier(.25,.46,.45,.94); }
+.sm-anim-in    { opacity: 1 !important; transform: none !important; }
+
+/* ===== CTA FINAL ===== */
+.cta-final {
+  background: radial-gradient(ellipse at center, #343d2a 0%, #181d12 100%);
+  padding: 120px 0;
+  overflow: hidden;
+  position: relative;
+}
+.cta-final__botanical {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  overflow: hidden;
+}
+.cta-final__botanical svg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+}
+.cta-final .container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+.cta-final__title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 600;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  line-height: 1.15;
+  color: #fff;
+  max-width: 700px;
+}
+.cta-final__subtitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.2rem;
+  line-height: 1.65;
+  color: rgba(193,196,167,0.7);
+  max-width: 500px;
+  margin-top: 4px;
+}
+.cta-final__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 16px 40px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 0.3s ease, transform 0.3s ease;
+  animation: wa-pulse 3s ease-in-out infinite;
+}
+@keyframes wa-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(37,211,102,0.3); }
+  50%      { box-shadow: 0 0 36px rgba(37,211,102,0.55); }
+}
+.btn-whatsapp:hover { filter: brightness(1.1); transform: scale(1.02); animation-play-state: paused; }
+.btn-secondary-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1.5px solid rgba(193,196,167,0.4);
+  color: #c1c4a7;
+  border-radius: 9999px;
+  padding: 16px 40px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+}
+.btn-secondary-cta:hover {
+  border-color: rgba(193,196,167,0.75);
+  background: rgba(193,196,167,0.06);
+  color: #fff;
+}
+.cta-final__socials {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+.social-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(193,196,167,0.6);
+  cursor: pointer;
+  transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+}
+.social-icon:hover {
+  border-color: #a68a63;
+  color: #a68a63;
+  background: rgba(166,138,99,0.1);
+}
+.social-icon svg { width: 18px; height: 18px; fill: currentColor; }
+
+/* Responsive — Sobre Mí & CTA */
+@media (max-width: 768px) {
+  .sobre-mi { padding: 72px 0; }
+  .sobre-mi .container {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    padding: 0 24px;
+    text-align: center;
+  }
+  .sobre-mi__photo-wrap { max-width: 300px; margin: 0 auto; width: 100%; }
+  .sobre-mi__content { align-items: center; }
+  .sobre-mi__cta { align-self: center; }
+  .sobre-mi__title { font-size: 1.75rem; }
+  .cta-final { padding: 80px 0; }
+  .cta-final .container { padding: 0 24px; }
+  .cta-final__buttons { flex-direction: column; width: 100%; }
+  .btn-whatsapp, .btn-secondary-cta { width: 100%; justify-content: center; padding: 16px 24px; }
+}
 </style>
 </head>
 <body>
@@ -1667,6 +1926,101 @@ footer::before {
 </section>
 
 
+<!-- ======================================================
+     SECCIÓN — SOBRE MÍ
+     ====================================================== -->
+<section class="sobre-mi">
+  <div class="container">
+
+    <!-- Columna izquierda: foto -->
+    <div class="sobre-mi__photo-wrap sm-slide-left" id="sm-photo">
+      <div class="sobre-mi__photo-placeholder">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:#a68a63">
+          <circle cx="32" cy="20" r="11" stroke="currentColor" stroke-width="2"/>
+          <path d="M8 56c0-13.255 10.745-24 24-24s24 10.745 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="sobre-mi__photo-frame-offset" id="sm-frame"></div>
+    </div>
+
+    <!-- Columna derecha: contenido -->
+    <div class="sobre-mi__content">
+      <p class="sobre-mi__tagline sm-fade-up" style="transition-delay:0s">CONOCE A PAU</p>
+      <h2 class="sobre-mi__title sm-fade-up" style="transition-delay:0.1s">
+        De una crisis de salud<br>a una misión de vida
+      </h2>
+      <div class="sobre-mi__body sm-fade-up" style="transition-delay:0.2s">
+        <p>La psoriasis me obligó a cuestionar todo lo que ponía en mi cuerpo y en mi hogar. Esa búsqueda me llevó a descubrir que vivir sin tóxicos no es un sacrificio — es un upgrade.</p>
+        <p>Hoy ayudo a familias en toda Latinoamérica a hacer esa transición: con productos que realmente funcionan, información clara, y una comunidad que te acompaña.</p>
+      </div>
+      <button class="sobre-mi__cta sm-fade-up" style="transition-delay:0.35s">
+        Conocer más sobre mí →
+      </button>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ======================================================
+     SECCIÓN — CTA FINAL
+     ====================================================== -->
+<section class="cta-final">
+
+  <!-- Textura botánica -->
+  <div class="cta-final__botanical" aria-hidden="true">
+    <svg viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M400 750 C400 600 350 500 280 380 C210 260 150 200 100 120" stroke="#c1c4a7" stroke-width="1.5" fill="none"/>
+      <path d="M400 750 C400 600 450 500 520 380 C590 260 650 200 700 120" stroke="#c1c4a7" stroke-width="1.5" fill="none"/>
+      <ellipse cx="250" cy="340" rx="38" ry="18" transform="rotate(-35 250 340)" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <ellipse cx="190" cy="260" rx="30" ry="14" transform="rotate(-50 190 260)" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <ellipse cx="145" cy="190" rx="24" ry="11" transform="rotate(-60 145 190)" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <ellipse cx="550" cy="340" rx="38" ry="18" transform="rotate(35 550 340)" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <ellipse cx="610" cy="260" rx="30" ry="14" transform="rotate(50 610 260)" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <ellipse cx="655" cy="190" rx="24" ry="11" transform="rotate(60 655 190)" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <path d="M400 750 C400 580 405 480 410 380" stroke="#c1c4a7" stroke-width="1" fill="none"/>
+      <ellipse cx="390" cy="420" rx="22" ry="10" transform="rotate(-15 390 420)" stroke="#c1c4a7" stroke-width="0.8" fill="none"/>
+      <ellipse cx="415" cy="380" rx="22" ry="10" transform="rotate(10 415 380)" stroke="#c1c4a7" stroke-width="0.8" fill="none"/>
+    </svg>
+  </div>
+
+  <div class="container">
+    <h2 class="cta-final__title sm-scale-in" id="cta-title">
+      ¿Lista para transformar tu hogar?
+    </h2>
+    <p class="cta-final__subtitle sm-fade-up" style="transition-delay:0.2s" id="cta-sub">
+      Conversemos sobre qué productos son ideales para ti y tu familia. Sin presión, con toda la información.
+    </p>
+    <div class="cta-final__buttons sm-fade-up" style="transition-delay:0.4s" id="cta-btns">
+      <button class="btn-whatsapp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.556 4.122 1.528 5.855L.057 23.177a.75.75 0 00.91.91l5.34-1.467A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.693 9.693 0 01-4.937-1.354l-.354-.21-3.67 1.008 1.025-3.563-.228-.368A9.693 9.693 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+        </svg>
+        Escríbeme por WhatsApp
+      </button>
+      <button class="btn-secondary-cta">Ver la Tienda</button>
+    </div>
+
+    <!-- Íconos sociales -->
+    <div class="cta-final__socials sm-fade-up" style="transition-delay:0.6s" id="cta-socials">
+      <!-- Instagram -->
+      <div class="social-icon" title="Instagram">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </div>
+      <!-- WhatsApp -->
+      <div class="social-icon" title="WhatsApp">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347zM12 0C5.373 0 0 5.373 0 12c0 2.124.556 4.122 1.528 5.855L.057 23.177a.75.75 0 00.91.91l5.34-1.467A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.693 9.693 0 01-4.937-1.354l-.354-.21-3.67 1.008 1.025-3.563-.228-.368A9.693 9.693 0 012.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>
+      </div>
+      <!-- TikTok -->
+      <div class="social-icon" title="TikTok">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.76a4.85 4.85 0 01-1.01-.07z"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <!-- ========== FOOTER ========== -->
 <footer>
   <div class="footer-inner">
@@ -1848,6 +2202,31 @@ const noviosObserver = new IntersectionObserver((entries) => {
 
 const noviosSection = document.querySelector('.novios-section');
 if (noviosSection) noviosObserver.observe(noviosSection);
+
+/* ========================================
+   SOBRE MÍ & CTA FINAL — fade-in animations
+   ======================================== */
+(function () {
+  const smObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('sm-anim-in');
+        // trigger offset frame after photo slides in
+        if (entry.target.id === 'sm-photo') {
+          setTimeout(() => {
+            const frame = document.getElementById('sm-frame');
+            if (frame) frame.classList.add('frame-visible');
+          }, 500);
+        }
+        smObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll(
+    '.sm-slide-left, .sobre-mi__tagline, .sobre-mi__title, .sobre-mi__body, .sobre-mi__cta, #cta-title, #cta-sub, #cta-btns, #cta-socials'
+  ).forEach(el => smObserver.observe(el));
+})();
 </script>
 
 </body>
