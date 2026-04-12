@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pau Henriques — Mockup v3 · Hero Comparativo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Dancing+Script:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg-main:        #343d2a;
+  --warm-800:       #4f3c25;
+  --warm-900:       #3d2e1c;
+  --primary:        #a68a63;
+  --primary-hover:  #b89a73;
+  --text-main:      #c1c4a7;
+  --text-inv:       #343d2a;
+  --secondary:      #666d4b;
+  --tertiary:       #a4ac85;
+  --whatsapp:       #25d366;
+  --surface-card:   #3d4a30;
+  --surface-el:     #475536;
+  --border-subtle:  rgba(193,196,167,0.12);
+  --border-default: rgba(193,196,167,0.20);
+  --glow:           0 0 20px rgba(166,138,99,0.25);
+  --gold:           #D4AF37;
+  --font-display:   'Dancing Script', cursive;
+  --font-heading:   'Cormorant Garamond', serif;
+  --font-body:      'Inter', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+
+/* ========== BUTTONS ========== */
+.btn-primary {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 12px 32px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.03em;
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--glow);
+  transform: translateY(-2px);
+}
+.btn-outline {
+  display: inline-block;
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 12px 32px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(193,196,167,0.30);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes heroFloat {
+  0%,100% { background-position: 20% 40%; }
+  50%      { background-position: 80% 60%; }
+}
+@keyframes parallaxDrift {
+  0%,100% { transform: scale(1.06) translateX(0px);   }
+  50%      { transform: scale(1.06) translateX(-12px); }
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ========== NAVBAR ========== */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.4s ease;
+}
+.navbar::before {
+  content: '';
+  display: block;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(166,138,99,0.4), transparent);
+}
+.navbar-inner {
+  background: rgba(52,61,42,0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 20px rgba(6,8,4,0.5);
+}
+.navbar-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.nav-logo {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.nav-logo .pau {
+  font-family: var(--font-display);
+  color: var(--primary);
+  font-size: 1.6rem;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-main);
+  opacity: 0.85;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.25s, opacity 0.25s;
+}
+.nav-links a:hover { color: #fff; opacity: 1; }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.nav-cart {
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-main);
+  opacity: 0.8;
+  transition: opacity 0.25s;
+  cursor: pointer;
+  position: relative;
+}
+.nav-cart:hover { opacity: 1; }
+.nav-cart svg { width: 22px; height: 22px; }
+.nav-btn-ingresar {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(166,138,99,0.4);
+  color: var(--primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.nav-btn-ingresar:hover {
+  background: var(--primary);
+  color: var(--text-inv);
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+}
+
+/* ========== TEMPLATE LABEL ========== */
+.template-label {
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 18px 24px;
+  text-align: center;
+}
+.template-label p {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* ========== TEMPLATE 1: FULL IMAGE ========== */
+.hero-t1 {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.hero-t1-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, #2a352090 0%, #1a2015 100%),
+              radial-gradient(ellipse at 70% 40%, #6b5030 0%, transparent 55%),
+              radial-gradient(ellipse at 30% 80%, #3d4a30 0%, transparent 50%);
+  background-color: #1e2918;
+  /* In production: background-image: url('/hero-photo.jpg'); background-size: cover; background-position: center; */
+}
+/* Subtle texture pattern to suggest photo */
+.hero-t1-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 65% 35%, rgba(100,78,50,0.35) 0%, transparent 40%),
+    radial-gradient(circle at 75% 55%, rgba(60,48,30,0.4)  0%, transparent 30%);
+}
+.hero-t1-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.08) 70%, transparent 100%);
+}
+.hero-t1-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 48px;
+  padding-top: 80px;
+  padding-bottom: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 620px;
+  margin-left: max(48px, calc(50vw - 640px + 48px));
+}
+.hero-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeInUp 0.7s ease 0.2s forwards;
+}
+.hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.8rem, 5vw, 4.2rem);
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  opacity: 0;
+  animation: fadeInUp 0.8s ease 0.35s forwards;
+}
+.hero-title .accent {
+  font-family: var(--font-display);
+  color: var(--primary);
+  font-size: 1.1em;
+  display: block;
+  line-height: 1.05;
+}
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: var(--text-main);
+  opacity: 0;
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 460px;
+  animation: fadeInUp 0.8s ease 0.5s forwards;
+}
+.hero-subtitle.visible { opacity: 1; }
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeInUp 0.8s ease 0.65s forwards;
+}
+/* Carousel dots */
+.hero-dots {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 9999px;
+  background: rgba(193,196,167,0.35);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.dot.active {
+  width: 22px;
+  background: var(--primary);
+}
+/* Photo placeholder label */
+.photo-placeholder-hint {
+  position: absolute;
+  top: 50%;
+  right: 10%;
+  transform: translateY(-50%);
+  z-index: 2;
+  text-align: center;
+  opacity: 0.3;
+}
+.photo-placeholder-hint p {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-main);
+}
+.photo-placeholder-hint p:first-child {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+/* ========== TEMPLATE 2: SPLIT ========== */
+.hero-t2 {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.hero-t2-left {
+  background: linear-gradient(135deg, #4f3c25 0%, #3a3a22 50%, #343d2a 100%);
+  display: flex;
+  align-items: center;
+  padding: clamp(48px, 8vw, 100px) clamp(32px, 5vw, 72px);
+}
+.hero-t2-text {
+  max-width: 520px;
+}
+.hero-t2-right {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(160deg, #2a2f1e 0%, #1a2015 100%);
+  /* In production: replace with actual photo */
+}
+.hero-t2-right::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 40% 40%, rgba(120,95,55,0.4) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 70%, rgba(50,60,35,0.5) 0%, transparent 45%);
+}
+.t2-photo-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  opacity: 0.25;
+}
+.t2-photo-label span { font-size: 3rem; display: block; margin-bottom: 10px; }
+.t2-photo-label p { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+
+/* ========== TEMPLATE 3: INMERSIVO ========== */
+.hero-t3 {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.hero-t3-bg {
+  position: absolute;
+  inset: -6%;
+  background: linear-gradient(170deg, #1a2015 0%, #2e2416 40%, #1c261a 100%);
+  background-color: #18211a;
+  animation: parallaxDrift 18s ease-in-out infinite;
+}
+.hero-t3-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 55% 30%, rgba(90,68,38,0.3) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 65%, rgba(40,55,28,0.4) 0%, transparent 35%);
+}
+.hero-t3-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgba(0,0,0,0.68) 0%,
+    rgba(0,0,0,0.40) 45%,
+    rgba(0,0,0,0.12) 75%,
+    transparent 100%
+  );
+}
+.hero-t3-content {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  width: 100%;
+  padding: 80px max(48px, calc(50vw - 640px + 48px));
+  padding-left: max(48px, calc(50vw - 640px + 48px));
+  padding-right: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.hero-t3-text { max-width: 580px; }
+.hero-t3-note {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-main);
+  opacity: 0.4;
+  background: rgba(0,0,0,0.3);
+  padding: 6px 16px;
+  border-radius: 9999px;
+  border: 1px solid rgba(193,196,167,0.1);
+}
+
+/* ========== IMPACT SECTION ========== */
+.impact {
+  position: relative;
+  background: var(--warm-800);
+  padding: clamp(80px, 10vw, 120px) 0;
+  overflow: hidden;
+  text-align: center;
+}
+/* Decorative top/bottom hairlines */
+.impact::before,
+.impact::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(166,138,99,0.2), transparent);
+}
+.impact::before { top: 0; }
+.impact::after  { bottom: 0; }
+/* Optional very faint branch SVG as bg watermark */
+.impact-branch-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  opacity: 0.045;
+  pointer-events: none;
+}
+.impact-container {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+/* Horizontal decorative lines flanking the content */
+.impact-lines {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  justify-content: center;
+  margin-bottom: 48px;
+}
+.impact-line {
+  flex: 1;
+  max-width: 120px;
+  height: 1px;
+  background: rgba(166,138,99,0.2);
+  transform-origin: center;
+  transform: scaleX(0);
+  will-change: transform;
+}
+.impact-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(166,138,99,0.35);
+}
+.impact-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(4rem, 8vw, 6rem);
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 8px;
+  opacity: 0;
+  /* JS controls transform for scroll parallax */
+  will-change: transform, opacity;
+  transform-origin: center center;
+  transform: scale(1.18);
+  transition: opacity 0.6s ease;
+}
+.impact-number.visible { opacity: 1; }
+.impact-phrase {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  color: var(--text-main);
+  opacity: 0;
+  line-height: 1.4;
+  /* JS controls translateY for parallax */
+  will-change: transform, opacity;
+  transition: opacity 0.8s ease 0.3s;
+  max-width: 560px;
+  margin: 0 auto 28px;
+}
+.impact-phrase.visible { opacity: 0.85; }
+.impact-accent-line {
+  width: 60px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.8s ease 0.5s, transform 0.8s ease 0.5s;
+  transform: scaleX(0.3);
+}
+.impact-accent-line.visible {
+  opacity: 0.7;
+  transform: scaleX(1);
+}
+.impact-lines-bottom {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  justify-content: center;
+  margin-top: 48px;
+}
+
+/* ========== FOOTER ========== */
+footer {
+  position: relative;
+  background: #2e3922;
+  overflow: hidden;
+}
+footer::before {
+  content: '';
+  display: block;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(166,138,99,0.3), transparent);
+}
+.footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 56px 24px 32px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr 1fr 1.5fr;
+  gap: 40px;
+  margin-bottom: 40px;
+}
+.footer-logo-block {}
+.footer-logo-text {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+  margin-bottom: 10px;
+  display: block;
+}
+.footer-logo-text .pau {
+  font-family: var(--font-display);
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+.footer-tagline {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  opacity: 0.45;
+  letter-spacing: 0.03em;
+}
+.footer-col-title {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--primary);
+  opacity: 0.6;
+  margin-bottom: 16px;
+}
+.footer-links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.footer-links a {
+  font-size: 0.87rem;
+  color: var(--text-main);
+  opacity: 0.5;
+  transition: color 0.25s, opacity 0.25s;
+}
+.footer-links a:hover { color: var(--primary); opacity: 1; }
+.footer-social {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+}
+.social-icon {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-main);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.social-icon:hover {
+  border-color: rgba(166,138,99,0.4);
+  color: var(--primary);
+  opacity: 1;
+  box-shadow: var(--glow);
+}
+.social-icon svg { width: 17px; height: 17px; fill: currentColor; }
+.footer-bottom {
+  padding-top: 24px;
+  border-top: 1px solid rgba(193,196,167,0.07);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.68rem;
+  color: var(--text-main);
+  opacity: 0.3;
+}
+.footer-bottom a { opacity: 1; transition: opacity 0.25s; }
+.footer-bottom a:hover { opacity: 0.7; }
+.pandait-credit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pandait-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  opacity: 0.55;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-btn-ingresar { display: none; }
+
+  .hero-t1-content {
+    padding: 60px 24px 100px;
+    margin-left: 0;
+    max-width: 100%;
+  }
+
+  .hero-t2 { grid-template-columns: 1fr; }
+  .hero-t2-right { min-height: 280px; }
+  .hero-t2-left { padding: 60px 24px; }
+
+  .hero-t3-content {
+    padding: 60px 24px 80px;
+  }
+
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+}
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="navbar-container">
+      <!-- Logo -->
+      <a href="/" class="nav-logo">
+        <span class="pau">Pau</span> Henriques
+      </a>
+
+      <!-- Center links -->
+      <ul class="nav-links">
+        <li><a href="/podcast">Podcast</a></li>
+        <li><a href="/tienda">Tienda</a></li>
+        <li><a href="/plan-novios">Plan Novios</a></li>
+        <li><a href="/sobre-mi">Sobre Mi</a></li>
+      </ul>
+
+      <!-- Right actions -->
+      <div class="nav-right">
+        <!-- Cart icon -->
+        <a href="/carrito" class="nav-cart" aria-label="Carrito">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+        </a>
+        <!-- Ingresar -->
+        <a href="/sign-in" class="nav-btn-ingresar">Ingresar</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+<!-- ============================= -->
+<!-- TEMPLATE 1: FULL IMAGE        -->
+<!-- ============================= -->
+<div class="template-label">
+  <p>Template 1 &nbsp;·&nbsp; Full Image</p>
+</div>
+
+<section class="hero-t1">
+  <!-- Background "photo" placeholder -->
+  <div class="hero-t1-bg"></div>
+  <!-- Directional overlay -->
+  <div class="hero-t1-overlay"></div>
+
+  <!-- Photo hint (will be replaced by real image) -->
+  <div class="photo-placeholder-hint">
+    <p>🖼</p>
+    <p>Foto de Pau<br>background-image</p>
+  </div>
+
+  <!-- Content -->
+  <div class="hero-t1-content">
+    <span class="hero-eyebrow">Bienestar &amp; Hogar Sin Tóxicos</span>
+    <h1 class="hero-title">
+      <span class="accent">Pau Henriques</span>
+      Vive plenamente,<br>sin químicos ni tóxicos
+    </h1>
+    <p class="hero-subtitle">
+      Descubre productos naturales que transforman tu hogar y tu salud.
+      Más de 200 familias ya dieron el primer paso.
+    </p>
+    <div class="hero-ctas">
+      <a href="/tienda" class="btn-primary">Ver Productos</a>
+      <a href="/sobre-mi" class="btn-outline">Conoce a Pau</a>
+    </div>
+  </div>
+
+  <!-- Carousel dots -->
+  <div class="hero-dots">
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+</section>
+
+
+<!-- ============================= -->
+<!-- TEMPLATE 2: SPLIT             -->
+<!-- ============================= -->
+<div class="template-label">
+  <p>Template 2 &nbsp;·&nbsp; Split</p>
+</div>
+
+<section class="hero-t2">
+  <!-- Left: text on gradient -->
+  <div class="hero-t2-left">
+    <div class="hero-t2-text">
+      <span class="hero-eyebrow" style="opacity:1; animation:none;">Bienestar &amp; Hogar Sin Tóxicos</span>
+      <h1 class="hero-title" style="opacity:1; animation:none;">
+        <span class="accent">Pau Henriques</span>
+        Vive plenamente,<br>sin químicos ni tóxicos
+      </h1>
+      <p class="hero-subtitle" style="opacity:1; animation:none; margin-bottom:36px;">
+        Descubre productos naturales que transforman tu hogar y tu salud.
+        Más de 200 familias ya dieron el primer paso.
+      </p>
+      <div class="hero-ctas" style="opacity:1; animation:none;">
+        <a href="/tienda" class="btn-primary">Ver Productos</a>
+        <a href="/sobre-mi" class="btn-outline">Conoce a Pau</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: image placeholder (no overlay) -->
+  <div class="hero-t2-right">
+    <div class="t2-photo-label">
+      <span>🖼</span>
+      <p>Foto de Pau<br>object-cover</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================= -->
+<!-- TEMPLATE 3: INMERSIVO         -->
+<!-- ============================= -->
+<div class="template-label">
+  <p>Template 3 &nbsp;·&nbsp; Inmersivo</p>
+</div>
+
+<section class="hero-t3">
+  <!-- Animated background -->
+  <div class="hero-t3-bg"></div>
+  <div class="hero-t3-overlay"></div>
+
+  <!-- Content -->
+  <div class="hero-t3-content">
+    <div class="hero-t3-text">
+      <span class="hero-eyebrow" style="opacity:1; animation:none;">Bienestar &amp; Hogar Sin Tóxicos</span>
+      <h1 class="hero-title" style="opacity:1; animation:none;">
+        <span class="accent">Pau Henriques</span>
+        Vive plenamente,<br>sin químicos ni tóxicos
+      </h1>
+      <p class="hero-subtitle" style="opacity:1; animation:none; margin-bottom:36px;">
+        Descubre productos naturales que transforman tu hogar y tu salud.
+        Más de 200 familias ya dieron el primer paso.
+      </p>
+      <div class="hero-ctas" style="opacity:1; animation:none;">
+        <a href="/tienda" class="btn-primary">Ver Productos</a>
+        <a href="/sobre-mi" class="btn-outline">Conoce a Pau</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Production note -->
+  <div class="hero-t3-note">
+    En producción: video loop o imagen con parallax
+  </div>
+</section>
+
+
+<!-- ============================= -->
+<!-- SECCIÓN: FRASE DE IMPACTO     -->
+<!-- ============================= -->
+<section class="impact">
+  <!-- Subtle branch watermark SVG -->
+  <svg class="impact-branch-bg" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <!-- Stylized botanical branch -->
+    <path d="M300 560 C300 560 300 300 300 40" stroke="#a68a63" stroke-width="1.5" fill="none"/>
+    <path d="M300 200 C300 200 240 170 190 130" stroke="#a68a63" stroke-width="1" fill="none"/>
+    <path d="M300 260 C300 260 360 230 400 200" stroke="#a68a63" stroke-width="1" fill="none"/>
+    <path d="M300 340 C300 340 230 320 180 290" stroke="#a68a63" stroke-width="1" fill="none"/>
+    <path d="M300 400 C300 400 370 385 420 360" stroke="#a68a63" stroke-width="1" fill="none"/>
+    <ellipse cx="190" cy="125" rx="18" ry="10" transform="rotate(-30 190 125)" stroke="#a68a63" stroke-width="0.8" fill="none"/>
+    <ellipse cx="400" cy="196" rx="18" ry="10" transform="rotate(20 400 196)" stroke="#a68a63" stroke-width="0.8" fill="none"/>
+    <ellipse cx="178" cy="287" rx="16" ry="9" transform="rotate(-20 178 287)" stroke="#a68a63" stroke-width="0.8" fill="none"/>
+    <ellipse cx="422" cy="357" rx="16" ry="9" transform="rotate(15 422 357)" stroke="#a68a63" stroke-width="0.8" fill="none"/>
+  </svg>
+
+  <div class="impact-container">
+    <!-- Top decorative lines -->
+    <div class="impact-lines">
+      <div class="impact-line"></div>
+      <div class="impact-dot"></div>
+      <div class="impact-dot"></div>
+      <div class="impact-dot"></div>
+      <div class="impact-line"></div>
+    </div>
+
+    <!-- Number -->
+    <div class="impact-number" id="impact-number">0+</div>
+
+    <!-- Phrase -->
+    <p class="impact-phrase" id="impact-phrase">
+      familias ya transformaron su hogar y su salud
+    </p>
+
+    <!-- Accent line -->
+    <div class="impact-accent-line" id="impact-accent"></div>
+
+    <!-- Bottom decorative lines -->
+    <div class="impact-lines-bottom">
+      <div class="impact-line"></div>
+      <div class="impact-dot"></div>
+      <div class="impact-dot"></div>
+      <div class="impact-dot"></div>
+      <div class="impact-line"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Logo + tagline -->
+      <div class="footer-logo-block">
+        <a href="/" class="footer-logo-text">
+          <span class="pau">Pau</span> Henriques
+        </a>
+        <p class="footer-tagline">Vive sin tóxicos, vive plenamente.</p>
+      </div>
+
+      <!-- Navegación -->
+      <div>
+        <p class="footer-col-title">Navegación</p>
+        <ul class="footer-links">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="/tienda">Tienda</a></li>
+          <li><a href="/podcast">Podcast</a></li>
+          <li><a href="/sobre-mi">Sobre Mi</a></li>
+        </ul>
+      </div>
+
+      <!-- Legal -->
+      <div>
+        <p class="footer-col-title">Legal</p>
+        <ul class="footer-links">
+          <li><a href="/politica-privacidad">Privacidad</a></li>
+          <li><a href="/terminos-servicio">Términos</a></li>
+        </ul>
+      </div>
+
+      <!-- Social -->
+      <div>
+        <p class="footer-col-title">Conéctate</p>
+        <div class="footer-social">
+          <!-- Instagram -->
+          <a href="https://www.instagram.com/pau_henriques/" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="Instagram">
+            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+          </a>
+          <!-- WhatsApp -->
+          <a href="https://wa.me/593991712532" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="WhatsApp">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          </a>
+          <!-- TikTok -->
+          <a href="https://www.tiktok.com/@pau_henriques" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="TikTok">
+            <svg viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="footer-bottom">
+      <p>&copy; 2026 Pau Henriques. Todos los derechos reservados.</p>
+      <div class="pandait-credit">
+        <span>Desarrollado por</span>
+        <span class="pandait-badge">Panda IT</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+/* ========================================
+   IMPACT SECTION — scroll-driven effects
+   ======================================== */
+const impactSection = document.querySelector('.impact');
+const impactNumber  = document.getElementById('impact-number');
+const impactPhrase  = document.getElementById('impact-phrase');
+const impactAccent  = document.getElementById('impact-accent');
+const impactLines   = document.querySelectorAll('.impact-line');
+
+let hasCountedUp   = false;
+let rafScheduled   = false;
+
+/* ---- Count-up helper ---- */
+function countUp(el, target, duration) {
+  const start = performance.now();
+  const step = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.floor(eased * target) + '+';
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = target + '+';
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---- Scroll progress helper ----
+   Returns a value 0→1 as the section scrolls from
+   "bottom edge enters viewport" to "top edge leaves viewport".
+   0.5 = section center aligned with viewport center. */
+function getSectionProgress() {
+  if (!impactSection) return 0;
+  const rect   = impactSection.getBoundingClientRect();
+  const vh     = window.innerHeight;
+  const total  = vh + rect.height;
+  // distance scrolled since bottom edge entered viewport
+  const scrolled = vh - rect.top;
+  return Math.max(0, Math.min(1, scrolled / total));
+}
+
+/* ---- Apply scroll transforms ---- */
+function applyScrollEffects() {
+  const p = getSectionProgress(); // 0 → 1
+
+  /* -- Lines: expand scaleX 0 → 1
+        start expanding at p=0.15, fully open at p=0.55 */
+  const lineP = Math.max(0, Math.min(1, (p - 0.15) / 0.4));
+  impactLines.forEach(line => {
+    line.style.transform = `scaleX(${lineP})`;
+  });
+
+  /* -- Number: scale 1.18 → 1.0
+        shrinks as section scrolls to center (p ≈ 0.3 → 0.65) */
+  const numberP = Math.max(0, Math.min(1, (p - 0.25) / 0.4));
+  const scale   = 1.18 - numberP * 0.18; // 1.18 → 1.0
+  if (impactNumber) {
+    // preserve the CSS opacity transition — only touch transform
+    impactNumber.style.transform = `scale(${scale.toFixed(3)})`;
+  }
+
+  /* -- Phrase: subtle vertical parallax
+        moves from +16px → 0px → -10px across the section */
+  const phraseOffset = 16 - p * 26; // +16px at top, -10px at bottom
+  if (impactPhrase) {
+    impactPhrase.style.transform = `translateY(${phraseOffset.toFixed(2)}px)`;
+  }
+
+  rafScheduled = false;
+}
+
+/* ---- IntersectionObserver: trigger fade-in & count-up once ---- */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !hasCountedUp) {
+      hasCountedUp = true;
+      impactNumber.classList.add('visible');
+      countUp(impactNumber, 200, 1800);
+      setTimeout(() => impactPhrase.classList.add('visible'), 350);
+      setTimeout(() => impactAccent.classList.add('visible'), 650);
+    }
+  });
+}, { threshold: 0.25 });
+
+if (impactSection) observer.observe(impactSection);
+
+/* ---- Scroll listener with rAF throttle ---- */
+window.addEventListener('scroll', () => {
+  if (!rafScheduled) {
+    rafScheduled = true;
+    requestAnimationFrame(applyScrollEffects);
+  }
+}, { passive: true });
+
+/* Run once on load in case section is already in view */
+applyScrollEffects();
+</script>
+
+</body>
+</html>
