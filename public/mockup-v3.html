@@ -698,6 +698,537 @@ footer::before {
 @media (max-width: 480px) {
   .footer-grid { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   MOCKUP SECTION LABEL (divider visible in review)
+   ============================================================ */
+.mockup-section-label {
+  background: rgba(166,138,99,0.08);
+  border-top: 1px solid rgba(166,138,99,0.25);
+  border-bottom: 1px solid rgba(166,138,99,0.25);
+  padding: 14px 24px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--primary);
+  opacity: 0.75;
+}
+
+/* ============================================================
+   WELL ME SECTION — shared header
+   ============================================================ */
+.wellme-section {
+  padding: 88px 0 72px;
+}
+.wellme-section-alt {
+  background: var(--warm-900);
+  padding: 88px 0 72px;
+}
+.wellme-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+.wellme-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 10px;
+  display: block;
+}
+.wellme-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.12;
+  margin-bottom: 40px;
+}
+.wellme-heading-alt {
+  color: #e8d9c0;
+}
+
+/* ============================================================
+   3A — BENTO GRID — TIENDA INFRARROJO
+   ============================================================ */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  margin-bottom: 32px;
+}
+.bento-item {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1 / 1;
+  background: var(--surface-card);
+}
+.bento-item.span-2-col { grid-column: span 2; aspect-ratio: 2 / 1; }
+.bento-item.span-2-row { grid-row: span 2; aspect-ratio: 1 / 2; }
+.bento-item.span-2-col.span-2-row { grid-column: span 2; grid-row: span 2; aspect-ratio: 1 / 1; }
+
+.bento-bg {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.5s ease;
+}
+.bento-item:hover .bento-bg {
+  transform: scale(1.05);
+}
+
+/* Hover overlay */
+.bento-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 25, 15, 0.72);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.bento-item:hover .bento-overlay { opacity: 1; }
+
+.bento-product-name {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.bento-product-price {
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+.bento-add-btn {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 7px 18px;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+  width: fit-content;
+  transition: background 0.2s;
+}
+.bento-add-btn:hover { background: var(--primary-hover); }
+
+/* Badge */
+.bento-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  z-index: 2;
+}
+.bento-badge.badge-gold { background: var(--gold); color: #1a1400; }
+
+.wellme-cta-row {
+  text-align: center;
+  padding-top: 8px;
+}
+
+/* ============================================================
+   3B — CARICO CATALOG GRID
+   ============================================================ */
+.carico-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  margin-bottom: 40px;
+}
+.carico-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 3 / 4;
+}
+.carico-card-bg {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.6s ease;
+}
+.carico-card:hover .carico-card-bg { transform: scale(1.05); }
+.carico-card-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(30,20,10,0.85) 0%, rgba(30,20,10,0.2) 50%, transparent 100%);
+  transition: opacity 0.3s;
+}
+.carico-card:hover .carico-card-gradient { opacity: 0.9; }
+.carico-card-content {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 28px 24px;
+  transform: translateY(0);
+  transition: transform 0.4s ease;
+}
+.carico-card:hover .carico-card-content { transform: translateY(-8px); }
+.carico-card-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+.carico-card-desc {
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.5;
+}
+
+.carico-cta-center {
+  text-align: center;
+}
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--whatsapp);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  padding: 14px 36px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.02em;
+}
+.btn-whatsapp:hover {
+  background: #1ebe5c;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(37,211,102,0.3);
+}
+.btn-whatsapp svg { width: 20px; height: 20px; fill: #fff; flex-shrink: 0; }
+
+/* Section transition separator */
+.section-transition {
+  height: 2px;
+  background: linear-gradient(to right,
+    transparent 0%,
+    rgba(166,138,99,0.15) 20%,
+    rgba(166,138,99,0.30) 50%,
+    rgba(166,138,99,0.15) 80%,
+    transparent 100%
+  );
+  margin: 0;
+}
+
+/* ============================================================
+   PLAN DE NOVIOS SECTION
+   ============================================================ */
+:root {
+  --novios-bg-deep:    #2a2014;
+  --novios-bg-mid:     #3d3426;
+  --novios-bg-warm:    #4a3d2e;
+  --novios-gold:       #D4AF37;
+  --novios-gold-soft:  #e8c96b;
+  --novios-cream:      #f5ede3;
+  --novios-cream-dim:  #ddd0b8;
+  --novios-rose:       #b89a73;
+}
+
+.novios-section {
+  position: relative;
+  overflow: hidden;
+  background: var(--novios-bg-deep);
+  padding: 100px 0 96px;
+}
+
+/* Radial warm glow in bg */
+.novios-section::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 75% 50%, rgba(212,175,55,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 80% at 25% 40%, rgba(166,138,99,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* Subtle fabric/paper texture overlay (CSS-only) */
+.novios-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.novios-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: center;
+}
+
+/* Left column: text */
+.novios-left {}
+.novios-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--novios-gold);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.novios-eyebrow::before,
+.novios-eyebrow::after {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  background: var(--novios-gold);
+  opacity: 0.5;
+}
+.novios-heading {
+  font-family: var(--font-heading);
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  font-weight: 500;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+.novios-heading em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--novios-cream-dim);
+}
+.novios-subtitle {
+  font-family: var(--font-body);
+  font-size: 1.02rem;
+  color: var(--novios-cream-dim);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 460px;
+}
+.novios-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+.btn-novios-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--novios-gold);
+  color: #1a1400;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 13px 30px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+}
+.btn-novios-primary:hover {
+  background: var(--novios-gold-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(212,175,55,0.35);
+}
+.btn-novios-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--novios-cream);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 13px 30px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(245,237,227,0.30);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.3s ease;
+}
+.btn-novios-outline:hover {
+  border-color: var(--novios-gold);
+  color: var(--novios-gold);
+  transform: translateY(-2px);
+}
+.novios-social-proof {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: rgba(221,208,184,0.65);
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.novios-social-proof::before {
+  content: '✦';
+  color: var(--novios-gold);
+  opacity: 0.7;
+  font-size: 0.7rem;
+}
+
+/* Right column: image placeholder with decorative frame */
+.novios-right {
+  position: relative;
+}
+.novios-photo-wrapper {
+  position: relative;
+  aspect-ratio: 4 / 5;
+}
+.novios-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #7a6240 0%, #b89a73 45%, #9e7d5a 100%);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.novios-photo-placeholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(42,32,20,0.4) 100%);
+}
+.novios-photo-label {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  position: relative; z-index: 1;
+}
+
+/* Gold offset frame */
+.novios-frame {
+  position: absolute;
+  top: -16px;
+  right: -16px;
+  bottom: 16px;
+  left: 16px;
+  border: 1.5px solid var(--novios-gold);
+  opacity: 0;
+  border-radius: 4px;
+  pointer-events: none;
+  /* Draw-on animation: clip-path trick */
+  clip-path: inset(0 100% 100% 0);
+  transition: clip-path 1.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.1s;
+}
+.novios-frame.drawn {
+  opacity: 0.55;
+  clip-path: inset(0 0% 0% 0);
+}
+
+/* Floating particles (CSS only) */
+.novios-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.novios-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--novios-gold);
+  opacity: 0;
+  animation: noviosFloat linear infinite;
+}
+@keyframes noviosFloat {
+  0%   { transform: translateY(0)   scale(0.8); opacity: 0; }
+  15%  { opacity: 0.12; }
+  85%  { opacity: 0.10; }
+  100% { transform: translateY(-90px) scale(1.2); opacity: 0; }
+}
+.novios-particle:nth-child(1)  { left: 12%; bottom: 15%; animation-duration: 6.5s; animation-delay: 0s;    width:3px; height:3px; }
+.novios-particle:nth-child(2)  { left: 28%; bottom: 22%; animation-duration: 8.0s; animation-delay: 1.3s; }
+.novios-particle:nth-child(3)  { left: 45%; bottom: 10%; animation-duration: 7.2s; animation-delay: 2.1s; width:3px; height:3px; }
+.novios-particle:nth-child(4)  { left: 62%; bottom: 30%; animation-duration: 9.0s; animation-delay: 0.7s; }
+.novios-particle:nth-child(5)  { left: 75%; bottom: 18%; animation-duration: 6.8s; animation-delay: 3.0s; width:5px; height:5px; }
+.novios-particle:nth-child(6)  { left: 88%; bottom: 25%; animation-duration: 7.5s; animation-delay: 1.8s; width:3px; height:3px; }
+.novios-particle:nth-child(7)  { left: 35%; bottom: 40%; animation-duration: 8.5s; animation-delay: 4.2s; width:2px; height:2px; }
+.novios-particle:nth-child(8)  { left: 55%; bottom: 5%;  animation-duration: 7.0s; animation-delay: 2.6s; }
+
+/* Scroll-in animations */
+.novios-left,
+.novios-right {
+  opacity: 0;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.novios-left  { transform: translateX(-32px); }
+.novios-right { transform: translateX( 32px); }
+.novios-left.visible,
+.novios-right.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ============================================================
+   RESPONSIVE — new sections
+   ============================================================ */
+@media (max-width: 1024px) {
+  .bento-grid { grid-template-columns: repeat(3, 1fr); }
+  .bento-item.span-2-col { grid-column: span 2; }
+  .novios-container { grid-template-columns: 1fr; gap: 48px; }
+  .novios-right { max-width: 480px; margin: 0 auto; }
+}
+@media (max-width: 768px) {
+  .bento-grid { grid-template-columns: repeat(2, 1fr); }
+  .bento-item.span-2-col  { grid-column: span 1; aspect-ratio: 1 / 1; }
+  .bento-item.span-2-row  { grid-row: span 1; }
+  .carico-grid { grid-template-columns: 1fr 1fr; }
+  .wellme-container { padding: 0 20px; }
+  .novios-container { padding: 0 20px; }
+  .novios-heading { font-size: 2.2rem; }
+  .novios-ctas { gap: 10px; }
+}
+@media (max-width: 480px) {
+  .carico-grid { grid-template-columns: 1fr; }
+  .bento-grid { grid-template-columns: 1fr 1fr; }
+  .novios-frame { top: -10px; right: -10px; bottom: 10px; left: 10px; }
+}
 </style>
 </head>
 <body>
@@ -909,6 +1440,233 @@ footer::before {
 </section>
 
 
+<!-- ========================================= -->
+<!-- — SECCIÓN: PRODUCTOS WELL ME —          -->
+<!-- ========================================= -->
+<div class="mockup-section-label">— Sección: Productos Well Me — 3A: Tienda Infrarrojo (e-commerce) —</div>
+
+
+<!-- ============================= -->
+<!-- 3A — TIENDA INFRARROJO        -->
+<!-- ============================= -->
+<section class="wellme-section">
+  <div class="wellme-container">
+    <span class="wellme-eyebrow">Well Me &nbsp;·&nbsp; Tienda Infrarrojo</span>
+    <h2 class="wellme-heading">Tecnología que cuida tu cuerpo</h2>
+
+    <!-- Bento grid -->
+    <div class="bento-grid">
+
+      <!-- 1. Colchoneta Infrarroja — span 2 cols (destacado) -->
+      <div class="bento-item span-2-col" style="background:#3d4a30;">
+        <div class="bento-bg" style="background:linear-gradient(135deg,#3d4a30 0%,#4f5e3a 60%,#3a4628 100%);width:100%;height:100%;"></div>
+        <span class="bento-badge badge-gold">Más Vendido</span>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Colchoneta Infrarroja</p>
+          <p class="bento-product-price">$299</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 2. Almohada Cervical -->
+      <div class="bento-item" style="background:#475536;">
+        <div class="bento-bg" style="background:linear-gradient(145deg,#475536 0%,#566646 100%);width:100%;height:100%;"></div>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Almohada Cervical</p>
+          <p class="bento-product-price">$79</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 3. Faja Térmica -->
+      <div class="bento-item" style="background:#4f3c25;">
+        <div class="bento-bg" style="background:linear-gradient(145deg,#4f3c25 0%,#614d32 100%);width:100%;height:100%;"></div>
+        <span class="bento-badge">Nuevo</span>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Faja Térmica</p>
+          <p class="bento-product-price">$149</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 4. Mini Mat — span 2 rows (destacado vertical) -->
+      <div class="bento-item span-2-row" style="background:#3e4e31;">
+        <div class="bento-bg" style="background:linear-gradient(180deg,#3e4e31 0%,#506040 100%);width:100%;height:100%;"></div>
+        <span class="bento-badge badge-gold">Más Vendido</span>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Mini Mat</p>
+          <p class="bento-product-price">$129</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 5. Cinturón -->
+      <div class="bento-item" style="background:#4a3820;">
+        <div class="bento-bg" style="background:linear-gradient(145deg,#4a3820 0%,#5c4828 100%);width:100%;height:100%;"></div>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Cinturón Infrarrojo</p>
+          <p class="bento-product-price">$89</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 6. Rodillera -->
+      <div class="bento-item" style="background:#3d4a30;">
+        <div class="bento-bg" style="background:linear-gradient(145deg,#3d4a30 0%,#4e5e3e 100%);width:100%;height:100%;"></div>
+        <span class="bento-badge">Nuevo</span>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Rodillera Térmica</p>
+          <p class="bento-product-price">$69</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 7. Manta Full — span 2 cols -->
+      <div class="bento-item span-2-col" style="background:#475536;">
+        <div class="bento-bg" style="background:linear-gradient(135deg,#475536 0%,#384430 60%,#556645 100%);width:100%;height:100%;"></div>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Manta Full Infrarroja</p>
+          <p class="bento-product-price">$399</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+      <!-- 8. Almohadilla Cuello -->
+      <div class="bento-item" style="background:#4f3c25;">
+        <div class="bento-bg" style="background:linear-gradient(145deg,#4f3c25 0%,#634d32 100%);width:100%;height:100%;"></div>
+        <div class="bento-overlay">
+          <p class="bento-product-name">Almohadilla Cuello</p>
+          <p class="bento-product-price">$59</p>
+          <span class="bento-add-btn">Agregar</span>
+        </div>
+      </div>
+
+    </div><!-- /bento-grid -->
+
+    <div class="wellme-cta-row">
+      <a href="/tienda" class="btn-outline">Ver toda la tienda →</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================= -->
+<!-- TRANSITION                    -->
+<!-- ============================= -->
+<div class="section-transition"></div>
+<div class="mockup-section-label">— Sección: Productos Well Me — 3B: Catálogo Carico (asesoría) —</div>
+
+
+<!-- ============================= -->
+<!-- 3B — CATÁLOGO CARICO          -->
+<!-- ============================= -->
+<section class="wellme-section-alt">
+  <div class="wellme-container">
+    <span class="wellme-eyebrow" style="color:var(--primary);">Well Me &nbsp;·&nbsp; Catálogo Carico</span>
+    <h2 class="wellme-heading wellme-heading-alt">Productos premium para tu hogar</h2>
+
+    <!-- Carico category grid -->
+    <div class="carico-grid">
+
+      <!-- Cocina -->
+      <div class="carico-card">
+        <div class="carico-card-bg" style="background:linear-gradient(145deg,#634d32 0%,#7a6240 60%,#5a4428 100%);width:100%;height:100%;"></div>
+        <div class="carico-card-gradient"></div>
+        <div class="carico-card-content">
+          <p class="carico-card-title">Cocina</p>
+          <p class="carico-card-desc">Utensilios y electrodomésticos sin tóxicos para preparar alimentos con consciencia.</p>
+        </div>
+      </div>
+
+      <!-- Hogar y Salud -->
+      <div class="carico-card">
+        <div class="carico-card-bg" style="background:linear-gradient(145deg,#7a6240 0%,#8c7450 60%,#634d32 100%);width:100%;height:100%;"></div>
+        <div class="carico-card-gradient"></div>
+        <div class="carico-card-content">
+          <p class="carico-card-title">Hogar &amp; Salud</p>
+          <p class="carico-card-desc">Purificadores, difusores y soluciones de bienestar para cada espacio de tu casa.</p>
+        </div>
+      </div>
+
+      <!-- Dormitorio -->
+      <div class="carico-card">
+        <div class="carico-card-bg" style="background:linear-gradient(145deg,#4f3c25 0%,#634d32 60%,#3d2e1c 100%);width:100%;height:100%;"></div>
+        <div class="carico-card-gradient"></div>
+        <div class="carico-card-content">
+          <p class="carico-card-title">Dormitorio</p>
+          <p class="carico-card-desc">Ropa de cama orgánica, textiles naturales y accesorios para un descanso profundo.</p>
+        </div>
+      </div>
+
+    </div><!-- /carico-grid -->
+
+    <div class="carico-cta-center">
+      <a href="https://wa.me/593991712532" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        Agenda tu asesoría personalizada
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========================================= -->
+<!-- — SECCIÓN: PLAN DE NOVIOS —              -->
+<!-- ========================================= -->
+<div class="section-transition"></div>
+<div class="mockup-section-label">— Sección: Plan de Novios —</div>
+
+
+<!-- ============================= -->
+<!-- PLAN DE NOVIOS                -->
+<!-- ============================= -->
+<section class="novios-section">
+  <!-- Floating particles -->
+  <div class="novios-particles" aria-hidden="true">
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+    <span class="novios-particle"></span>
+  </div>
+
+  <div class="novios-container">
+
+    <!-- Left: text -->
+    <div class="novios-left" id="novios-left">
+      <p class="novios-eyebrow">Plan de Novios</p>
+      <h2 class="novios-heading">
+        Empiecen su vida juntos<br>
+        con <em>lo mejor</em>
+      </h2>
+      <p class="novios-subtitle">
+        Una mesa de regalos diseñada para los amantes del bienestar. Crean un santuario de vida desde el primer día, rodeados de productos que cuidan su hogar y su salud.
+      </p>
+      <div class="novios-ctas">
+        <a href="/plan-novios" class="btn-novios-primary">Conocer el Plan ✦</a>
+        <a href="https://wa.me/593991712532" target="_blank" rel="noopener noreferrer" class="btn-novios-outline">Hablar con Pau</a>
+      </div>
+      <p class="novios-social-proof">50+ parejas ya eligieron este plan</p>
+    </div>
+
+    <!-- Right: photo placeholder with gold frame -->
+    <div class="novios-right" id="novios-right">
+      <div class="novios-photo-wrapper">
+        <div class="novios-photo-placeholder">
+          <p class="novios-photo-label">📷 Foto novios<br>object-cover</p>
+        </div>
+        <!-- Animated gold frame -->
+        <div class="novios-frame" id="novios-frame"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
 <!-- ========== FOOTER ========== -->
 <footer>
   <div class="footer-inner">
@@ -1069,6 +1827,27 @@ window.addEventListener('scroll', () => {
 
 /* Run once on load in case section is already in view */
 applyScrollEffects();
+
+/* ========================================
+   NOVIOS SECTION — fade-in + frame draw
+   ======================================== */
+const noviosLeft  = document.getElementById('novios-left');
+const noviosRight = document.getElementById('novios-right');
+const noviosFrame = document.getElementById('novios-frame');
+
+const noviosObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      noviosLeft?.classList.add('visible');
+      setTimeout(() => noviosRight?.classList.add('visible'), 200);
+      setTimeout(() => noviosFrame?.classList.add('drawn'), 600);
+      noviosObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.18 });
+
+const noviosSection = document.querySelector('.novios-section');
+if (noviosSection) noviosObserver.observe(noviosSection);
 </script>
 
 </body>
