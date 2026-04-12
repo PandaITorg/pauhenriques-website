@@ -1,10 +1,11 @@
 import HomeSchema from "@/components/schemas/HomeSchema";
 import Footer from "@/components/layout/Footer";
-import Hero from "@/components/home/Hero";
+import HeroCarousel from "@/components/homepage/HeroCarousel";
 import SobreMi from "@/components/home/SobreMi";
 import CategoryShowcase from "@/components/home/CategoryShowcase";
 import PodcastSection from "@/components/home/PodcastSection";
 import Testimonios from "@/components/home/Testimonios";
+import { getActiveSlides } from "@/lib/homepage/queries";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -16,12 +17,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const slides = await getActiveSlides();
+
   return (
     <>
       <HomeSchema />
       <div className="overflow-x-hidden">
-        <Hero />
+        <HeroCarousel slides={slides} />
         <SobreMi />
         <CategoryShowcase />
         <PodcastSection />

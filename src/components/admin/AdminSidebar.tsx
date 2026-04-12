@@ -11,6 +11,7 @@ import {
   FaTimes,
   FaExternalLinkAlt,
   FaGift,
+  FaHome,
 } from "react-icons/fa";
 import { useState } from "react";
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
   { href: "/admin/promociones", label: "Promociones", icon: FaTag },
   { href: "/admin/plan-novios", label: "Plan Novios", icon: FaGift },
+  { href: "/admin/homepage", label: "Homepage", icon: FaHome },
 ];
 
 export default function AdminSidebar() {

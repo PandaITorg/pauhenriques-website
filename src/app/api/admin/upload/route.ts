@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const file = formData.get("file") as File | null;
   const productId = formData.get("productId") as string | null;
+  const folderParam = formData.get("folder") as string | null;
 
   if (!file) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
   const ext = file.name.split(".").pop() || "jpg";
   const uniqueName = `${crypto.randomUUID()}.${ext}`;
-  const folder = productId ? `products/${productId}` : "products/temp";
+  const folder = folderParam || (productId ? `products/${productId}` : "products/temp");
   const filePath = `${folder}/${uniqueName}`;
 
   const url = await uploadFile(buffer, filePath, file.type);
