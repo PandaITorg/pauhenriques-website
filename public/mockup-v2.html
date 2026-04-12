@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pau Henriques — Fotografía & Bienestar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Dancing+Script:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg-main: #343d2a;
+  --bg-warm: #4f3c25;
+  --bg-warm-900: #3d2e1c;
+  --bg-warm-alt: #3d3426;
+  --primary: #a68a63;
+  --primary-hover: #b89a73;
+  --text-main: #c1c4a7;
+  --text-inv: #343d2a;
+  --accent: #562f10;
+  --secondary: #666d4b;
+  --tertiary: #a4ac85;
+  --whatsapp: #25d366;
+  --surface-card: #3d4a30;
+  --surface-elevated: #475536;
+  --border-subtle: rgba(193,196,167,0.12);
+  --border-default: rgba(193,196,167,0.20);
+  --glow: 0 0 20px rgba(166,138,99,0.25);
+  --gold: #c9a84c;
+  --font-display: 'Dancing Script', cursive;
+  --font-heading: 'Cormorant Garamond', serif;
+  --font-body: 'Inter', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-body);
+  background: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; display: block; }
+
+/* ========== UTILITIES ========== */
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.btn-primary {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 14px 32px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.03em;
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: var(--glow);
+  transform: translateY(-2px);
+}
+.btn-outline {
+  display: inline-block;
+  background: transparent;
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 14px 32px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(193,196,167,0.30);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-outline:hover {
+  border-color: var(--primary);
+  color: #fff;
+  transform: translateY(-2px);
+}
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--whatsapp);
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 14px 32px;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.btn-whatsapp:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(37,211,102,0.3);
+}
+.section-tag {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+/* ========== ANIMATIONS ========== */
+.fade-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-up.delay-1 { transition-delay: 0.15s; }
+.fade-up.delay-2 { transition-delay: 0.3s; }
+.fade-up.delay-3 { transition-delay: 0.45s; }
+.fade-up.delay-4 { transition-delay: 0.6s; }
+
+@keyframes heroGradient {
+  0%, 100% { background-position: 15% 80%; }
+  33% { background-position: 60% 40%; }
+  66% { background-position: 30% 60%; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-12px) rotate(-1deg); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(166,138,99,0.15); }
+  50% { box-shadow: 0 0 40px rgba(166,138,99,0.35); }
+}
+
+/* ========== NAVBAR ========== */
+.navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  padding: 20px 0;
+  transition: all 0.4s ease;
+}
+.navbar.scrolled {
+  background: rgba(52,61,42,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 14px 0;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.2);
+}
+.navbar .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-logo {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.nav-logo span {
+  font-family: var(--font-display);
+  color: var(--primary);
+  font-size: 1.8rem;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-main);
+  transition: color 0.3s;
+  letter-spacing: 0.02em;
+}
+.nav-links a:hover { color: #fff; }
+.nav-cta {
+  background: var(--primary);
+  color: #fff !important;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+}
+.nav-cta:hover {
+  background: var(--primary-hover) !important;
+  box-shadow: var(--glow);
+}
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+.nav-hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--text-main);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
+/* ========== 1. HERO ========== */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 15% 80%, #7a6240 0%, #4f3c25 30%, #343d2a 65%, #2b3322 100%);
+  background-size: 200% 200%;
+  animation: heroGradient 15s ease infinite;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -100px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(166,138,99,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -50px; left: 10%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(122,98,64,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero .container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  padding-top: 100px;
+  padding-bottom: 80px;
+}
+.hero-text h1 {
+  font-family: var(--font-heading);
+  font-size: 3.8rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+.hero-text h1 .pau {
+  font-family: var(--font-display);
+  color: var(--primary);
+  font-size: 4.2rem;
+}
+.hero-text p {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  margin-bottom: 36px;
+  max-width: 480px;
+  line-height: 1.7;
+}
+.hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+.hero-visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Polaroid placeholder */
+.polaroid {
+  width: 320px;
+  height: 400px;
+  background: #fff;
+  padding: 16px 16px 60px;
+  border-radius: 4px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 30px rgba(166,138,99,0.1);
+  transform: rotate(-3deg);
+  animation: float 6s ease-in-out infinite;
+}
+.polaroid-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4f3c25, #3d2e1c, #343d2a);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.polaroid-inner svg { width: 80px; height: 80px; opacity: 0.3; }
+.polaroid-caption {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: #666;
+}
+
+/* Carousel dots */
+.hero-dots {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+.hero-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(193,196,167,0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.hero-dot.active {
+  background: var(--primary);
+  box-shadow: 0 0 10px rgba(166,138,99,0.4);
+}
+
+/* Branch SVG decoration */
+.branch-deco {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.07;
+}
+.branch-deco-1 { top: 60px; right: -40px; width: 300px; height: 300px; }
+.branch-deco-2 { bottom: 40px; left: -60px; width: 250px; height: 250px; transform: scaleX(-1); }
+
+/* ========== 2. IMPACTO ========== */
+.impacto {
+  background: var(--bg-warm);
+  padding: 80px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.impacto::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(166,138,99,0.3), transparent);
+}
+.impacto-number {
+  font-family: var(--font-heading);
+  font-size: 5rem;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.impacto h2 {
+  font-family: var(--font-heading);
+  font-size: 2rem;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 12px;
+}
+.impacto p {
+  font-size: 1.05rem;
+  max-width: 600px;
+  margin: 0 auto;
+  color: var(--text-main);
+  opacity: 0.85;
+}
+
+/* ========== 3A. TIENDA INFRARROJO ========== */
+.tienda {
+  background: var(--bg-main);
+  padding: 100px 0;
+  position: relative;
+}
+.section-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.section-header h2 {
+  font-family: var(--font-heading);
+  font-size: 2.6rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 12px;
+}
+.section-header p {
+  font-size: 1rem;
+  color: var(--text-main);
+  opacity: 0.8;
+  margin-top: 12px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.product-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.4s ease;
+}
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--glow);
+  border-color: var(--border-default);
+}
+.product-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  background: linear-gradient(135deg, #475536, #3d4a30, #343d2a);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.product-img svg { width: 48px; height: 48px; opacity: 0.15; }
+.product-badge {
+  position: absolute;
+  top: 14px; left: 14px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.product-info { padding: 20px; }
+.product-name {
+  font-family: var(--font-heading);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.product-desc {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  opacity: 0.7;
+  margin-bottom: 14px;
+}
+.product-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.product-price {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.product-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--bg-main);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.product-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.product-btn svg { width: 18px; height: 18px; stroke: var(--text-main); fill: none; }
+.product-btn:hover svg { stroke: #fff; }
+
+/* ========== 3B. CATALOGO CARICO ========== */
+.catalogo {
+  background: var(--bg-warm-900);
+  padding: 100px 0;
+}
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-bottom: 48px;
+}
+.catalogo-card {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 3/4;
+  cursor: pointer;
+  transition: all 0.4s ease;
+}
+.catalogo-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.catalogo-card-bg {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #475536, #3d4a30);
+}
+.catalogo-card:nth-child(2) .catalogo-card-bg {
+  background: linear-gradient(135deg, #4f3c25, #3d2e1c);
+}
+.catalogo-card:nth-child(3) .catalogo-card-bg {
+  background: linear-gradient(135deg, #562f10, #3d2e1c);
+}
+.catalogo-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(52,61,42,0.9) 0%, transparent 60%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 28px;
+}
+.catalogo-title {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.catalogo-sub {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  opacity: 0.8;
+}
+.catalogo-cta { text-align: center; }
+
+/* ========== 4. PLAN DE NOVIOS ========== */
+.novios {
+  position: relative;
+  padding: 120px 0;
+  background: linear-gradient(135deg, #3d2e1c, #343d2a);
+  overflow: hidden;
+}
+.novios::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(52,61,42,0.80);
+}
+.novios .container {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.novios-text .section-tag { margin-bottom: 16px; display: block; }
+.novios-text h2 {
+  font-family: var(--font-heading);
+  font-size: 3rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: 20px;
+}
+.novios-text p {
+  font-size: 1.05rem;
+  color: var(--text-main);
+  margin-bottom: 36px;
+  line-height: 1.7;
+  max-width: 480px;
+}
+.novios-text .buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+.novios-visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.novios-frame {
+  width: 380px;
+  height: 460px;
+  position: relative;
+}
+.novios-frame-outer {
+  position: absolute;
+  inset: -12px;
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  opacity: 0.4;
+  transform: translate(12px, 12px);
+}
+.novios-frame-inner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4f3c25, #3d2e1c);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.novios-frame-inner svg { width: 64px; height: 64px; opacity: 0.15; }
+
+/* ========== 5. PODCAST ========== */
+.podcast {
+  background: var(--bg-main);
+  padding: 100px 0;
+}
+.podcast-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 48px;
+  align-items: start;
+}
+.podcast-cover {
+  width: 350px;
+  height: 350px;
+  background: var(--bg-warm);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+}
+.podcast-cover-icon { font-size: 3rem; margin-bottom: 20px; opacity: 0.5; }
+.podcast-cover h3 {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  line-height: 1.3;
+}
+.podcast-cover p {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  opacity: 0.7;
+  margin-top: 8px;
+}
+.podcast-info h2 {
+  font-family: var(--font-heading);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 12px;
+}
+.podcast-info > p {
+  font-size: 1rem;
+  color: var(--text-main);
+  opacity: 0.8;
+  margin-bottom: 32px;
+  max-width: 500px;
+}
+.episode-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.episode-card:hover {
+  border-color: var(--border-default);
+  transform: translateX(6px);
+}
+.episode-play {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.episode-card:hover .episode-play { box-shadow: var(--glow); }
+.episode-play svg { width: 18px; height: 18px; fill: #fff; margin-left: 2px; }
+.episode-meta { flex: 1; }
+.episode-num {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+.episode-title {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+.episode-dur {
+  font-size: 0.8rem;
+  color: var(--text-main);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+/* ========== 6. TESTIMONIOS ========== */
+.testimonios {
+  background: var(--bg-warm-900);
+  padding: 100px 0;
+  overflow: hidden;
+}
+.testimonios-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+.testi-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 36px 28px;
+  transition: all 0.4s ease;
+  position: relative;
+}
+.testi-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--glow);
+}
+.testi-quote {
+  position: absolute;
+  top: 20px; left: 24px;
+  font-family: var(--font-heading);
+  font-size: 5rem;
+  color: var(--primary);
+  opacity: 0.15;
+  line-height: 1;
+  pointer-events: none;
+}
+.testi-stars {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+}
+.testi-star {
+  width: 18px; height: 18px;
+  color: var(--gold);
+}
+.testi-text {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text-main);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.testi-author {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.testi-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--surface-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+.testi-name {
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.testi-role {
+  font-size: 0.78rem;
+  color: var(--text-main);
+  opacity: 0.6;
+}
+
+/* ========== 7. SOBRE MI ========== */
+.sobre-mi {
+  background: var(--bg-main);
+  padding: 120px 0;
+}
+.sobre-mi .container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.sobre-mi-visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.sobre-mi-frame {
+  width: 360px;
+  height: 440px;
+  position: relative;
+}
+.sobre-mi-deco {
+  position: absolute;
+  inset: -16px;
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  opacity: 0.3;
+  transform: translate(-16px, 16px);
+}
+.sobre-mi-img {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4f3c25, #343d2a);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sobre-mi-img svg { width: 64px; height: 64px; opacity: 0.15; }
+.sobre-mi-text .section-tag { display: block; margin-bottom: 16px; }
+.sobre-mi-text h2 {
+  font-family: var(--font-heading);
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+.sobre-mi-text h2 .pau {
+  font-family: var(--font-display);
+  color: var(--primary);
+}
+.sobre-mi-text p {
+  font-size: 1rem;
+  color: var(--text-main);
+  line-height: 1.8;
+  margin-bottom: 16px;
+  max-width: 480px;
+}
+
+/* ========== 8. CTA FINAL ========== */
+.cta-final {
+  background: radial-gradient(ellipse at center, #343d2a 0%, #181d12 100%);
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-final::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 600px; height: 600px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(166,138,99,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.cta-final .container { position: relative; z-index: 2; }
+.cta-final h2 {
+  font-family: var(--font-heading);
+  font-size: 3.2rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+.cta-final p {
+  font-size: 1.1rem;
+  color: var(--text-main);
+  opacity: 0.8;
+  margin-bottom: 40px;
+  max-width: 550px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.cta-final .btn-primary {
+  font-size: 1.05rem;
+  padding: 18px 48px;
+  animation: pulse-glow 3s ease infinite;
+}
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 48px;
+}
+.social-icon {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.social-icon:hover {
+  border-color: var(--primary);
+  background: rgba(166,138,99,0.1);
+  transform: translateY(-3px);
+}
+.social-icon svg { width: 20px; height: 20px; fill: var(--text-main); }
+
+/* ========== FOOTER ========== */
+.footer {
+  background: #1a1f14;
+  padding: 40px 0;
+  text-align: center;
+  border-top: 1px solid var(--border-subtle);
+}
+.footer p {
+  font-size: 0.82rem;
+  color: var(--text-main);
+  opacity: 0.5;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1024px) {
+  .hero .container { grid-template-columns: 1fr; text-align: center; }
+  .hero-text p { margin: 0 auto 36px; }
+  .hero-buttons { justify-content: center; }
+  .hero-visual { margin-top: 40px; }
+  .products-grid, .catalogo-grid, .testimonios-grid { grid-template-columns: repeat(2, 1fr); }
+  .novios .container { grid-template-columns: 1fr; text-align: center; }
+  .novios-text p { margin: 0 auto 36px; }
+  .novios-text .buttons { justify-content: center; }
+  .novios-visual { margin-top: 40px; }
+  .podcast-layout { grid-template-columns: 1fr; }
+  .podcast-cover { margin: 0 auto; }
+  .sobre-mi .container { grid-template-columns: 1fr; text-align: center; }
+  .sobre-mi-visual { margin-bottom: 40px; }
+  .sobre-mi-text p { margin: 0 auto 16px; }
+}
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    background: rgba(52,61,42,0.97);
+    backdrop-filter: blur(16px);
+    padding: 24px;
+    gap: 20px;
+  }
+  .hero-text h1 { font-size: 2.6rem; }
+  .hero-text h1 .pau { font-size: 3rem; }
+  .polaroid { width: 240px; height: 300px; }
+  .products-grid, .catalogo-grid, .testimonios-grid { grid-template-columns: 1fr; }
+  .impacto-number { font-size: 3.5rem; }
+  .section-header h2 { font-size: 2rem; }
+  .novios-text h2 { font-size: 2.2rem; }
+  .cta-final h2 { font-size: 2.2rem; }
+  .podcast-cover { width: 280px; height: 280px; }
+  .sobre-mi-frame { width: 280px; height: 340px; }
+  .novios-frame { width: 280px; height: 340px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAVBAR ============ -->
+<nav class="navbar" id="navbar">
+  <div class="container">
+    <a href="#" class="nav-logo"><span>Pau</span> Henriques</a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#tienda">Tienda</a></li>
+      <li><a href="#catalogo">Carico</a></li>
+      <li><a href="#novios">Novios</a></li>
+      <li><a href="#podcast">Podcast</a></li>
+      <li><a href="#sobre-mi">Sobre Mi</a></li>
+      <li><a href="#contacto" class="nav-cta">Contactar</a></li>
+    </ul>
+    <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Branch SVG decoration template -->
+<svg style="display:none">
+  <symbol id="branch" viewBox="0 0 200 200">
+    <path d="M20 180 Q60 140 80 100 Q90 80 85 50 Q82 30 90 15" stroke="currentColor" stroke-width="2" fill="none" opacity="0.5"/>
+    <path d="M80 100 Q100 90 130 95" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.4"/>
+    <path d="M85 50 Q70 40 55 45" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.4"/>
+    <path d="M85 70 Q105 60 120 65" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.3"/>
+    <circle cx="130" cy="95" r="4" fill="currentColor" opacity="0.2"/>
+    <circle cx="55" cy="45" r="3" fill="currentColor" opacity="0.2"/>
+    <circle cx="120" cy="65" r="3.5" fill="currentColor" opacity="0.2"/>
+    <circle cx="90" cy="15" r="3" fill="currentColor" opacity="0.2"/>
+  </symbol>
+  <symbol id="camera" viewBox="0 0 24 24">
+    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  </symbol>
+</svg>
+
+<!-- ============ 1. HERO ============ -->
+<section class="hero" id="hero">
+  <svg class="branch-deco branch-deco-1" viewBox="0 0 200 200"><use href="#branch" style="color: var(--text-main)"/></svg>
+  <svg class="branch-deco branch-deco-2" viewBox="0 0 200 200"><use href="#branch" style="color: var(--primary)"/></svg>
+
+  <div class="container">
+    <div class="hero-text">
+      <div class="fade-up">
+        <p class="section-tag" style="margin-bottom:12px">Bienestar & Fotografia</p>
+      </div>
+      <h1 class="fade-up delay-1">Transforma tu bienestar con <span class="pau">Pau</span> Henriques</h1>
+      <p class="fade-up delay-2">Terapia infrarroja, fotografia con alma y acompanamiento personalizado para reconectar con tu mejor version.</p>
+      <div class="hero-buttons fade-up delay-3">
+        <a href="#tienda" class="btn-primary">Explorar Tienda</a>
+        <a href="#contacto" class="btn-outline">Conoce Mas</a>
+      </div>
+    </div>
+    <div class="hero-visual fade-up delay-2">
+      <div class="polaroid">
+        <div class="polaroid-inner">
+          <svg viewBox="0 0 24 24"><use href="#camera" style="color: #c1c4a7"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-dots" id="heroDots">
+    <div class="hero-dot active" data-slide="0"></div>
+    <div class="hero-dot" data-slide="1"></div>
+    <div class="hero-dot" data-slide="2"></div>
+  </div>
+</section>
+
+<!-- ============ 2. IMPACTO ============ -->
+<section class="impacto">
+  <div class="container">
+    <div class="impacto-number fade-up">200+</div>
+    <h2 class="fade-up delay-1">Familias que confiaron en nosotros</h2>
+    <p class="fade-up delay-2">Sesiones de bienestar, fotografia y momentos unicos capturados con amor y profesionalismo.</p>
+  </div>
+</section>
+
+<!-- ============ 3A. TIENDA INFRARROJO ============ -->
+<section class="tienda" id="tienda">
+  <div class="container">
+    <div class="section-header fade-up">
+      <span class="section-tag">Bienestar</span>
+      <h2>Tienda Infrarrojo</h2>
+      <p>Dispositivos seleccionados para tu salud y bienestar diario.</p>
+    </div>
+    <div class="products-grid">
+
+      <div class="product-card fade-up delay-1">
+        <div class="product-img">
+          <span class="product-badge">Mas Vendido</span>
+          <svg viewBox="0 0 24 24"><use href="#camera" style="color: #c1c4a7"/></svg>
+        </div>
+        <div class="product-info">
+          <div class="product-name">Panel Infrarrojo Pro</div>
+          <div class="product-desc">Terapia de luz roja de cuerpo completo</div>
+          <div class="product-footer">
+            <span class="product-price">$489</span>
+            <button class="product-btn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up delay-2">
+        <div class="product-img">
+          <svg viewBox="0 0 24 24"><use href="#camera" style="color: #c1c4a7"/></svg>
+        </div>
+        <div class="product-info">
+          <div class="product-name">Lampara Facial IR</div>
+          <div class="product-desc">Rejuvenecimiento facial con luz infrarroja</div>
+          <div class="product-footer">
+            <span class="product-price">$199</span>
+            <button class="product-btn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card fade-up delay-3">
+        <div class="product-img">
+          <span class="product-badge">Nuevo</span>
+          <svg viewBox="0 0 24 24"><use href="#camera" style="color: #c1c4a7"/></svg>
+        </div>
+        <div class="product-info">
+          <div class="product-name">Manta Infrarroja</div>
+          <div class="product-desc">Relajacion profunda y desintoxicacion</div>
+          <div class="product-footer">
+            <span class="product-price">$349</span>
+            <button class="product-btn">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3B. CATALOGO CARICO ============ -->
+<section class="catalogo" id="catalogo">
+  <div class="container">
+    <div class="section-header fade-up">
+      <span class="section-tag">Fotografia</span>
+      <h2>Catalogo Carico</h2>
+      <p>Sesiones fotograficas que capturan la esencia de cada momento.</p>
+    </div>
+    <div class="catalogo-grid">
+
+      <div class="catalogo-card fade-up delay-1">
+        <div class="catalogo-card-bg"></div>
+        <div class="catalogo-overlay">
+          <div class="catalogo-title">Retratos</div>
+          <div class="catalogo-sub">Sesiones individuales y familiares</div>
+        </div>
+      </div>
+
+      <div class="catalogo-card fade-up delay-2">
+        <div class="catalogo-card-bg"></div>
+        <div class="catalogo-overlay">
+          <div class="catalogo-title">Maternidad</div>
+          <div class="catalogo-sub">Momentos de espera y amor</div>
+        </div>
+      </div>
+
+      <div class="catalogo-card fade-up delay-3">
+        <div class="catalogo-card-bg"></div>
+        <div class="catalogo-overlay">
+          <div class="catalogo-title">Newborn</div>
+          <div class="catalogo-sub">Primeros dias, recuerdos eternos</div>
+        </div>
+      </div>
+
+    </div>
+    <div class="catalogo-cta fade-up">
+      <a href="#" class="btn-whatsapp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Consultar por WhatsApp
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4. PLAN DE NOVIOS ============ -->
+<section class="novios" id="novios">
+  <div class="container">
+    <div class="novios-text">
+      <span class="section-tag fade-up">Experiencia Premium</span>
+      <h2 class="fade-up delay-1">Plan de Novios</h2>
+      <p class="fade-up delay-2">Una experiencia completa para inmortalizar el dia mas importante de tu vida. Desde el getting ready hasta la ultima pieza de baile.</p>
+      <div class="buttons fade-up delay-3">
+        <a href="#" class="btn-primary">Ver Paquetes</a>
+        <a href="#" class="btn-outline">Consultar Fecha</a>
+      </div>
+    </div>
+    <div class="novios-visual fade-up delay-2">
+      <div class="novios-frame">
+        <div class="novios-frame-outer"></div>
+        <div class="novios-frame-inner">
+          <svg viewBox="0 0 24 24"><use href="#camera" style="color: #c1c4a7"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. PODCAST ============ -->
+<section class="podcast" id="podcast">
+  <div class="container">
+    <div class="section-header fade-up" style="margin-bottom:48px">
+      <span class="section-tag">Escucha</span>
+      <h2>El Podcast de Pau</h2>
+    </div>
+    <div class="podcast-layout">
+      <div class="podcast-cover fade-up">
+        <div class="podcast-cover-icon">&#127897;</div>
+        <h3>Conversaciones con Alma</h3>
+        <p>por Pau Henriques</p>
+      </div>
+      <div class="podcast-info fade-up delay-1">
+        <p>Conversaciones sobre bienestar, fotografia, maternidad y crecimiento personal. Nuevos episodios cada semana.</p>
+
+        <div class="episode-card">
+          <div class="episode-play">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <div class="episode-meta">
+            <div class="episode-num">Episodio 24</div>
+            <div class="episode-title">El poder de la luz infrarroja</div>
+          </div>
+          <div class="episode-dur">32 min</div>
+        </div>
+
+        <div class="episode-card">
+          <div class="episode-play">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <div class="episode-meta">
+            <div class="episode-num">Episodio 23</div>
+            <div class="episode-title">Fotografia como terapia emocional</div>
+          </div>
+          <div class="episode-dur">28 min</div>
+        </div>
+
+        <div class="episode-card">
+          <div class="episode-play">
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          </div>
+          <div class="episode-meta">
+            <div class="episode-num">Episodio 22</div>
+            <div class="episode-title">Maternidad consciente y autocuidado</div>
+          </div>
+          <div class="episode-dur">45 min</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. TESTIMONIOS ============ -->
+<section class="testimonios" id="testimonios">
+  <div class="container">
+    <div class="section-header fade-up">
+      <span class="section-tag">Testimonios</span>
+      <h2>Lo que dicen nuestros clientes</h2>
+    </div>
+    <div class="testimonios-grid">
+
+      <div class="testi-card fade-up delay-1">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars">
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <p class="testi-text">Pau capturo exactamente lo que sentiamos ese dia. Las fotos son magicas, cada vez que las veo revivo esos momentos.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">MC</div>
+          <div>
+            <div class="testi-name">Maria Castillo</div>
+            <div class="testi-role">Sesion de Bodas</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card fade-up delay-2">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars">
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <p class="testi-text">El panel infrarrojo cambio mi rutina de bienestar por completo. La asesoria de Pau fue clave para elegir el adecuado.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">LR</div>
+          <div>
+            <div class="testi-name">Laura Rodriguez</div>
+            <div class="testi-role">Tienda Infrarrojo</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testi-card fade-up delay-3">
+        <div class="testi-quote">&ldquo;</div>
+        <div class="testi-stars">
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          <svg class="testi-star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        </div>
+        <p class="testi-text">Las fotos de mi embarazo quedaron increibles. Pau tiene una sensibilidad unica para capturar momentos tan intimos.</p>
+        <div class="testi-author">
+          <div class="testi-avatar">AG</div>
+          <div>
+            <div class="testi-name">Ana Garcia</div>
+            <div class="testi-role">Sesion Maternidad</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. SOBRE MI ============ -->
+<section class="sobre-mi" id="sobre-mi">
+  <div class="container">
+    <div class="sobre-mi-visual fade-up">
+      <div class="sobre-mi-frame">
+        <div class="sobre-mi-deco"></div>
+        <div class="sobre-mi-img">
+          <svg viewBox="0 0 24 24"><use href="#camera" style="color: #c1c4a7"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="sobre-mi-text">
+      <span class="section-tag fade-up">Conoceme</span>
+      <h2 class="fade-up delay-1">Hola, soy <span class="pau">Pau</span></h2>
+      <p class="fade-up delay-2">Fotografa, emprendedora y apasionada del bienestar. Desde hace mas de 8 anos acompano familias en sus momentos mas importantes, combinando mi amor por la fotografia con la terapia infrarroja.</p>
+      <p class="fade-up delay-3">Creo profundamente en el poder de la luz — tanto la que ilumina una buena foto como la que sana nuestro cuerpo. Cada proyecto es una oportunidad para crear algo hermoso y significativo.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. CTA FINAL ============ -->
+<section class="cta-final" id="contacto">
+  <div class="container">
+    <span class="section-tag fade-up" style="display:block;margin-bottom:20px">Comienza Hoy</span>
+    <h2 class="fade-up delay-1">Tu momento merece ser inolvidable</h2>
+    <p class="fade-up delay-2">Ya sea una sesion fotografica, un producto de bienestar o simplemente una conversacion, estoy aqui para ti.</p>
+    <a href="#" class="btn-primary fade-up delay-3">Agendar Consulta Gratis</a>
+    <div class="social-icons fade-up delay-4">
+      <a href="#" class="social-icon" aria-label="Instagram">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>
+      </a>
+      <a href="#" class="social-icon" aria-label="Facebook">
+        <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+      </a>
+      <a href="#" class="social-icon" aria-label="YouTube">
+        <svg viewBox="0 0 24 24"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" stroke="currentColor" stroke-width="1.5" fill="none"/><polygon points="9.75,15.02 15.5,11.75 9.75,8.48" fill="currentColor"/></svg>
+      </a>
+      <a href="#" class="social-icon" aria-label="WhatsApp">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 Pau Henriques. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
+<!-- ============ JAVASCRIPT ============ -->
+<script>
+// Navbar scroll effect
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// Hamburger menu
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+hamburger.addEventListener('click', () => {
+  navLinks.classList.toggle('open');
+});
+
+// Close menu on link click
+navLinks.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => navLinks.classList.remove('open'));
+});
+
+// Hero carousel
+const heroSlides = [
+  {
+    tag: 'Bienestar & Fotografia',
+    title: 'Transforma tu bienestar con <span class="pau">Pau</span> Henriques',
+    desc: 'Terapia infrarroja, fotografia con alma y acompanamiento personalizado para reconectar con tu mejor version.',
+    cta1: 'Explorar Tienda',
+    cta2: 'Conoce Mas'
+  },
+  {
+    tag: 'Fotografia con Alma',
+    title: 'Momentos que se sienten, no solo se ven',
+    desc: 'Cada sesion fotografica es una experiencia unica donde capturo la esencia de tus momentos mas preciados.',
+    cta1: 'Ver Catalogo',
+    cta2: 'Reservar Sesion'
+  },
+  {
+    tag: 'Terapia Infrarroja',
+    title: 'Descubre el poder sanador de la <span class="pau">luz</span>',
+    desc: 'Productos profesionales de terapia infrarroja seleccionados para mejorar tu salud, tu energia y tu bienestar diario.',
+    cta1: 'Ver Productos',
+    cta2: 'Mas Info'
+  }
+];
+
+let currentSlide = 0;
+const dots = document.querySelectorAll('.hero-dot');
+const heroTag = document.querySelector('.hero-text .section-tag');
+const heroTitle = document.querySelector('.hero-text h1');
+const heroDesc = document.querySelector('.hero-text > p:not(.section-tag)');
+
+function goToSlide(index) {
+  currentSlide = index;
+  const slide = heroSlides[index];
+
+  // Fade out
+  const heroText = document.querySelector('.hero-text');
+  heroText.style.opacity = '0';
+  heroText.style.transform = 'translateY(20px)';
+
+  setTimeout(() => {
+    heroTag.textContent = slide.tag;
+    heroTitle.innerHTML = slide.title;
+    heroDesc.textContent = slide.desc;
+
+    const btns = document.querySelector('.hero-buttons');
+    btns.children[0].textContent = slide.cta1;
+    btns.children[1].textContent = slide.cta2;
+
+    // Fade in
+    heroText.style.opacity = '1';
+    heroText.style.transform = 'translateY(0)';
+  }, 300);
+
+  dots.forEach((d, i) => d.classList.toggle('active', i === index));
+}
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => goToSlide(parseInt(dot.dataset.slide)));
+});
+
+// Auto-advance carousel
+setInterval(() => {
+  goToSlide((currentSlide + 1) % heroSlides.length);
+}, 6000);
+
+// Add transition to hero text
+const heroTextEl = document.querySelector('.hero-text');
+heroTextEl.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+
+// IntersectionObserver for fade-up
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function (e) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>
