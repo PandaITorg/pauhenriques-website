@@ -5,7 +5,7 @@ export async function getActiveSlides(): Promise<HeroSlide[]> {
   if (!dbAdmin) return [];
   try {
     const snapshot = await dbAdmin
-      .collection('homepage_slides')
+      .collection('hero_slides')
       .where('active', '==', true)
       .orderBy('order')
       .get();

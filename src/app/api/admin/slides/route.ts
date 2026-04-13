@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   }
 
   const snapshot = await dbAdmin
-    .collection("homepage_slides")
+    .collection("hero_slides")
     .orderBy("order")
     .get();
 
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     updatedAt: now,
   };
 
-  const docRef = await dbAdmin.collection("homepage_slides").add(slideData);
+  const docRef = await dbAdmin.collection("hero_slides").add(slideData);
 
   return NextResponse.json({ id: docRef.id }, { status: 201 });
 }

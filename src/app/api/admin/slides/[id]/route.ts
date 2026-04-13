@@ -26,7 +26,7 @@ export async function GET(
   }
 
   const { id } = await params;
-  const doc = await dbAdmin.collection("homepage_slides").doc(id).get();
+  const doc = await dbAdmin.collection("hero_slides").doc(id).get();
 
   if (!doc.exists) {
     return NextResponse.json({ error: "Slide no encontrado" }, { status: 404 });
@@ -62,7 +62,7 @@ export async function PUT(
   delete updateData.id;
   delete updateData.createdAt;
 
-  await dbAdmin.collection("homepage_slides").doc(id).update(updateData);
+  await dbAdmin.collection("hero_slides").doc(id).update(updateData);
 
   return NextResponse.json({ success: true });
 }
@@ -79,7 +79,7 @@ export async function DELETE(
   }
 
   const { id } = await params;
-  await dbAdmin.collection("homepage_slides").doc(id).delete();
+  await dbAdmin.collection("hero_slides").doc(id).delete();
 
   return NextResponse.json({ success: true });
 }
