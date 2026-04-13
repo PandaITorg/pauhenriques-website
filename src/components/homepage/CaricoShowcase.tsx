@@ -11,9 +11,8 @@ const BREAKPOINT_COLS = {
   480: 1,
 };
 
-// Varied aspect ratios make the masonry feel Pinterest-y even when image
-// shapes are similar. Cycled by index.
-const ASPECT_RATIOS = [4 / 5, 3 / 4, 5 / 6, 1, 4 / 5, 3 / 4];
+// Uniform 4/5 portrait across all cards — clean catalog feel.
+const CARD_ASPECT = 4 / 5;
 
 interface CaricoShowcaseProps {
   categories?: CaricoCategory[];
@@ -79,12 +78,11 @@ export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
             const link = ctaLink && ctaLink.length > 0 ? ctaLink : WHATSAPP_CTA;
             const isExternal = link.startsWith('http');
             const key = 'id' in cat ? (cat.id as string) : cat.name;
-            const aspect = ASPECT_RATIOS[i % ASPECT_RATIOS.length];
             return (
               <motion.div
                 key={key}
                 className="group relative rounded-xl overflow-hidden cursor-pointer mb-3"
-                style={{ aspectRatio: aspect }}
+                style={{ aspectRatio: CARD_ASPECT }}
                 initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-60px' }}

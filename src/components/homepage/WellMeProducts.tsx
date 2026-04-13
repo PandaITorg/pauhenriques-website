@@ -17,9 +17,8 @@ const BREAKPOINT_COLS = {
   640: 2,
 };
 
-// Pseudo-randomised but deterministic aspect ratios so the grid feels
-// Pinterest-y even when every product image is the same shape.
-const ASPECT_RATIOS = [4 / 5, 1, 3 / 4, 5 / 6, 1, 4 / 5, 3 / 4, 1];
+// Uniform 4/5 portrait across all cards — clean catalog feel.
+const CARD_ASPECT = 4 / 5;
 
 export default function WellMeProducts({ products }: WellMeProductsProps) {
   return (
@@ -52,12 +51,7 @@ export default function WellMeProducts({ products }: WellMeProductsProps) {
             columnClassName="pl-3 bg-clip-padding"
           >
             {products.map((product, i) => (
-              <ProductCard
-                key={product.refId}
-                product={product}
-                index={i}
-                aspect={ASPECT_RATIOS[i % ASPECT_RATIOS.length]}
-              />
+              <ProductCard key={product.refId} product={product} index={i} />
             ))}
           </Masonry>
         )}
@@ -83,18 +77,16 @@ export default function WellMeProducts({ products }: WellMeProductsProps) {
 function ProductCard({
   product,
   index,
-  aspect,
 }: {
   product: FeaturedProduct;
   index: number;
-  aspect: number;
 }) {
   return (
     <motion.article
       className="group relative overflow-hidden rounded-xl mb-3"
       style={{
         backgroundColor: 'var(--color-surface-card)',
-        aspectRatio: aspect,
+        aspectRatio: CARD_ASPECT,
       }}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
