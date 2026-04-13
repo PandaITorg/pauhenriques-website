@@ -12,7 +12,10 @@ import {
   FaSpinner,
   FaTimes,
   FaMagic,
+  FaDesktop,
+  FaMobileAlt,
 } from "react-icons/fa";
+import SlidePreview from "@/components/homepage/SlidePreview";
 
 interface SlideRow {
   id: string;
@@ -23,10 +26,23 @@ interface SlideRow {
   videoUrl: string;
   ctaText: string;
   ctaLink: string;
-  ctaStyle: "primary" | "secondary";
+  ctaStyle: "primary" | "secondary" | "ghost" | "gold" | "whatsapp";
   template: "full-image" | "split" | "immersive";
   textStyle: "none" | "opaque" | "glass";
   overlayOpacity: number;
+  // Granular customization
+  kicker: string;
+  titleFont: "cormorant" | "cormorant-italic" | "dancing-script" | "inter";
+  titleSize: "md" | "lg" | "xl" | "xxl";
+  titleColor: string;
+  accentWord: string;
+  textPosition:
+    | "top-left" | "top-center" | "top-right"
+    | "center-left" | "center" | "center-right"
+    | "bottom-left" | "bottom-center" | "bottom-right";
+  textBackground: "none" | "glass" | "opaque" | "gradient-left" | "gradient-bottom" | "spotlight";
+  overlayDirection: "none" | "left" | "right" | "top" | "bottom" | "radial" | "vignette";
+  imageEffect: "none" | "ken-burns" | "parallax";
   order: number;
   active: boolean;
 }
@@ -43,6 +59,15 @@ const EMPTY_SLIDE: Omit<SlideRow, "id"> = {
   template: "full-image",
   textStyle: "none",
   overlayOpacity: 0.5,
+  kicker: "",
+  titleFont: "cormorant",
+  titleSize: "lg",
+  titleColor: "#ffffff",
+  accentWord: "",
+  textPosition: "bottom-left",
+  textBackground: "gradient-left",
+  overlayDirection: "left",
+  imageEffect: "ken-burns",
   order: 0,
   active: true,
 };
@@ -59,6 +84,15 @@ const SEED_SLIDE: Omit<SlideRow, "id"> = {
   template: "full-image",
   textStyle: "none",
   overlayOpacity: 0.5,
+  kicker: "",
+  titleFont: "cormorant",
+  titleSize: "xl",
+  titleColor: "#ffffff",
+  accentWord: "transforma tu salud",
+  textPosition: "center-left",
+  textBackground: "gradient-left",
+  overlayDirection: "left",
+  imageEffect: "ken-burns",
   order: 0,
   active: true,
 };
@@ -67,6 +101,35 @@ const inputClass =
   "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200 px-3 py-2.5 w-full";
 
 const labelClass = "block text-xs font-medium text-text-main/60 mb-1.5";
+
+function FormSection({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border border-border-subtle rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-surface-elevated hover:bg-surface-elevated/70 transition-colors cursor-pointer"
+      >
+        <span className="text-sm font-semibold text-text-main">{title}</span>
+        {open ? (
+          <FaChevronUp className="w-3 h-3 text-text-main/40" />
+        ) : (
+          <FaChevronDown className="w-3 h-3 text-text-main/40" />
+        )}
+      </button>
+      {open && <div className="p-4 space-y-4">{children}</div>}
+    </div>
+  );
+}
 
 export default function AdminHomepagePage() {
   const [slides, setSlides] = useState<SlideRow[]>([]);
@@ -540,12 +603,33 @@ function SlideModal({
   onImageFile: (file: File) => void;
   onMobileFile: (file: File) => void;
 }) {
+  const [previewViewport, setPreviewViewport] = useState<"desktop" | "mobile">("desktop");
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
+  const TITLE_COLOR_PRESETS = [
+    { value: "#ffffff", label: "Blanco" },
+    { value: "#a68a63", label: "Primary" },
+    { value: "#D4AF37", label: "Dorado" },
+    { value: "#f5ede3", label: "Crema" },
+    { value: "#343d2a", label: "Bosque" },
+  ];
+
+  const POSITION_ZONES: Array<{ value: SlideRow["textPosition"]; label: string }> = [
+    { value: "top-left", label: "↖" },
+    { value: "top-center", label: "↑" },
+    { value: "top-right", label: "↗" },
+    { value: "center-left", label: "←" },
+    { value: "center", label: "•" },
+    { value: "center-right", label: "→" },
+    { value: "bottom-left", label: "↙" },
+    { value: "bottom-center", label: "↓" },
+    { value: "bottom-right", label: "↘" },
+  ];
+
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-surface-card border border-border-subtle rounded-2xl w-full max-w-2xl my-4">
+      <div className="bg-surface-card border border-border-subtle rounded-2xl w-full max-w-6xl my-4">
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
           <h2 className="text-base font-semibold text-text-main">
@@ -559,217 +643,399 @@ function SlideModal({
           </button>
         </div>
 
-        {/* Form */}
-        <div className="px-6 py-5 space-y-5">
-          {/* Title + Subtitle */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Título *</label>
-              <input
-                type="text"
-                value={form.title}
-                onChange={(e) => set("title", e.target.value)}
-                placeholder="Transforma tu hogar..."
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Subtítulo</label>
-              <input
-                type="text"
-                value={form.subtitle}
-                onChange={(e) => set("subtitle", e.target.value)}
-                placeholder="Descripción breve..."
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          {/* Image desktop */}
-          <div>
-            <label className={labelClass}>Imagen desktop</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={form.imageUrl}
-                onChange={(e) => set("imageUrl", e.target.value)}
-                placeholder="https://... o /assets/..."
-                className={`${inputClass} flex-1`}
-              />
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && onImageFile(e.target.files[0])}
-              />
-              <button
-                type="button"
-                onClick={() => imageInputRef.current?.click()}
-                disabled={uploadingImage}
-                className="px-3 py-2.5 bg-surface-elevated hover:bg-surface-card border border-border-default rounded-xl text-sm text-text-main/60 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
-              >
-                {uploadingImage ? <FaSpinner className="w-4 h-4 animate-spin" /> : "Subir"}
-              </button>
-            </div>
-            {form.imageUrl && (
-              <div className="mt-2 relative w-24 h-16 rounded-lg overflow-hidden bg-surface-elevated">
-                <Image src={form.imageUrl} alt="Preview" fill className="object-cover" sizes="96px" />
-              </div>
-            )}
-          </div>
-
-          {/* Image mobile */}
-          <div>
-            <label className={labelClass}>Imagen mobile (opcional)</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={form.imageMobile}
-                onChange={(e) => set("imageMobile", e.target.value)}
-                placeholder="https://... o dejar vacío para usar la misma"
-                className={`${inputClass} flex-1`}
-              />
-              <input
-                ref={mobileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => e.target.files?.[0] && onMobileFile(e.target.files[0])}
-              />
-              <button
-                type="button"
-                onClick={() => mobileInputRef.current?.click()}
-                disabled={uploadingMobile}
-                className="px-3 py-2.5 bg-surface-elevated hover:bg-surface-card border border-border-default rounded-xl text-sm text-text-main/60 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
-              >
-                {uploadingMobile ? <FaSpinner className="w-4 h-4 animate-spin" /> : "Subir"}
-              </button>
-            </div>
-          </div>
-
-          {/* Video URL */}
-          <div>
-            <label className={labelClass}>URL de video (solo para template "Immersive")</label>
-            <input
-              type="text"
-              value={form.videoUrl}
-              onChange={(e) => set("videoUrl", e.target.value)}
-              placeholder="https://..."
-              className={inputClass}
-            />
-          </div>
-
-          {/* CTA */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Texto del CTA</label>
-              <input
-                type="text"
-                value={form.ctaText}
-                onChange={(e) => set("ctaText", e.target.value)}
-                placeholder="Explorar Catálogo"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Link del CTA</label>
-              <input
-                type="text"
-                value={form.ctaLink}
-                onChange={(e) => set("ctaLink", e.target.value)}
-                placeholder="/tienda"
-                className={inputClass}
-              />
-            </div>
-          </div>
-
-          {/* Dropdowns row 1 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className={labelClass}>Template</label>
-              <select
-                value={form.template}
-                onChange={(e) => set("template", e.target.value as SlideRow["template"])}
-                className={inputClass}
-              >
-                <option value="full-image">Full Image</option>
-                <option value="split">Split (2 columnas)</option>
-                <option value="immersive">Immersive (centrado)</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Estilo de texto</label>
-              <select
-                value={form.textStyle}
-                onChange={(e) => set("textStyle", e.target.value as SlideRow["textStyle"])}
-                className={inputClass}
-              >
-                <option value="none">Sin fondo</option>
-                <option value="opaque">Opaco</option>
-                <option value="glass">Glass (blur)</option>
-              </select>
-            </div>
-            <div>
-              <label className={labelClass}>Estilo CTA</label>
-              <select
-                value={form.ctaStyle}
-                onChange={(e) => set("ctaStyle", e.target.value as SlideRow["ctaStyle"])}
-                className={inputClass}
-              >
-                <option value="primary">Primario (dorado)</option>
-                <option value="secondary">Secundario (glass)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Overlay opacity + order + active */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-            <div>
-              <label className={labelClass}>
-                Opacidad del overlay: <span className="text-primary">{Math.round(form.overlayOpacity * 100)}%</span>
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={form.overlayOpacity}
-                onChange={(e) => set("overlayOpacity", parseFloat(e.target.value))}
-                className="w-full accent-primary"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Orden</label>
-              <input
-                type="number"
-                value={form.order}
-                onChange={(e) => set("order", parseInt(e.target.value) || 0)}
-                min={0}
-                className={inputClass}
-              />
-            </div>
-            <div className="flex items-center gap-3 pb-0.5">
-              <label className={`${labelClass} mb-0`}>Activo</label>
-              <button
-                type="button"
-                onClick={() => set("active", !form.active)}
-                className={`relative w-10 h-6 rounded-full transition-colors duration-200 cursor-pointer ${
-                  form.active ? "bg-success" : "bg-text-main/20"
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
-                    form.active ? "translate-x-5" : "translate-x-1"
-                  }`}
+        {/* Body: form + preview */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_560px]">
+          {/* ── Form column ── */}
+          <div className="px-6 py-5 space-y-6 overflow-y-auto max-h-[75vh]">
+            {/* ── SECTION: Contenido ── */}
+            <FormSection title="Contenido" defaultOpen>
+              <div>
+                <label className={labelClass}>Kicker / eyebrow (opcional)</label>
+                <input
+                  type="text"
+                  value={form.kicker}
+                  onChange={(e) => set("kicker", e.target.value)}
+                  placeholder="AHORA DISPONIBLE · PRIMICIA · TIENDA WELL ME"
+                  className={inputClass}
                 />
-              </button>
-            </div>
+              </div>
+              <div>
+                <label className={labelClass}>Título *</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  placeholder="Transforma tu hogar..."
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Palabra acento (opcional) — se renderiza en Dancing Script + caramelo
+                </label>
+                <input
+                  type="text"
+                  value={form.accentWord}
+                  onChange={(e) => set("accentWord", e.target.value)}
+                  placeholder="Ej: tienda en línea"
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className={labelClass}>Subtítulo</label>
+                <input
+                  type="text"
+                  value={form.subtitle}
+                  onChange={(e) => set("subtitle", e.target.value)}
+                  placeholder="Descripción breve..."
+                  className={inputClass}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Texto del CTA</label>
+                  <input
+                    type="text"
+                    value={form.ctaText}
+                    onChange={(e) => set("ctaText", e.target.value)}
+                    placeholder="Explorar Catálogo"
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Link del CTA</label>
+                  <input
+                    type="text"
+                    value={form.ctaLink}
+                    onChange={(e) => set("ctaLink", e.target.value)}
+                    placeholder="/tienda"
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Estilo del botón CTA</label>
+                <select
+                  value={form.ctaStyle}
+                  onChange={(e) => set("ctaStyle", e.target.value as SlideRow["ctaStyle"])}
+                  className={inputClass}
+                >
+                  <option value="primary">Primario (caramelo)</option>
+                  <option value="secondary">Secundario (glass)</option>
+                  <option value="ghost">Ghost (outline)</option>
+                  <option value="gold">Dorado</option>
+                  <option value="whatsapp">WhatsApp</option>
+                </select>
+              </div>
+            </FormSection>
+
+            {/* ── SECTION: Tipografía ── */}
+            <FormSection title="Tipografía" defaultOpen>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Fuente del título</label>
+                  <select
+                    value={form.titleFont}
+                    onChange={(e) => set("titleFont", e.target.value as SlideRow["titleFont"])}
+                    className={inputClass}
+                  >
+                    <option value="cormorant">Cormorant (elegante)</option>
+                    <option value="cormorant-italic">Cormorant Italic</option>
+                    <option value="dancing-script">Dancing Script</option>
+                    <option value="inter">Inter (bold retail)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Tamaño del título</label>
+                  <select
+                    value={form.titleSize}
+                    onChange={(e) => set("titleSize", e.target.value as SlideRow["titleSize"])}
+                    className={inputClass}
+                  >
+                    <option value="md">Mediano</option>
+                    <option value="lg">Grande</option>
+                    <option value="xl">XL</option>
+                    <option value="xxl">XXL (headline)</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>Color del título</label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {TITLE_COLOR_PRESETS.map((preset) => (
+                    <button
+                      key={preset.value}
+                      type="button"
+                      onClick={() => set("titleColor", preset.value)}
+                      className={`w-8 h-8 rounded-full border-2 transition-all cursor-pointer ${
+                        form.titleColor === preset.value ? "border-primary scale-110" : "border-border-default"
+                      }`}
+                      style={{ backgroundColor: preset.value }}
+                      title={preset.label}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={form.titleColor}
+                    onChange={(e) => set("titleColor", e.target.value)}
+                    className="w-8 h-8 rounded-full border-2 border-border-default cursor-pointer"
+                    title="Color personalizado"
+                  />
+                  <input
+                    type="text"
+                    value={form.titleColor}
+                    onChange={(e) => set("titleColor", e.target.value)}
+                    className={`${inputClass} flex-1 min-w-[100px] font-mono text-xs`}
+                  />
+                </div>
+              </div>
+            </FormSection>
+
+            {/* ── SECTION: Layout ── */}
+            <FormSection title="Layout & Fondo de texto" defaultOpen>
+              <div>
+                <label className={labelClass}>Posición del bloque de texto</label>
+                <div className="grid grid-cols-3 gap-1 max-w-[180px]">
+                  {POSITION_ZONES.map((zone) => (
+                    <button
+                      key={zone.value}
+                      type="button"
+                      onClick={() => set("textPosition", zone.value)}
+                      className={`aspect-square flex items-center justify-center text-lg rounded-lg border transition-all cursor-pointer ${
+                        form.textPosition === zone.value
+                          ? "bg-primary text-white border-primary"
+                          : "bg-surface-elevated border-border-default text-text-main/60 hover:border-primary/50"
+                      }`}
+                      title={zone.value}
+                    >
+                      {zone.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Fondo del texto</label>
+                  <select
+                    value={form.textBackground}
+                    onChange={(e) => set("textBackground", e.target.value as SlideRow["textBackground"])}
+                    className={inputClass}
+                  >
+                    <option value="none">Sin fondo</option>
+                    <option value="gradient-left">Gradiente lateral</option>
+                    <option value="gradient-bottom">Gradiente inferior</option>
+                    <option value="spotlight">Spotlight radial</option>
+                    <option value="glass">Glass (blur)</option>
+                    <option value="opaque">Opaco</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Template</label>
+                  <select
+                    value={form.template}
+                    onChange={(e) => set("template", e.target.value as SlideRow["template"])}
+                    className={inputClass}
+                  >
+                    <option value="full-image">Full Image</option>
+                    <option value="split">Split (2 columnas)</option>
+                    <option value="immersive">Immersive (video bg)</option>
+                  </select>
+                </div>
+              </div>
+            </FormSection>
+
+            {/* ── SECTION: Imagen & Overlay ── */}
+            <FormSection title="Imagen & Overlay" defaultOpen={false}>
+              <div>
+                <label className={labelClass}>Imagen desktop</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={form.imageUrl}
+                    onChange={(e) => set("imageUrl", e.target.value)}
+                    placeholder="https://... o /assets/..."
+                    className={`${inputClass} flex-1`}
+                  />
+                  <input
+                    ref={imageInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && onImageFile(e.target.files[0])}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="px-3 py-2.5 bg-surface-elevated hover:bg-surface-card border border-border-default rounded-xl text-sm text-text-main/60 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    {uploadingImage ? <FaSpinner className="w-4 h-4 animate-spin" /> : "Subir"}
+                  </button>
+                </div>
+                {form.imageUrl && (
+                  <div className="mt-2 relative w-24 h-16 rounded-lg overflow-hidden bg-surface-elevated">
+                    <Image src={form.imageUrl} alt="Preview" fill className="object-cover" sizes="96px" />
+                  </div>
+                )}
+              </div>
+              <div>
+                <label className={labelClass}>Imagen mobile (opcional)</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={form.imageMobile}
+                    onChange={(e) => set("imageMobile", e.target.value)}
+                    placeholder="Dejar vacío para usar la desktop"
+                    className={`${inputClass} flex-1`}
+                  />
+                  <input
+                    ref={mobileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => e.target.files?.[0] && onMobileFile(e.target.files[0])}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => mobileInputRef.current?.click()}
+                    disabled={uploadingMobile}
+                    className="px-3 py-2.5 bg-surface-elevated hover:bg-surface-card border border-border-default rounded-xl text-sm text-text-main/60 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
+                  >
+                    {uploadingMobile ? <FaSpinner className="w-4 h-4 animate-spin" /> : "Subir"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>URL de video (solo template &quot;Immersive&quot;)</label>
+                <input
+                  type="text"
+                  value={form.videoUrl}
+                  onChange={(e) => set("videoUrl", e.target.value)}
+                  placeholder="https://..."
+                  className={inputClass}
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Dirección del overlay</label>
+                  <select
+                    value={form.overlayDirection}
+                    onChange={(e) => set("overlayDirection", e.target.value as SlideRow["overlayDirection"])}
+                    className={inputClass}
+                  >
+                    <option value="none">Plano (sin dirección)</option>
+                    <option value="left">Desde izquierda</option>
+                    <option value="right">Desde derecha</option>
+                    <option value="top">Desde arriba</option>
+                    <option value="bottom">Desde abajo</option>
+                    <option value="radial">Radial (oscuro en bordes)</option>
+                    <option value="vignette">Vignette fuerte</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>Efecto de imagen</label>
+                  <select
+                    value={form.imageEffect}
+                    onChange={(e) => set("imageEffect", e.target.value as SlideRow["imageEffect"])}
+                    className={inputClass}
+                  >
+                    <option value="none">Ninguno</option>
+                    <option value="ken-burns">Ken Burns (zoom sutil)</option>
+                    <option value="parallax">Parallax scroll</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Intensidad del overlay: <span className="text-primary">{Math.round(form.overlayOpacity * 100)}%</span>
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={form.overlayOpacity}
+                  onChange={(e) => set("overlayOpacity", parseFloat(e.target.value))}
+                  className="w-full accent-primary"
+                />
+              </div>
+            </FormSection>
+
+            {/* ── SECTION: Visibilidad ── */}
+            <FormSection title="Visibilidad & Orden" defaultOpen={false}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                <div>
+                  <label className={labelClass}>Orden</label>
+                  <input
+                    type="number"
+                    value={form.order}
+                    onChange={(e) => set("order", parseInt(e.target.value) || 0)}
+                    min={0}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex items-center gap-3 pb-0.5">
+                  <label className={`${labelClass} mb-0`}>Activo</label>
+                  <button
+                    type="button"
+                    onClick={() => set("active", !form.active)}
+                    className={`relative w-10 h-6 rounded-full transition-colors duration-200 cursor-pointer ${
+                      form.active ? "bg-success" : "bg-text-main/20"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                        form.active ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            </FormSection>
+
+            {formError && <p className="text-error text-xs font-medium">{formError}</p>}
           </div>
 
-          {formError && (
-            <p className="text-error text-xs font-medium">{formError}</p>
-          )}
+          {/* ── Preview column ── */}
+          <div className="hidden lg:flex flex-col border-l border-border-subtle bg-black/40">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+              <span className="text-xs font-medium text-text-main/60 uppercase tracking-wider">Preview</span>
+              <div className="flex gap-1 bg-surface-elevated rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => setPreviewViewport("desktop")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+                    previewViewport === "desktop"
+                      ? "bg-primary text-white"
+                      : "text-text-main/60 hover:text-text-main"
+                  }`}
+                >
+                  <FaDesktop className="w-3 h-3" /> Desktop
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewViewport("mobile")}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all cursor-pointer ${
+                    previewViewport === "mobile"
+                      ? "bg-primary text-white"
+                      : "text-text-main/60 hover:text-text-main"
+                  }`}
+                >
+                  <FaMobileAlt className="w-3 h-3" /> Mobile
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+              <div
+                className="origin-center"
+                style={{
+                  transform: previewViewport === "desktop" ? "scale(0.42)" : "scale(0.72)",
+                }}
+              >
+                <SlidePreview slide={form} viewport={previewViewport} />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Modal footer */}
