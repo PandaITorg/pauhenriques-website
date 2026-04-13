@@ -9,6 +9,7 @@ import CaricoShowcase from "@/components/homepage/CaricoShowcase";
 import WellMeProducts from "@/components/homepage/WellMeProducts";
 import PlanNoviosSection from "@/components/homepage/PlanNoviosSection";
 import PodcastSection from "@/components/homepage/PodcastSection";
+import AboutCondensed from "@/components/homepage/AboutCondensed";
 import {
   getActiveSlides,
   getActiveCaricoCategories,
@@ -49,6 +50,7 @@ export default async function Home() {
         <PlanNoviosSection imageUrl="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fplan-novios%2Fproducto-portrait.webp?alt=media" />
         <PodcastSection episodes={podcastEpisodes ?? undefined} />
         <Testimonios />
+        <AboutCondensed />
         <Footer />
       </div>
     </>
