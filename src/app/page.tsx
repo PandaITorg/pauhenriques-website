@@ -1,7 +1,6 @@
 import HomeSchema from "@/components/schemas/HomeSchema";
 import Footer from "@/components/layout/Footer";
 import SobreMi from "@/components/home/SobreMi";
-import CategoryShowcase from "@/components/home/CategoryShowcase";
 import Testimonios from "@/components/home/Testimonios";
 import HeroCarousel from "@/components/homepage/HeroCarousel";
 import ImpactStatement from "@/components/homepage/ImpactStatement";
@@ -9,7 +8,6 @@ import CaricoShowcase from "@/components/homepage/CaricoShowcase";
 import WellMeProducts from "@/components/homepage/WellMeProducts";
 import PlanNoviosSection from "@/components/homepage/PlanNoviosSection";
 import PodcastSection from "@/components/homepage/PodcastSection";
-import AboutCondensed from "@/components/homepage/AboutCondensed";
 import CtaFinal from "@/components/homepage/CtaFinal";
 import {
   getActiveSlides,
@@ -45,13 +43,11 @@ export default async function Home() {
         <HeroCarousel slides={slides} />
         <ImpactStatement />
         <SobreMi />
-        <CategoryShowcase />
         <CaricoShowcase categories={caricoCategories} />
         <WellMeProducts products={featuredProducts} />
         <PlanNoviosSection imageUrl="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fplan-novios%2Fproducto-portrait.webp?alt=media" />
         <PodcastSection episodes={podcastEpisodes ?? undefined} />
         <Testimonios />
-        <AboutCondensed />
         <CtaFinal />
         <Footer />
       </div>
