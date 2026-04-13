@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaImage, FaLayerGroup } from "react-icons/fa";
+import { FaImage, FaLayerGroup, FaStar } from "react-icons/fa";
 
 const TABS = [
   { href: "/admin/homepage", label: "Hero Slides", icon: FaImage, match: "exact" as const },
   { href: "/admin/homepage/carico", label: "Categorías Carico", icon: FaLayerGroup, match: "prefix" as const },
+  { href: "/admin/homepage/wellme", label: "Productos destacados", icon: FaStar, match: "prefix" as const },
 ];
 
 export default function AdminHomepageLayout({

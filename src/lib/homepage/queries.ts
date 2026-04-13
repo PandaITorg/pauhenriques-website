@@ -55,8 +55,54 @@ export async function getActiveMetrics(): Promise<HomepageMetric[]> {
 }
 
 export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
-  // TODO: Implement Firestore query
-  return [];
+  if (!dbAdmin) {
+    console.warn('[featured_products] dbAdmin not initialized — returning empty list');
+    return [];
+  }
+  try {
+    const refsSnapshot = await dbAdmin
+      .collection('featured_products')
+      .where('active', '==', true)
+      .orderBy('order')
+      .get();
+
+    if (refsSnapshot.empty) return [];
+
+    const refs = refsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<{
+      id: string;
+      productId: string;
+      badge?: string | null;
+      bentoSize?: 'normal' | 'wide' | 'tall';
+      order: number;
+    }>;
+
+    const productDocs = await Promise.all(
+      refs.map((r) => dbAdmin!.collection('products').doc(r.productId).get()),
+    );
+
+    const merged: FeaturedProduct[] = [];
+    refs.forEach((ref, i) => {
+      const pDoc = productDocs[i];
+      if (!pDoc.exists) return;
+      const p = pDoc.data()!;
+      if (p.isActive === false) return;
+      merged.push({
+        refId: ref.id,
+        productId: ref.productId,
+        name: p.name ?? '',
+        description: p.description ?? '',
+        price: typeof p.price === 'number' ? p.price : 0,
+        imageUrl: Array.isArray(p.images) ? (p.images[0] ?? '') : '',
+        badge: ref.badge ?? null,
+        bentoSize: ref.bentoSize ?? 'normal',
+        order: ref.order,
+      });
+    });
+    return merged;
+  } catch (e) {
+    console.error('[featured_products] query failed:', e);
+    return [];
+  }
 }
 
 export async function getActiveCaricoCategories(): Promise<CaricoCategory[]> {

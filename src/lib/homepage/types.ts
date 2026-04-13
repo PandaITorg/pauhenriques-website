@@ -61,20 +61,29 @@ export interface CaricoCategory {
   updatedAt: Date;
 }
 
-export interface FeaturedProduct {
+/** Firestore doc shape for `featured_products` — references a Product + presentation overrides. */
+export interface FeaturedProductRef {
   id: string;
-  name: string;
-  shortDescription: string;
-  price: number | null;
-  comparePrice?: number;
-  imageUrl: string;
-  badge: string | null;
-  ctaType: 'cart' | 'whatsapp' | 'link';
-  ctaLink?: string;
-  storeType: 'wellme' | 'carico';
-  gridSpan?: 'normal' | 'wide' | 'tall';
+  productId: string;
+  badge?: string | null;
+  bentoSize?: 'normal' | 'wide' | 'tall';
   order: number;
   active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Hydrated shape returned by getFeaturedProducts: joins the ref with its Product. */
+export interface FeaturedProduct {
+  refId: string;
+  productId: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  badge?: string | null;
+  bentoSize: 'normal' | 'wide' | 'tall';
+  order: number;
 }
 
 export interface HomepageContent {

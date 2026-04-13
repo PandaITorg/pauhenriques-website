@@ -7,7 +7,12 @@ import Testimonios from "@/components/home/Testimonios";
 import HeroCarousel from "@/components/homepage/HeroCarousel";
 import ImpactStatement from "@/components/homepage/ImpactStatement";
 import CaricoShowcase from "@/components/homepage/CaricoShowcase";
-import { getActiveSlides, getActiveCaricoCategories } from "@/lib/homepage/queries";
+import WellMeProducts from "@/components/homepage/WellMeProducts";
+import {
+  getActiveSlides,
+  getActiveCaricoCategories,
+  getFeaturedProducts,
+} from "@/lib/homepage/queries";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +27,10 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [slides, caricoCategories] = await Promise.all([
+  const [slides, caricoCategories, featuredProducts] = await Promise.all([
     getActiveSlides(),
     getActiveCaricoCategories(),
+    getFeaturedProducts(),
   ]);
 
   return (
@@ -36,6 +42,7 @@ export default async function Home() {
         <SobreMi />
         <CategoryShowcase />
         <CaricoShowcase categories={caricoCategories} />
+        <WellMeProducts products={featuredProducts} />
         <PodcastSection />
         <Testimonios />
         <Footer />

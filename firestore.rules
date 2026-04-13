@@ -30,6 +30,12 @@ service cloud.firestore {
       allow write: if false; // Solo via Admin SDK
     }
 
+    // Homepage — Productos destacados (lectura pública)
+    match /featured_products/{featuredId} {
+      allow read: if true;
+      allow write: if false; // Solo via Admin SDK
+    }
+
     // Carrito: cada usuario puede leer y escribir solo su propio carrito
     match /carts/{cartId} {
       allow read, write: if request.auth != null && request.auth.uid == cartId;
