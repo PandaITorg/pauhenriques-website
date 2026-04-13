@@ -1,5 +1,26 @@
 import { dbAdmin } from '@/lib/firebase-admin';
-import { HeroSlide, HomepageMetric, FeaturedProduct, HomepageContent, Testimonial } from './types';
+import { HeroSlide, HomepageMetric, FeaturedProduct, HomepageContent, Testimonial, HeroTextBackground } from './types';
+
+function mapLegacyTextStyle(textStyle: string | undefined): HeroTextBackground {
+  if (textStyle === 'glass') return 'glass';
+  if (textStyle === 'opaque') return 'opaque';
+  return 'gradient-left';
+}
+
+function applySlideDefaults(data: Record<string, unknown>): Partial<HeroSlide> {
+  const legacyTextStyle = data.textStyle as string | undefined;
+  return {
+    kicker: (data.kicker as string) ?? '',
+    titleFont: (data.titleFont as HeroSlide['titleFont']) ?? 'cormorant',
+    titleSize: (data.titleSize as HeroSlide['titleSize']) ?? 'lg',
+    titleColor: (data.titleColor as string) ?? '#ffffff',
+    accentWord: (data.accentWord as string) ?? '',
+    textPosition: (data.textPosition as HeroSlide['textPosition']) ?? 'bottom-left',
+    textBackground: (data.textBackground as HeroSlide['textBackground']) ?? mapLegacyTextStyle(legacyTextStyle),
+    overlayDirection: (data.overlayDirection as HeroSlide['overlayDirection']) ?? 'left',
+    imageEffect: (data.imageEffect as HeroSlide['imageEffect']) ?? 'ken-burns',
+  };
+}
 
 export async function getActiveSlides(): Promise<HeroSlide[]> {
   if (!dbAdmin) {
@@ -17,6 +38,7 @@ export async function getActiveSlides(): Promise<HeroSlide[]> {
       return {
         id: doc.id,
         ...data,
+        ...applySlideDefaults(data),
         createdAt: data.createdAt?.toDate?.() ?? new Date(),
         updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
       } as HeroSlide;

@@ -1,3 +1,14 @@
+export type HeroTitleFont = 'cormorant' | 'cormorant-italic' | 'dancing-script' | 'inter';
+export type HeroTitleSize = 'md' | 'lg' | 'xl' | 'xxl';
+export type HeroTextPosition =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'center-left' | 'center' | 'center-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right';
+export type HeroTextBackground = 'none' | 'glass' | 'opaque' | 'gradient-left' | 'gradient-bottom' | 'spotlight';
+export type HeroOverlayDirection = 'none' | 'left' | 'right' | 'top' | 'bottom' | 'radial' | 'vignette';
+export type HeroImageEffect = 'none' | 'ken-burns' | 'parallax';
+export type HeroCtaStyle = 'primary' | 'secondary' | 'ghost' | 'gold' | 'whatsapp';
+
 export interface HeroSlide {
   id: string;
   title: string;
@@ -7,10 +18,21 @@ export interface HeroSlide {
   videoUrl?: string;
   ctaText: string;
   ctaLink: string;
-  ctaStyle: 'primary' | 'secondary';
+  ctaStyle: HeroCtaStyle;
   template: 'full-image' | 'split' | 'immersive';
+  /** @deprecated superseded by textBackground. Kept for legacy docs. */
   textStyle: 'none' | 'opaque' | 'glass';
   overlayOpacity: number;
+  // Granular customization (all optional, defaults applied in getActiveSlides)
+  kicker?: string;
+  titleFont?: HeroTitleFont;
+  titleSize?: HeroTitleSize;
+  titleColor?: string;
+  accentWord?: string;
+  textPosition?: HeroTextPosition;
+  textBackground?: HeroTextBackground;
+  overlayDirection?: HeroOverlayDirection;
+  imageEffect?: HeroImageEffect;
   order: number;
   active: boolean;
   createdAt: Date;
