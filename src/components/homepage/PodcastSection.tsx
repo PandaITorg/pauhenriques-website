@@ -16,16 +16,18 @@ interface Episode {
   applePodcastLink: string;
 }
 
-// TODO: migrate to Firestore-backed homepage_content.podcast_latestEpisodes
-// or pull from podcast RSS feed. Hardcoded for now to ship the redesign.
-const EPISODES: Episode[] = [
+const SHOW_SPOTIFY_URL = 'https://open.spotify.com/show/6eMZqxyHUtW46yJd0Et4uw';
+const SHOW_APPLE_URL =
+  'https://podcasts.apple.com/us/podcast/de-t%C3%B3xica-a-sin-t%C3%B3xicos/id1567244331';
+
+// Fallback used only when the RSS feed fetch fails (offline build, transient).
+const FALLBACK_EPISODES: Episode[] = [
   {
     number: '11',
     title: 'Mi experiencia familiar con el Earthing',
     duration: '32 min',
     spotifyLink: 'https://open.spotify.com/episode/6eMZqxyHUtW46yJd0Et4uw',
-    applePodcastLink:
-      'https://podcasts.apple.com/us/podcast/de-t%C3%B3xica-a-sin-t%C3%B3xicos/id1567244331',
+    applePodcastLink: SHOW_APPLE_URL,
   },
   {
     number: '10',
@@ -45,7 +47,12 @@ const EPISODES: Episode[] = [
   },
 ];
 
-export default function PodcastSection() {
+interface PodcastSectionProps {
+  episodes?: Episode[];
+}
+
+export default function PodcastSection({ episodes }: PodcastSectionProps = {}) {
+  const list = episodes && episodes.length > 0 ? episodes : FALLBACK_EPISODES;
   const sectionRef = useRef<HTMLElement | null>(null);
   const inView = useInView(sectionRef, { once: true, amount: 0.15 });
 
@@ -106,7 +113,7 @@ export default function PodcastSection() {
             {/* Streaming chips below cover */}
             <div className="mt-7 flex items-center justify-center md:justify-start gap-3">
               <a
-                href="https://open.spotify.com/show/0gWjAcWjj9HzHt0RVRoMXi"
+                href={SHOW_SPOTIFY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Escuchar en Spotify"
@@ -120,7 +127,7 @@ export default function PodcastSection() {
                 <FaSpotify className="w-5 h-5" />
               </a>
               <a
-                href="https://podcasts.apple.com/us/podcast/de-t%C3%B3xica-a-sin-t%C3%B3xicos/id1567244331"
+                href={SHOW_APPLE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Escuchar en Apple Podcasts"
@@ -179,8 +186,8 @@ export default function PodcastSection() {
 
             {/* Episode list */}
             <div className="space-y-3 mb-8">
-              {EPISODES.map((ep, i) => (
-                <EpisodeCard key={ep.number} episode={ep} index={i} inView={inView} />
+              {list.map((ep, i) => (
+                <EpisodeCard key={`${ep.number}-${i}`} episode={ep} index={i} inView={inView} />
               ))}
             </div>
 

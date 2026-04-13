@@ -14,6 +14,7 @@ import {
   getActiveCaricoCategories,
   getFeaturedProducts,
 } from "@/lib/homepage/queries";
+import { getLatestEpisodes } from "@/lib/homepage/podcast";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +29,11 @@ export const metadata: Metadata = {
 };
 
 export default async function Home() {
-  const [slides, caricoCategories, featuredProducts] = await Promise.all([
+  const [slides, caricoCategories, featuredProducts, podcastEpisodes] = await Promise.all([
     getActiveSlides(),
     getActiveCaricoCategories(),
     getFeaturedProducts(),
+    getLatestEpisodes(3),
   ]);
 
   return (
@@ -45,7 +47,7 @@ export default async function Home() {
         <CaricoShowcase categories={caricoCategories} />
         <WellMeProducts products={featuredProducts} />
         <PlanNoviosSection imageUrl="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fplan-novios%2Fproducto-portrait.webp?alt=media" />
-        <PodcastSection />
+        <PodcastSection episodes={podcastEpisodes ?? undefined} />
         <Testimonios />
         <Footer />
       </div>
