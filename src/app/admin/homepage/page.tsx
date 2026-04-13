@@ -785,7 +785,7 @@ function SlideModal({
                     type="text"
                     value={form.titleColor}
                     onChange={(e) => set("titleColor", e.target.value)}
-                    className={`${inputClass} flex-1 min-w-[100px] font-mono text-xs`}
+                    className={`${inputClass} flex-1 min-w-25 font-mono text-xs`}
                   />
                 </div>
               </div>
@@ -795,7 +795,7 @@ function SlideModal({
             <FormSection title="Layout & Fondo de texto" defaultOpen>
               <div>
                 <label className={labelClass}>Posición del bloque de texto</label>
-                <div className="grid grid-cols-3 gap-1 max-w-[180px]">
+                <div className="grid grid-cols-3 gap-1 max-w-45">
                   {POSITION_ZONES.map((zone) => (
                     <button
                       key={zone.value}
