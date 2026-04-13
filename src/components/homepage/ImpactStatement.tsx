@@ -60,7 +60,7 @@ export default function ImpactStatement({
       ref={sectionRef}
       className="relative overflow-hidden"
       style={{
-        backgroundColor: 'var(--color-warm-800)',
+        backgroundColor: 'var(--color-warm-900)',
         paddingTop: 'clamp(80px, 10vw, 120px)',
         paddingBottom: 'clamp(80px, 10vw, 120px)',
       }}
@@ -89,7 +89,7 @@ export default function ImpactStatement({
         className="absolute top-0 left-1/2 -translate-x-1/2 h-px w-3/4 origin-center"
         style={{
           background:
-            'linear-gradient(to right, transparent, rgba(166,138,99,0.35), transparent)',
+            'linear-gradient(to right, transparent, rgba(164,172,133,0.35), transparent)',
           scaleX: hairlineScale,
         }}
       />
@@ -173,7 +173,7 @@ export default function ImpactStatement({
         className="absolute bottom-0 left-1/2 -translate-x-1/2 h-px w-3/4 origin-center"
         style={{
           background:
-            'linear-gradient(to right, transparent, rgba(166,138,99,0.35), transparent)',
+            'linear-gradient(to right, transparent, rgba(164,172,133,0.35), transparent)',
           scaleX: hairlineScale,
         }}
       />

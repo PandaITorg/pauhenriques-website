@@ -48,7 +48,7 @@ export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
   return (
     <section
       className="py-16 md:py-24"
-      style={{ backgroundColor: 'var(--color-warm-900)' }}
+      style={{ backgroundColor: 'var(--color-warm-800)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}

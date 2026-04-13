@@ -60,7 +60,7 @@ export default function PodcastSection({ episodes }: PodcastSectionProps = {}) {
     <section
       ref={sectionRef}
       className="relative py-20 md:py-28"
-      style={{ backgroundColor: 'var(--color-warm-900)' }}
+      style={{ backgroundColor: 'var(--color-surface-card)' }}
     >
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-12 md:gap-16 lg:gap-20 items-start">

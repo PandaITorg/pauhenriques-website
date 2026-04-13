@@ -167,7 +167,7 @@ const Testimonios: React.FC = () => {
   }, [animateScroll]);
 
   return (
-    <section className="bg-warm-900 py-16 md:py-24">
+    <section className="bg-background py-16 md:py-24">
       {/* Header */}
       <div className="container mx-auto text-center mb-10 md:mb-14 px-5">
         <h2 className="font-cormorant text-3xl md:text-4xl font-semibold text-text-main">
@@ -204,8 +204,8 @@ const Testimonios: React.FC = () => {
         </div>
 
         {/* Fade edges */}
-        <div className="absolute inset-y-0 left-0 pointer-events-none bg-linear-to-r from-warm-900 to-transparent w-8 sm:w-16 md:w-24" />
-        <div className="absolute inset-y-0 right-0 pointer-events-none bg-linear-to-l from-warm-900 to-transparent w-8 sm:w-16 md:w-24" />
+        <div className="absolute inset-y-0 left-0 pointer-events-none bg-linear-to-r from-background to-transparent w-8 sm:w-16 md:w-24" />
+        <div className="absolute inset-y-0 right-0 pointer-events-none bg-linear-to-l from-background to-transparent w-8 sm:w-16 md:w-24" />
       </div>
     </section>
   );
