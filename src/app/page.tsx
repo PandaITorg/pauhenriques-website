@@ -5,6 +5,7 @@ import CategoryShowcase from "@/components/home/CategoryShowcase";
 import PodcastSection from "@/components/home/PodcastSection";
 import Testimonios from "@/components/home/Testimonios";
 import HeroCarousel from "@/components/homepage/HeroCarousel";
+import CaricoShowcase from "@/components/homepage/CaricoShowcase";
 import { getActiveSlides } from "@/lib/homepage/queries";
 import type { Metadata } from "next";
 
@@ -27,6 +28,7 @@ export default async function Home() {
         <HeroCarousel slides={slides} />
         <SobreMi />
         <CategoryShowcase />
+        <CaricoShowcase />
         <PodcastSection />
         <Testimonios />
         <Footer />
