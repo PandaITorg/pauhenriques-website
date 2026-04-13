@@ -8,6 +8,7 @@ import HeroCarousel from "@/components/homepage/HeroCarousel";
 import ImpactStatement from "@/components/homepage/ImpactStatement";
 import CaricoShowcase from "@/components/homepage/CaricoShowcase";
 import WellMeProducts from "@/components/homepage/WellMeProducts";
+import PlanNoviosSection from "@/components/homepage/PlanNoviosSection";
 import {
   getActiveSlides,
   getActiveCaricoCategories,
@@ -43,6 +44,7 @@ export default async function Home() {
         <CategoryShowcase />
         <CaricoShowcase categories={caricoCategories} />
         <WellMeProducts products={featuredProducts} />
+        <PlanNoviosSection />
         <PodcastSection />
         <Testimonios />
         <Footer />
