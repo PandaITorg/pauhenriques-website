@@ -1,6 +1,5 @@
 import HomeSchema from "@/components/schemas/HomeSchema";
 import Footer from "@/components/layout/Footer";
-import SobreMi from "@/components/home/SobreMi";
 import Testimonios from "@/components/home/Testimonios";
 import HeroCarousel from "@/components/homepage/HeroCarousel";
 import ImpactStatement from "@/components/homepage/ImpactStatement";
@@ -42,7 +41,6 @@ export default async function Home() {
       <div className="overflow-x-hidden">
         <HeroCarousel slides={slides} />
         <ImpactStatement />
-        <SobreMi />
         <CaricoShowcase categories={caricoCategories} />
         <WellMeProducts products={featuredProducts} />
         <PlanNoviosSection imageUrl="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fplan-novios%2Fproducto-portrait.webp?alt=media" />

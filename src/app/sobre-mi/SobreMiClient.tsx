@@ -92,9 +92,13 @@ function GlowVideo() {
 export default function SobreMiClient({
   pauSobreMi1,
   pauSobreMi2,
+  pauForrest,
+  jorgeYPau,
 }: {
   pauSobreMi1: StaticImageData;
   pauSobreMi2: StaticImageData;
+  pauForrest: StaticImageData;
+  jorgeYPau: StaticImageData;
 }) {
   return (
     <div className="bg-background min-h-screen">
@@ -125,7 +129,88 @@ export default function SobreMiClient({
       {/* ── Separator ── */}
       <div className="h-px max-w-6xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
 
-      {/* ── Chapter 1: Mi Mision ── */}
+      {/* ── Chapter: Mi Camino (origin story) ── */}
+      <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+          <div className="md:w-1/2 space-y-6">
+            <FadeIn>
+              <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-main">
+                Mi{" "}
+                <span className="font-dancing-script text-primary text-[1.15em]">
+                  Camino
+                </span>
+              </h2>
+            </FadeIn>
+            <FadeIn delay={100}>
+              <p className="text-base md:text-lg text-text-main/70 leading-relaxed">
+                Hace 15 anos me diagnosticaron Psoriasis en la piel, una
+                condicion &ldquo;incurable&rdquo; y en ese momento empezo mi
+                interes por entender temas que van mas alla de un diagnostico.
+              </p>
+            </FadeIn>
+            <FadeIn delay={200}>
+              <p className="text-base md:text-lg text-text-main/70 leading-relaxed">
+                Tuve un gran despertar y una curiosidad incansable en aprender
+                como poder sanar mi cuerpo de adentro para afuera. En como
+                vivir un estilo de vida libre de toxicos.
+              </p>
+            </FadeIn>
+          </div>
+          <div className="md:w-1/2 flex justify-center">
+            <GlowPhoto
+              src={pauForrest}
+              alt="Pau Henriques en el bosque"
+              className="max-w-xs sm:max-w-sm"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Separator ── */}
+      <div className="h-px max-w-6xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      {/* ── Chapter: Junto a Jorge ── */}
+      <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-16 md:py-24">
+        <div className="flex flex-col-reverse md:flex-row items-center gap-10 md:gap-14">
+          <div className="md:w-1/2 flex justify-center">
+            <GlowPhoto
+              src={jorgeYPau}
+              alt="Jorge y Pau"
+              className="max-w-xs sm:max-w-sm"
+            />
+          </div>
+          <div className="md:w-1/2 space-y-6">
+            <FadeIn>
+              <h2 className="font-cormorant text-2xl sm:text-3xl md:text-4xl font-semibold text-text-main">
+                Junto a{" "}
+                <span className="font-dancing-script text-primary text-[1.15em]">
+                  Jorge
+                </span>
+              </h2>
+            </FadeIn>
+            <FadeIn delay={100}>
+              <p className="text-base md:text-lg text-text-main/70 leading-relaxed">
+                Actualmente trabajo junto a mi companero de vida y esposo
+                Jorge, liderando la Marca Carico en el Ecuador. Nos enfocamos
+                en brindar una mejor salud y estilo de vida a todos nuestros
+                clientes.
+              </p>
+            </FadeIn>
+            <FadeIn delay={200}>
+              <p className="text-base md:text-lg text-text-main/70 leading-relaxed">
+                Nuestra filosofia y nuestros productos han mejorado la salud y
+                el estilo de vida que tenemos junto con el de cientos de
+                clientes con testimonios de vida impactantes.
+              </p>
+            </FadeIn>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Separator ── */}
+      <div className="h-px max-w-6xl mx-auto bg-linear-to-r from-transparent via-border-default to-transparent" />
+
+      {/* ── Chapter: Mi Mision ── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-6 lg:px-8 py-16 md:py-24">
         <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
           <div className="md:w-1/2 space-y-6">
