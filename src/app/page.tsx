@@ -10,6 +10,7 @@ import WellMeProducts from "@/components/homepage/WellMeProducts";
 import PlanNoviosSection from "@/components/homepage/PlanNoviosSection";
 import PodcastSection from "@/components/homepage/PodcastSection";
 import AboutCondensed from "@/components/homepage/AboutCondensed";
+import CtaFinal from "@/components/homepage/CtaFinal";
 import {
   getActiveSlides,
   getActiveCaricoCategories,
@@ -51,6 +52,7 @@ export default async function Home() {
         <PodcastSection episodes={podcastEpisodes ?? undefined} />
         <Testimonios />
         <AboutCondensed />
+        <CtaFinal />
         <Footer />
       </div>
     </>
