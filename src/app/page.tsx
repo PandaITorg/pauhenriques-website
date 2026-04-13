@@ -2,13 +2,13 @@ import HomeSchema from "@/components/schemas/HomeSchema";
 import Footer from "@/components/layout/Footer";
 import SobreMi from "@/components/home/SobreMi";
 import CategoryShowcase from "@/components/home/CategoryShowcase";
-import PodcastSection from "@/components/home/PodcastSection";
 import Testimonios from "@/components/home/Testimonios";
 import HeroCarousel from "@/components/homepage/HeroCarousel";
 import ImpactStatement from "@/components/homepage/ImpactStatement";
 import CaricoShowcase from "@/components/homepage/CaricoShowcase";
 import WellMeProducts from "@/components/homepage/WellMeProducts";
 import PlanNoviosSection from "@/components/homepage/PlanNoviosSection";
+import PodcastSection from "@/components/homepage/PodcastSection";
 import {
   getActiveSlides,
   getActiveCaricoCategories,
@@ -44,7 +44,7 @@ export default async function Home() {
         <CategoryShowcase />
         <CaricoShowcase categories={caricoCategories} />
         <WellMeProducts products={featuredProducts} />
-        <PlanNoviosSection />
+        <PlanNoviosSection imageUrl="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fplan-novios%2Fproducto-portrait.webp?alt=media" />
         <PodcastSection />
         <Testimonios />
         <Footer />
