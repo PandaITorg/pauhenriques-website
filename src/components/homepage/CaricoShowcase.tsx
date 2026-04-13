@@ -1,26 +1,40 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
+import type { CaricoCategory } from '@/lib/homepage/types';
 
-const CATEGORIES = [
+interface CaricoShowcaseProps {
+  categories?: CaricoCategory[];
+}
+
+const FALLBACK: Array<Pick<CaricoCategory, 'name' | 'description' | 'bgColor' | 'imageUrl'>> = [
   {
     name: 'Cocina',
     description: 'Sartenes, ollas y utensilios libres de PFAS y metales pesados',
-    bg: '#634d32',
+    bgColor: '#634d32',
+    imageUrl: '',
   },
   {
     name: 'Hogar y Salud',
     description: 'Purificadores de agua y aire para un ambiente limpio',
-    bg: '#7a6240',
+    bgColor: '#7a6240',
+    imageUrl: '',
   },
   {
     name: 'Dormitorio',
     description: 'Tecnología de descanso para recuperarte mientras duermes',
-    bg: '#4f3c25',
+    bgColor: '#4f3c25',
+    imageUrl: '',
   },
 ];
 
-export default function CaricoShowcase() {
+const WHATSAPP_CTA =
+  'https://wa.me/593000000000?text=Hola%20Pau%2C%20me%20gustar%C3%ADa%20agendar%20una%20asesor%C3%ADa%20personalizada%20sobre%20productos%20Carico';
+
+export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
+  const items = categories && categories.length > 0 ? categories : FALLBACK;
+
   return (
     <section
       className="py-16 md:py-24"
@@ -45,61 +59,78 @@ export default function CaricoShowcase() {
 
         {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {CATEGORIES.map((cat, i) => (
-            <motion.div
-              key={cat.name}
-              className="group relative rounded-xl overflow-hidden cursor-pointer"
-              style={{ aspectRatio: '4/3' }}
-              initial={{ opacity: 0, y: 32 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
-            >
-              {/* Background */}
-              <div
-                className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-105"
-                style={{ backgroundColor: cat.bg }}
-              />
-
-              {/* Gradient overlay */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    'linear-gradient(to top, var(--color-bosque-profundo-900) 0%, rgba(14,18,10,0.55) 45%, transparent 100%)',
-                }}
-              />
-
-              {/* Text */}
-              <div
-                className="absolute bottom-0 left-0 right-0 p-6 transition-transform duration-300 ease-out group-hover:-translate-y-1"
+          {items.map((cat, i) => {
+            const ctaLink = 'ctaLink' in cat ? (cat.ctaLink as string | undefined) : undefined;
+            const link = ctaLink && ctaLink.length > 0 ? ctaLink : WHATSAPP_CTA;
+            const isExternal = link.startsWith('http');
+            const key = 'id' in cat ? (cat.id as string) : cat.name;
+            return (
+              <motion.div
+                key={key}
+                className="group relative rounded-xl overflow-hidden cursor-pointer"
+                style={{ aspectRatio: '4/3' }}
+                initial={{ opacity: 0, y: 32 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.6, delay: i * 0.15 }}
               >
-                <h3
-                  className="font-cormorant text-3xl md:text-4xl font-semibold text-white mb-1"
+                <a
+                  href={link}
+                  {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  className="absolute inset-0 block"
                 >
-                  {cat.name}
-                </h3>
-                <p
-                  className="text-sm leading-snug"
-                  style={{ color: 'var(--color-warm-200)' }}
-                >
-                  {cat.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+                  {/* Background: image or color */}
+                  <div
+                    className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-105"
+                    style={{ backgroundColor: cat.bgColor || '#634d32' }}
+                  >
+                    {cat.imageUrl && (
+                      <Image
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                      />
+                    )}
+                  </div>
+
+                  {/* Gradient overlay */}
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'linear-gradient(to top, var(--color-bosque-profundo-900) 0%, rgba(14,18,10,0.55) 45%, transparent 100%)',
+                    }}
+                  />
+
+                  {/* Text */}
+                  <div className="absolute bottom-0 left-0 right-0 p-6 transition-transform duration-300 ease-out group-hover:-translate-y-1">
+                    <h3 className="font-cormorant text-3xl md:text-4xl font-semibold text-white mb-1">
+                      {cat.name}
+                    </h3>
+                    <p
+                      className="text-sm leading-snug"
+                      style={{ color: 'var(--color-warm-200)' }}
+                    >
+                      {cat.description}
+                    </p>
+                  </div>
+                </a>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* CTA */}
         <div className="flex justify-center mt-12 md:mt-16">
           <a
-            href="https://wa.me/593000000000?text=Hola%20Pau%2C%20me%20gustar%C3%ADa%20agendar%20una%20asesor%C3%ADa%20personalizada%20sobre%20productos%20Carico"
+            href={WHATSAPP_CTA}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 rounded-full py-3 px-8 font-semibold text-white text-sm transition-all duration-200 hover:brightness-110 active:scale-95"
             style={{ backgroundColor: 'var(--color-whatsapp)' }}
           >
-            {/* WhatsApp icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"

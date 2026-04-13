@@ -18,6 +18,18 @@ service cloud.firestore {
       allow write: if false; // Solo escritura via Admin SDK
     }
 
+    // Homepage — Hero slides (lectura pública)
+    match /hero_slides/{slideId} {
+      allow read: if true;
+      allow write: if false; // Solo via Admin SDK
+    }
+
+    // Homepage — Categorías Carico (lectura pública)
+    match /carico_categories/{categoryId} {
+      allow read: if true;
+      allow write: if false; // Solo via Admin SDK
+    }
+
     // Carrito: cada usuario puede leer y escribir solo su propio carrito
     match /carts/{cartId} {
       allow read, write: if request.auth != null && request.auth.uid == cartId;

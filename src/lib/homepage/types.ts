@@ -48,6 +48,19 @@ export interface HomepageMetric {
   active: boolean;
 }
 
+export interface CaricoCategory {
+  id: string;
+  name: string;
+  description: string;
+  imageUrl: string;
+  bgColor: string;
+  ctaLink?: string;
+  order: number;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface FeaturedProduct {
   id: string;
   name: string;
