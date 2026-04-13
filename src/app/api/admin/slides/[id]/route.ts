@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth, dbAdmin } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -64,6 +65,8 @@ export async function PUT(
 
   await dbAdmin.collection("hero_slides").doc(id).update(updateData);
 
+  revalidatePath("/");
+
   return NextResponse.json({ success: true });
 }
 
@@ -80,6 +83,8 @@ export async function DELETE(
 
   const { id } = await params;
   await dbAdmin.collection("hero_slides").doc(id).delete();
+
+  revalidatePath("/");
 
   return NextResponse.json({ success: true });
 }

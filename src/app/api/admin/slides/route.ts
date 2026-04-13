@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth, dbAdmin } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
@@ -67,6 +68,8 @@ export async function POST(request: NextRequest) {
   };
 
   const docRef = await dbAdmin.collection("hero_slides").add(slideData);
+
+  revalidatePath("/");
 
   return NextResponse.json({ id: docRef.id }, { status: 201 });
 }

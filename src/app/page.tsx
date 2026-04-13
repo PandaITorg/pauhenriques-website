@@ -9,6 +9,8 @@ import CaricoShowcase from "@/components/homepage/CaricoShowcase";
 import { getActiveSlides } from "@/lib/homepage/queries";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos",
   description:

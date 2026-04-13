@@ -2,7 +2,10 @@ import { dbAdmin } from '@/lib/firebase-admin';
 import { HeroSlide, HomepageMetric, FeaturedProduct, HomepageContent, Testimonial } from './types';
 
 export async function getActiveSlides(): Promise<HeroSlide[]> {
-  if (!dbAdmin) return [];
+  if (!dbAdmin) {
+    console.warn('[hero_slides] dbAdmin not initialized — returning empty slides');
+    return [];
+  }
   try {
     const snapshot = await dbAdmin
       .collection('hero_slides')
@@ -18,7 +21,8 @@ export async function getActiveSlides(): Promise<HeroSlide[]> {
         updatedAt: data.updatedAt?.toDate?.() ?? new Date(),
       } as HeroSlide;
     });
-  } catch {
+  } catch (e) {
+    console.error('[hero_slides] query failed:', e);
     return [];
   }
 }
