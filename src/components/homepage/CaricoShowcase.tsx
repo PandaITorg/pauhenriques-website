@@ -2,7 +2,18 @@
 
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import Masonry from 'react-masonry-css';
 import type { CaricoCategory } from '@/lib/homepage/types';
+
+const BREAKPOINT_COLS = {
+  default: 3,
+  768: 2,
+  480: 1,
+};
+
+// Varied aspect ratios make the masonry feel Pinterest-y even when image
+// shapes are similar. Cycled by index.
+const ASPECT_RATIOS = [4 / 5, 3 / 4, 5 / 6, 1, 4 / 5, 3 / 4];
 
 interface CaricoShowcaseProps {
   categories?: CaricoCategory[];
@@ -57,29 +68,33 @@ export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
           </h2>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Masonry grid */}
+        <Masonry
+          breakpointCols={BREAKPOINT_COLS}
+          className="flex w-auto -ml-3"
+          columnClassName="pl-3 bg-clip-padding"
+        >
           {items.map((cat, i) => {
             const ctaLink = 'ctaLink' in cat ? (cat.ctaLink as string | undefined) : undefined;
             const link = ctaLink && ctaLink.length > 0 ? ctaLink : WHATSAPP_CTA;
             const isExternal = link.startsWith('http');
             const key = 'id' in cat ? (cat.id as string) : cat.name;
+            const aspect = ASPECT_RATIOS[i % ASPECT_RATIOS.length];
             return (
               <motion.div
                 key={key}
-                className="group relative rounded-xl overflow-hidden cursor-pointer"
-                style={{ aspectRatio: '4/3' }}
+                className="group relative rounded-xl overflow-hidden cursor-pointer mb-3"
+                style={{ aspectRatio: aspect }}
                 initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.6, delay: i * 0.15 }}
+                viewport={{ once: true, margin: '-60px' }}
+                transition={{ duration: 0.55, delay: Math.min(i * 0.08, 0.5) }}
               >
                 <a
                   href={link}
                   {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   className="absolute inset-0 block"
                 >
-                  {/* Background: image or color */}
                   <div
                     className="absolute inset-0 transition-transform duration-500 ease-out group-hover:scale-105"
                     style={{ backgroundColor: cat.bgColor || '#634d32' }}
@@ -90,12 +105,11 @@ export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
                         alt={cat.name}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 33vw"
                       />
                     )}
                   </div>
 
-                  {/* Gradient overlay */}
                   <div
                     className="absolute inset-0"
                     style={{
@@ -104,9 +118,8 @@ export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
                     }}
                   />
 
-                  {/* Text */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 transition-transform duration-300 ease-out group-hover:-translate-y-1">
-                    <h3 className="font-cormorant text-3xl md:text-4xl font-semibold text-white mb-1">
+                  <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6 transition-transform duration-300 ease-out group-hover:-translate-y-1">
+                    <h3 className="font-cormorant text-2xl md:text-3xl font-semibold text-white mb-1 leading-tight">
                       {cat.name}
                     </h3>
                     <p
@@ -120,7 +133,7 @@ export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
               </motion.div>
             );
           })}
-        </div>
+        </Masonry>
 
         {/* CTA */}
         <div className="flex justify-center mt-12 md:mt-16">

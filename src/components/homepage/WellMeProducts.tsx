@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
+import Masonry from 'react-masonry-css';
 import { FaPlus } from 'react-icons/fa6';
 import type { FeaturedProduct } from '@/lib/homepage/types';
 
@@ -10,11 +11,15 @@ interface WellMeProductsProps {
   products: FeaturedProduct[];
 }
 
-const SIZE_CLASSES: Record<FeaturedProduct['bentoSize'], string> = {
-  normal: 'col-span-1 row-span-1 aspect-square',
-  wide: 'col-span-2 row-span-1 aspect-[2/1]',
-  tall: 'col-span-1 row-span-2 aspect-[1/2]',
+const BREAKPOINT_COLS = {
+  default: 4,
+  1024: 3,
+  640: 2,
 };
+
+// Pseudo-randomised but deterministic aspect ratios so the grid feels
+// Pinterest-y even when every product image is the same shape.
+const ASPECT_RATIOS = [4 / 5, 1, 3 / 4, 5 / 6, 1, 4 / 5, 3 / 4, 1];
 
 export default function WellMeProducts({ products }: WellMeProductsProps) {
   return (
@@ -23,7 +28,6 @@ export default function WellMeProducts({ products }: WellMeProductsProps) {
       style={{ backgroundColor: 'var(--color-background)' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-12 md:mb-16">
           <p
             className="text-xs font-semibold uppercase tracking-widest mb-3"
@@ -42,14 +46,22 @@ export default function WellMeProducts({ products }: WellMeProductsProps) {
         {products.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0.75 auto-rows-[minmax(200px,auto)]">
+          <Masonry
+            breakpointCols={BREAKPOINT_COLS}
+            className="flex w-auto -ml-3"
+            columnClassName="pl-3 bg-clip-padding"
+          >
             {products.map((product, i) => (
-              <ProductCard key={product.refId} product={product} index={i} />
+              <ProductCard
+                key={product.refId}
+                product={product}
+                index={i}
+                aspect={ASPECT_RATIOS[i % ASPECT_RATIOS.length]}
+              />
             ))}
-          </div>
+          </Masonry>
         )}
 
-        {/* Section CTA */}
         <div className="flex justify-center mt-12 md:mt-16">
           <Link
             href="/tienda"
@@ -68,15 +80,26 @@ export default function WellMeProducts({ products }: WellMeProductsProps) {
   );
 }
 
-function ProductCard({ product, index }: { product: FeaturedProduct; index: number }) {
+function ProductCard({
+  product,
+  index,
+  aspect,
+}: {
+  product: FeaturedProduct;
+  index: number;
+  aspect: number;
+}) {
   return (
     <motion.article
-      className={`group relative overflow-hidden rounded-xl ${SIZE_CLASSES[product.bentoSize]}`}
-      style={{ backgroundColor: 'var(--color-surface-card)' }}
+      className="group relative overflow-hidden rounded-xl mb-3"
+      style={{
+        backgroundColor: 'var(--color-surface-card)',
+        aspectRatio: aspect,
+      }}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.55, delay: Math.min(index * 0.08, 0.5) }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.5, delay: Math.min(index * 0.06, 0.4) }}
     >
       <Link
         href={`/tienda/${product.productId}`}
@@ -89,7 +112,7 @@ function ProductCard({ product, index }: { product: FeaturedProduct; index: numb
             alt={product.name}
             fill
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-white/30 text-xs">
@@ -107,7 +130,7 @@ function ProductCard({ product, index }: { product: FeaturedProduct; index: numb
         )}
 
         <div className="absolute inset-x-0 bottom-0 pt-16 pb-4 px-4 bg-linear-to-t from-black/85 via-black/55 to-transparent">
-          <h3 className="font-cormorant text-lg md:text-xl font-medium text-white leading-tight line-clamp-2">
+          <h3 className="font-cormorant text-base md:text-lg font-medium text-white leading-tight line-clamp-2">
             {product.name}
           </h3>
           <div className="mt-1 flex items-center justify-between gap-3">

@@ -54,7 +54,7 @@ export async function getActiveMetrics(): Promise<HomepageMetric[]> {
   return [];
 }
 
-export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
+export async function getFeaturedProducts(fallbackLimit = 8): Promise<FeaturedProduct[]> {
   if (!dbAdmin) {
     console.warn('[featured_products] dbAdmin not initialized — returning empty list');
     return [];
@@ -66,39 +66,63 @@ export async function getFeaturedProducts(): Promise<FeaturedProduct[]> {
       .orderBy('order')
       .get();
 
-    if (refsSnapshot.empty) return [];
+    if (!refsSnapshot.empty) {
+      const refs = refsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<{
+        id: string;
+        productId: string;
+        badge?: string | null;
+        bentoSize?: 'normal' | 'wide' | 'tall';
+        order: number;
+      }>;
 
-    const refs = refsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Array<{
-      id: string;
-      productId: string;
-      badge?: string | null;
-      bentoSize?: 'normal' | 'wide' | 'tall';
-      order: number;
-    }>;
+      const productDocs = await Promise.all(
+        refs.map((r) => dbAdmin!.collection('products').doc(r.productId).get()),
+      );
 
-    const productDocs = await Promise.all(
-      refs.map((r) => dbAdmin!.collection('products').doc(r.productId).get()),
-    );
+      const merged: FeaturedProduct[] = [];
+      refs.forEach((ref, i) => {
+        const pDoc = productDocs[i];
+        if (!pDoc.exists) return;
+        const p = pDoc.data()!;
+        if (p.isActive === false) return;
+        merged.push({
+          refId: ref.id,
+          productId: ref.productId,
+          name: p.name ?? '',
+          description: p.description ?? '',
+          price: typeof p.price === 'number' ? p.price : 0,
+          imageUrl: Array.isArray(p.images) ? (p.images[0] ?? '') : '',
+          badge: ref.badge ?? null,
+          bentoSize: ref.bentoSize ?? 'normal',
+          order: ref.order,
+        });
+      });
+      if (merged.length > 0) return merged;
+    }
 
-    const merged: FeaturedProduct[] = [];
-    refs.forEach((ref, i) => {
-      const pDoc = productDocs[i];
-      if (!pDoc.exists) return;
-      const p = pDoc.data()!;
-      if (p.isActive === false) return;
-      merged.push({
-        refId: ref.id,
-        productId: ref.productId,
+    // Fallback: when no curation exists, surface the latest active Infrarrojo
+    // products so the homepage never renders an empty Well Me grid.
+    const fallbackSnapshot = await dbAdmin
+      .collection('products')
+      .where('productType', '==', 'Infrarrojo')
+      .where('isActive', '==', true)
+      .limit(fallbackLimit)
+      .get();
+
+    return fallbackSnapshot.docs.map((doc, i) => {
+      const p = doc.data();
+      return {
+        refId: `fallback-${doc.id}`,
+        productId: doc.id,
         name: p.name ?? '',
         description: p.description ?? '',
         price: typeof p.price === 'number' ? p.price : 0,
         imageUrl: Array.isArray(p.images) ? (p.images[0] ?? '') : '',
-        badge: ref.badge ?? null,
-        bentoSize: ref.bentoSize ?? 'normal',
-        order: ref.order,
-      });
+        badge: null,
+        bentoSize: 'normal' as const,
+        order: i,
+      };
     });
-    return merged;
   } catch (e) {
     console.error('[featured_products] query failed:', e);
     return [];
