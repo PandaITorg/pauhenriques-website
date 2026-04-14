@@ -261,20 +261,40 @@ export async function POST(request: NextRequest) {
       nuveiData.transaction.status === "success" &&
       nuveiData.transaction.status_detail === 3
     ) {
-      // Update order — charge sets "paid" and transaction data.
-      // Webhook may also update; we use merge-friendly fields so neither overwrites the other.
+      const rawAuthCode = nuveiData.transaction.authorization_code;
+      const hasValidAuthCode =
+        typeof rawAuthCode === "string" &&
+        rawAuthCode.trim().length > 0 &&
+        rawAuthCode !== "null";
+
       if (dbAdmin) {
         const batch = dbAdmin.batch();
         const orderRef = dbAdmin.collection("orders").doc(orderId);
 
-        batch.update(orderRef, {
-          status: "paid",
-          paymentTransactionId: nuveiData.transaction.id,
-          authorizationCode: nuveiData.transaction.authorization_code || null,
-          ...(installments ? { installments, installmentsType: installmentsType ?? 0 } : {}),
-          chargeResponseAt: new Date(),
-          updatedAt: new Date(),
-        });
+        if (hasValidAuthCode) {
+          batch.update(orderRef, {
+            status: "paid",
+            paymentTransactionId: nuveiData.transaction.id,
+            authorizationCode: rawAuthCode,
+            ...(installments ? { installments, installmentsType: installmentsType ?? 0 } : {}),
+            chargeResponseAt: new Date(),
+            updatedAt: new Date(),
+          });
+        } else {
+          console.error(
+            `[AUDIT:MISSING_AUTH_CODE] orderId=${orderId} txId=${nuveiData.transaction.id} debitResponse=${JSON.stringify(nuveiData)}`,
+          );
+          batch.update(orderRef, {
+            status: "paid",
+            paymentTransactionId: nuveiData.transaction.id,
+            missingAuthCodeFlagged: true,
+            missingAuthCodeLoggedAt: new Date(),
+            emailPending: true,
+            ...(installments ? { installments, installmentsType: installmentsType ?? 0 } : {}),
+            chargeResponseAt: new Date(),
+            updatedAt: new Date(),
+          });
+        }
 
         // Atomically increment promotion usage if coupon was applied
         const orderSnap = await orderRef.get();
@@ -296,20 +316,28 @@ export async function POST(request: NextRequest) {
 
         await batch.commit();
 
-        // Send confirmation email (non-blocking)
-        const emailResult = await sendPaymentConfirmation({
-          to: userEmail,
-          customerName: orderInfo?.shippingAddress?.fullName || "",
-          orderId,
-          transactionId: nuveiData.transaction.id,
-          authorizationCode: nuveiData.transaction.authorization_code || null,
-          items: orderInfo?.items || [],
-          subtotal: orderInfo?.subtotal || amount,
-          discount: orderInfo?.discount || undefined,
-          couponCode: orderInfo?.couponCode,
-          vat: orderInfo?.vat || vat,
-          total: amount,
-        }).catch(() => ({ success: false }));
+        // Send confirmation email ONLY if we have a valid auth_code.
+        // Otherwise webhook or timeout handler will deliver it.
+        let emailSent = false;
+        if (hasValidAuthCode) {
+          const emailResult = await sendPaymentConfirmation({
+            to: userEmail,
+            customerName: orderInfo?.shippingAddress?.fullName || "",
+            orderId,
+            transactionId: nuveiData.transaction.id,
+            authorizationCode: rawAuthCode as string,
+            items: orderInfo?.items || [],
+            subtotal: orderInfo?.subtotal || amount,
+            discount: orderInfo?.discount || undefined,
+            couponCode: orderInfo?.couponCode,
+            vat: orderInfo?.vat || vat,
+            total: amount,
+          }).catch(() => ({ success: false }));
+          emailSent = emailResult.success;
+          if (emailSent) {
+            await orderRef.update({ emailSentAt: new Date() });
+          }
+        }
 
         // Delete card from Nuvei if user chose not to save it
         if (body.deleteCardAfterPayment && token) {
@@ -321,9 +349,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           transactionId: nuveiData.transaction.id,
-          authorizationCode: nuveiData.transaction.authorization_code,
+          authorizationCode: hasValidAuthCode ? rawAuthCode : null,
           orderId,
-          emailSent: emailResult.success,
+          emailSent,
         });
       }
 

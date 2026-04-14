@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pau Henriques — Salud Integral & Bienestar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { font-family: 'Inter', sans-serif; color: #2C2C2C; background: #FEFDFB; overflow-x: hidden; }
+img { max-width: 100%; display: block; }
+a { text-decoration: none; color: inherit; }
+button { border: none; cursor: pointer; font-family: inherit; }
+
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --bosque-profundo: #1B3A2D;
+  --bosque-medio: #2D5E4A;
+  --bosque-claro: #4A8B6F;
+  --caramelo: #C8956C;
+  --caramelo-claro: #D4A97A;
+  --dorado: #D4AF37;
+  --crema: #FAF6F0;
+  --crema-calido: #F5EDE3;
+  --blanco-organico: #FEFDFB;
+  --texto-principal: #2C2C2C;
+  --texto-suave: #6B6B6B;
+  --negro-elegante: #1A1A1A;
+  --radius-pill: 9999px;
+  --radius-card: 16px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.06);
+  --shadow-card-hover: 0 12px 40px rgba(0,0,0,0.12);
+  --transition: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ===== TYPOGRAPHY ===== */
+.font-display { font-family: 'Playfair Display', serif; }
+.font-sub { font-family: 'Cormorant Garamond', serif; }
+.font-body { font-family: 'Inter', sans-serif; }
+.tagline {
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--caramelo);
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 36px;
+  border-radius: var(--radius-pill);
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+.btn-caramelo {
+  background: var(--caramelo);
+  color: #fff;
+}
+.btn-caramelo:hover {
+  background: var(--caramelo-claro);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(200,149,108,0.35);
+}
+.btn-outline-white {
+  background: transparent;
+  color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.5);
+}
+.btn-outline-white:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: #fff;
+}
+.btn-outline-dark {
+  background: transparent;
+  color: var(--crema);
+  border: 1.5px solid rgba(250,246,240,0.4);
+}
+.btn-outline-dark:hover {
+  background: rgba(250,246,240,0.08);
+  border-color: var(--crema);
+}
+.btn-small {
+  padding: 10px 24px;
+  font-size: 0.85rem;
+}
+
+/* ===== SCROLL ANIMATIONS ===== */
+.fade-up {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  padding: 0 48px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.4s, box-shadow 0.4s, backdrop-filter 0.4s;
+}
+.navbar.scrolled {
+  background: rgba(254,253,251,0.92);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 1px 24px rgba(0,0,0,0.06);
+}
+.navbar-logo {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 1.4rem;
+  color: #fff;
+  transition: color 0.4s;
+  letter-spacing: -0.02em;
+}
+.navbar.scrolled .navbar-logo { color: var(--bosque-profundo); }
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+.navbar-links a {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 0.02em;
+  transition: color 0.3s;
+  position: relative;
+}
+.navbar-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1.5px;
+  background: var(--caramelo);
+  transition: width 0.3s;
+}
+.navbar-links a:hover::after { width: 100%; }
+.navbar.scrolled .navbar-links a { color: var(--texto-principal); }
+.navbar-cta {
+  padding: 10px 24px;
+  background: var(--caramelo);
+  color: #fff !important;
+  border-radius: var(--radius-pill);
+  font-weight: 500;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+}
+.navbar-cta::after { display: none !important; }
+.navbar-cta:hover { background: var(--caramelo-claro); }
+.navbar-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  padding: 4px;
+}
+.navbar-hamburger span {
+  width: 24px;
+  height: 2px;
+  background: #fff;
+  transition: background 0.3s;
+}
+.navbar.scrolled .navbar-hamburger span { background: var(--bosque-profundo); }
+
+/* ===== HERO ===== */
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+}
+.hero-slides {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+}
+.hero-slide {
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+}
+.hero-slide-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transform: scale(1.05);
+  transition: transform 6s ease;
+}
+.hero-slide.active .hero-slide-bg { transform: scale(1); }
+.hero-slide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(26,26,26,0.75) 0%, rgba(26,26,26,0.45) 45%, transparent 80%);
+}
+.hero-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 8%;
+  z-index: 2;
+  max-width: 720px;
+}
+.hero-content .tagline {
+  color: var(--caramelo-claro);
+  margin-bottom: 20px;
+  font-size: 0.8rem;
+}
+.hero-content h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+  color: #fff;
+  line-height: 1.12;
+  font-weight: 600;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+.hero-content p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+  margin-bottom: 36px;
+  max-width: 500px;
+}
+.hero-dots {
+  position: absolute;
+  bottom: 100px;
+  left: 8%;
+  display: flex;
+  gap: 12px;
+  z-index: 2;
+}
+.hero-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.6);
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+}
+.hero-dot.active {
+  background: var(--caramelo);
+  border-color: var(--caramelo);
+  width: 28px;
+  border-radius: 5px;
+}
+.scroll-indicator {
+  position: absolute;
+  bottom: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: bounce 2s infinite;
+}
+.scroll-indicator span {
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+.scroll-indicator svg { opacity: 0.5; }
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(10px); }
+}
+
+/* ===== IMPACT STRIP ===== */
+.impact {
+  background: var(--bosque-profundo);
+  padding: 72px 48px;
+  text-align: center;
+}
+.impact-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.impact-number {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  color: var(--dorado);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.impact-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+  color: var(--crema);
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+/* ===== SECTION SHARED ===== */
+.section {
+  padding: 100px 48px;
+}
+.section-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+.section-header .tagline { margin-bottom: 12px; }
+.section-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  color: var(--bosque-profundo);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.section-header p {
+  margin-top: 16px;
+  font-size: 1rem;
+  color: var(--texto-suave);
+  max-width: 560px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+/* ===== TIENDA INFRARROJO ===== */
+.tienda { background: var(--crema); }
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.product-card {
+  background: #fff;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  cursor: pointer;
+}
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-card-hover);
+}
+.product-img {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--crema-calido);
+}
+.product-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+.product-card:hover .product-img img { transform: scale(1.06); }
+.product-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 5px 14px;
+  background: var(--caramelo);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+}
+.product-info { padding: 20px; }
+.product-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--texto-principal);
+  margin-bottom: 6px;
+}
+.product-desc {
+  font-size: 0.82rem;
+  color: var(--texto-suave);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+.product-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.product-price {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  color: var(--caramelo);
+  font-weight: 600;
+}
+.product-cart-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bosque-profundo);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+.product-cart-btn:hover {
+  background: var(--bosque-medio);
+  transform: scale(1.1);
+}
+
+/* ===== CATALOGO CARICO ===== */
+.catalogo { background: var(--crema-calido); }
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  max-width: 1200px;
+  margin: 0 auto 48px;
+}
+.catalogo-card {
+  position: relative;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+.catalogo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+.catalogo-card:hover img { transform: scale(1.08); }
+.catalogo-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(27,58,45,0.85) 100%);
+}
+.catalogo-card-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px;
+  z-index: 1;
+}
+.catalogo-card-content h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.catalogo-card-content p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.5;
+}
+.catalogo-cta { text-align: center; }
+
+/* ===== PLAN NOVIOS ===== */
+.novios {
+  position: relative;
+  padding: 0;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.novios-bg {
+  position: absolute;
+  inset: 0;
+  background: url('https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1600&q=80') center/cover no-repeat;
+}
+.novios-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(27,58,45,0.82);
+}
+.novios-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 48px;
+  width: 100%;
+}
+.novios-text .tagline { color: var(--caramelo-claro); margin-bottom: 16px; }
+.novios-text h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.15;
+  margin-bottom: 18px;
+}
+.novios-text > p {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.7;
+  margin-bottom: 32px;
+  max-width: 440px;
+}
+.novios-buttons { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 28px; }
+.novios-social-proof {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  color: rgba(255,255,255,0.55);
+  font-style: italic;
+}
+.novios-img-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.novios-img-wrapper img {
+  width: 85%;
+  border-radius: var(--radius-card);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  position: relative;
+  z-index: 1;
+}
+.novios-img-wrapper::before {
+  content: '';
+  position: absolute;
+  width: 85%;
+  height: 100%;
+  border: 2px solid var(--caramelo);
+  border-radius: var(--radius-card);
+  transform: rotate(3deg);
+  top: 12px;
+  left: calc(7.5% + 12px);
+  opacity: 0.5;
+}
+
+/* ===== PODCAST ===== */
+.podcast { background: var(--crema-calido); }
+.podcast-inner {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 64px;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.podcast-cover {
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.12);
+  aspect-ratio: 1;
+  background: var(--bosque-profundo);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+}
+.podcast-cover-icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 24px;
+  opacity: 0.3;
+}
+.podcast-cover h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  color: #fff;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+.podcast-cover p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+  color: var(--caramelo-claro);
+}
+.podcast-info .tagline { margin-bottom: 12px; }
+.podcast-info h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 2.8vw, 2.2rem);
+  color: var(--bosque-profundo);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+.podcast-info > p {
+  font-size: 0.95rem;
+  color: var(--texto-suave);
+  line-height: 1.7;
+  margin-bottom: 32px;
+  max-width: 440px;
+}
+.podcast-episode {
+  background: #fff;
+  border-radius: var(--radius-card);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 28px;
+}
+.podcast-play {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--caramelo);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: var(--transition);
+}
+.podcast-play:hover { background: var(--caramelo-claro); transform: scale(1.08); }
+.podcast-ep-info h4 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--texto-principal);
+  margin-bottom: 2px;
+}
+.podcast-ep-info span {
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+.podcast-platforms {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.podcast-platforms span {
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+  margin-right: 4px;
+}
+.platform-badge {
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid #ddd;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--texto-principal);
+  background: #fff;
+  transition: var(--transition);
+}
+.platform-badge:hover {
+  border-color: var(--bosque-medio);
+  color: var(--bosque-medio);
+}
+
+/* ===== TESTIMONIOS ===== */
+.testimonios { background: var(--crema); }
+.testimonios-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.testimonio-card {
+  background: #fff;
+  border-radius: var(--radius-card);
+  padding: 36px 32px 28px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  transition: transform 0.4s ease;
+}
+.testimonio-card:hover { transform: translateY(-4px); }
+.testimonio-quote {
+  font-family: 'Playfair Display', serif;
+  font-size: 4rem;
+  color: rgba(200,149,108,0.15);
+  line-height: 1;
+  position: absolute;
+  top: 16px;
+  left: 28px;
+}
+.testimonio-stars {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 16px;
+}
+.testimonio-stars svg { width: 16px; height: 16px; }
+.testimonio-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.08rem;
+  font-style: italic;
+  color: var(--texto-principal);
+  line-height: 1.65;
+  margin-bottom: 24px;
+}
+.testimonio-author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.testimonio-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--crema-calido);
+}
+.testimonio-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--texto-principal);
+}
+.testimonio-context {
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+  margin-top: 1px;
+}
+
+/* ===== SOBRE MI ===== */
+.sobre-mi {
+  background: var(--bosque-profundo);
+  padding: 100px 48px;
+}
+.sobre-mi-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 72px;
+  align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.sobre-mi-img {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.sobre-mi-img img {
+  width: 80%;
+  border-radius: var(--radius-card);
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 20px 48px rgba(0,0,0,0.25);
+}
+.sobre-mi-img::before {
+  content: '';
+  position: absolute;
+  width: 80%;
+  height: 100%;
+  border: 2px solid var(--caramelo);
+  border-radius: var(--radius-card);
+  top: 16px;
+  left: calc(10% - 16px);
+  opacity: 0.4;
+  transform: rotate(-2deg);
+}
+.sobre-mi-text .tagline { color: var(--caramelo-claro); margin-bottom: 14px; }
+.sobre-mi-text h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  color: #fff;
+  font-weight: 600;
+  line-height: 1.15;
+  margin-bottom: 24px;
+}
+.sobre-mi-text p {
+  font-size: 0.95rem;
+  color: rgba(250,246,240,0.75);
+  line-height: 1.8;
+  margin-bottom: 16px;
+  max-width: 460px;
+}
+.sobre-mi-text .btn { margin-top: 16px; }
+
+/* ===== CTA FINAL ===== */
+.cta-final {
+  background: radial-gradient(ellipse at center, var(--bosque-profundo) 0%, var(--negro-elegante) 100%);
+  padding: 120px 48px;
+  text-align: center;
+}
+.cta-final h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+.cta-final p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  color: rgba(250,246,240,0.7);
+  margin-bottom: 40px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+.cta-final .btn { font-size: 1rem; padding: 18px 44px; }
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+.social-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  transition: var(--transition);
+}
+.social-icon:hover {
+  border-color: var(--caramelo);
+  color: var(--caramelo);
+  background: rgba(200,149,108,0.1);
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  background: var(--negro-elegante);
+  padding: 32px 48px;
+  text-align: center;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.footer p {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); }
+  .novios-inner { grid-template-columns: 1fr; gap: 40px; }
+  .novios-img-wrapper { display: none; }
+  .podcast-inner { grid-template-columns: 280px 1fr; gap: 40px; }
+}
+
+@media (max-width: 768px) {
+  .section { padding: 72px 24px; }
+  .navbar { padding: 0 24px; }
+  .navbar-links { display: none; }
+  .navbar-hamburger { display: flex; }
+  .hero-content { padding: 0 24px; }
+  .hero-dots { left: 24px; }
+  .impact { padding: 56px 24px; }
+  .products-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .catalogo-grid { grid-template-columns: 1fr; }
+  .catalogo-card { aspect-ratio: 16/9; }
+  .podcast-inner { grid-template-columns: 1fr; gap: 32px; }
+  .podcast-cover { max-width: 300px; margin: 0 auto; }
+  .testimonios-grid { grid-template-columns: 1fr; max-width: 480px; }
+  .sobre-mi { padding: 72px 24px; }
+  .sobre-mi-inner { grid-template-columns: 1fr; gap: 40px; }
+  .sobre-mi-img { order: -1; }
+  .sobre-mi-img img { width: 60%; max-width: 300px; }
+  .cta-final { padding: 80px 24px; }
+  .novios-inner { padding: 72px 24px; }
+  .novios-buttons { flex-direction: column; }
+  .novios-buttons .btn { text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .products-grid { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
+  .hero-content h1 { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <a href="#" class="navbar-logo">Pau Henriques</a>
+  <ul class="navbar-links">
+    <li><a href="#tienda">Tienda</a></li>
+    <li><a href="#catalogo">Catálogo</a></li>
+    <li><a href="#novios">Plan Novios</a></li>
+    <li><a href="#podcast">Podcast</a></li>
+    <li><a href="#sobre-mi">Sobre Mí</a></li>
+    <li><a href="#contacto" class="navbar-cta">Contactar</a></li>
+  </ul>
+  <button class="navbar-hamburger" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ===== HERO CAROUSEL ===== -->
+<section class="hero" id="hero">
+  <div class="hero-slides" id="heroSlides">
+    <!-- Slide 1 -->
+    <div class="hero-slide active">
+      <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=1600&q=80')"></div>
+      <div class="hero-content">
+        <span class="tagline">Bienestar Sin Tóxicos</span>
+        <h1>Transforma tu hogar, transforma tu salud</h1>
+        <p>Productos premium libres de tóxicos para cada rincón de tu vida</p>
+        <a href="#catalogo" class="btn btn-caramelo">Explorar Catálogo</a>
+      </div>
+    </div>
+    <!-- Slide 2 -->
+    <div class="hero-slide">
+      <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=1600&q=80')"></div>
+      <div class="hero-content">
+        <span class="tagline">Tienda Infrarrojo</span>
+        <h1>Tecnología de bienestar para tu cuerpo</h1>
+        <p>Descubre la terapia infrarroja y sus beneficios para tu salud diaria</p>
+        <a href="#tienda" class="btn btn-caramelo">Ver Productos</a>
+      </div>
+    </div>
+    <!-- Slide 3 -->
+    <div class="hero-slide">
+      <div class="hero-slide-bg" style="background-image: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1600&q=80')"></div>
+      <div class="hero-content">
+        <span class="tagline">Plan de Novios</span>
+        <h1>Empiecen su vida juntos con lo mejor</h1>
+        <p>Armen su hogar con productos que cuidan su salud desde el primer día</p>
+        <a href="#novios" class="btn btn-caramelo">Conocer el Plan</a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-dots">
+    <button class="hero-dot active" data-slide="0"></button>
+    <button class="hero-dot" data-slide="1"></button>
+    <button class="hero-dot" data-slide="2"></button>
+  </div>
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <svg width="24" height="24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</section>
+
+<!-- ===== FRASE DE IMPACTO ===== -->
+<section class="impact fade-up">
+  <div class="impact-inner">
+    <div class="impact-number"><span id="countUp">0</span>+</div>
+    <p class="impact-text">familias ya transformaron su hogar y su salud</p>
+  </div>
+</section>
+
+<!-- ===== TIENDA INFRARROJO ===== -->
+<section class="section tienda" id="tienda">
+  <div class="section-header fade-up">
+    <span class="tagline">Tienda Infrarrojo</span>
+    <h2>Tecnología que cuida tu cuerpo</h2>
+    <p>Dispositivos de terapia infrarroja de grado profesional para uso en casa</p>
+  </div>
+  <div class="products-grid">
+    <div class="product-card fade-up">
+      <div class="product-img">
+        <img src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=600&q=80" alt="Manta Infrarroja">
+        <span class="product-badge">Más Vendido</span>
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">Manta Infrarroja Premium</h3>
+        <p class="product-desc">Terapia de calor profundo para relajación y desintoxicación</p>
+        <div class="product-bottom">
+          <span class="product-price">$4,890</span>
+          <button class="product-cart-btn" aria-label="Agregar al carrito">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1h3l2 11h10l2-7H6"/><circle cx="9" cy="16" r="1.5"/><circle cx="16" cy="16" r="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="product-card fade-up">
+      <div class="product-img">
+        <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=600&q=80" alt="Panel Infrarrojo">
+        <span class="product-badge">Nuevo</span>
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">Panel Infrarrojo Facial</h3>
+        <p class="product-desc">Rejuvenecimiento celular con luz roja e infrarroja</p>
+        <div class="product-bottom">
+          <span class="product-price">$3,250</span>
+          <button class="product-cart-btn" aria-label="Agregar al carrito">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1h3l2 11h10l2-7H6"/><circle cx="9" cy="16" r="1.5"/><circle cx="16" cy="16" r="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="product-card fade-up">
+      <div class="product-img">
+        <img src="https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=600&q=80" alt="Cinturón Infrarrojo">
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">Cinturón Infrarrojo Lumbar</h3>
+        <p class="product-desc">Alivio del dolor y desinflamación localizada</p>
+        <div class="product-bottom">
+          <span class="product-price">$2,190</span>
+          <button class="product-cart-btn" aria-label="Agregar al carrito">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1h3l2 11h10l2-7H6"/><circle cx="9" cy="16" r="1.5"/><circle cx="16" cy="16" r="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="product-card fade-up">
+      <div class="product-img">
+        <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&q=80" alt="Sauna Bag">
+        <span class="product-badge">Nuevo</span>
+      </div>
+      <div class="product-info">
+        <h3 class="product-name">Sauna Bag Portátil</h3>
+        <p class="product-desc">Sesiones de sauna infrarroja en la comodidad de tu hogar</p>
+        <div class="product-bottom">
+          <span class="product-price">$6,750</span>
+          <button class="product-cart-btn" aria-label="Agregar al carrito">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1h3l2 11h10l2-7H6"/><circle cx="9" cy="16" r="1.5"/><circle cx="16" cy="16" r="1.5"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CATÁLOGO CARICO ===== -->
+<section class="section catalogo" id="catalogo">
+  <div class="section-header fade-up">
+    <span class="tagline">Catálogo Carico</span>
+    <h2>Productos premium para cada rincón de tu hogar</h2>
+    <p>Soluciones certificadas que eliminan tóxicos de tu vida diaria</p>
+  </div>
+  <div class="catalogo-grid">
+    <div class="catalogo-card fade-up">
+      <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="Cocina">
+      <div class="catalogo-card-content">
+        <h3>Cocina</h3>
+        <p>Filtros de agua, utensilios libres de químicos y más</p>
+      </div>
+    </div>
+    <div class="catalogo-card fade-up">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&q=80" alt="Hogar y Salud">
+      <div class="catalogo-card-content">
+        <h3>Hogar y Salud</h3>
+        <p>Purificadores de aire, limpieza ecológica y bienestar integral</p>
+      </div>
+    </div>
+    <div class="catalogo-card fade-up">
+      <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" alt="Dormitorio">
+      <div class="catalogo-card-content">
+        <h3>Dormitorio</h3>
+        <p>Descanso profundo con textiles orgánicos y tecnología del sueño</p>
+      </div>
+    </div>
+  </div>
+  <div class="catalogo-cta fade-up">
+    <a href="#" class="btn btn-caramelo">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.616l4.584-1.473A11.961 11.961 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.322-.724-6.016-1.955l-.42-.316-2.712.872.89-2.65-.346-.44A9.95 9.95 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Agenda tu asesoría personalizada
+    </a>
+  </div>
+</section>
+
+<!-- ===== PLAN DE NOVIOS ===== -->
+<section class="novios" id="novios">
+  <div class="novios-bg"></div>
+  <div class="novios-inner">
+    <div class="novios-text fade-up">
+      <span class="tagline">Plan de Novios</span>
+      <h2>Empiecen su hogar con lo mejor desde el día uno</h2>
+      <p>Un plan personalizado para que armen su primer hogar con productos que cuidan su salud, libres de tóxicos y con la calidad que merecen.</p>
+      <div class="novios-buttons">
+        <a href="#" class="btn btn-caramelo">Conocer el Plan</a>
+        <a href="#" class="btn btn-outline-white">Hablar con Pau</a>
+      </div>
+      <p class="novios-social-proof">50+ parejas ya eligieron este plan</p>
+    </div>
+    <div class="novios-img-wrapper fade-up">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&q=80" alt="Hogar de novios">
+    </div>
+  </div>
+</section>
+
+<!-- ===== PODCAST ===== -->
+<section class="section podcast" id="podcast">
+  <div class="podcast-inner">
+    <div class="podcast-cover fade-up">
+      <svg class="podcast-cover-icon" fill="none" stroke="rgba(250,246,240,0.4)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      <h3>De Tóxica<br>a Sin Tóxicos</h3>
+      <p>con Pau Henriques</p>
+    </div>
+    <div class="podcast-info fade-up">
+      <span class="tagline">Podcast</span>
+      <h2>De Tóxica a Sin Tóxicos</h2>
+      <p>Conversaciones honestas sobre salud, bienestar y cómo vivir una vida más consciente sin volverse loca en el intento.</p>
+      <div class="podcast-episode">
+        <button class="podcast-play" aria-label="Reproducir">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+        </button>
+        <div class="podcast-ep-info">
+          <h4>Ep. 47: Los 5 tóxicos que tienes en tu cocina</h4>
+          <span>32 min · Último episodio</span>
+        </div>
+      </div>
+      <div class="podcast-platforms">
+        <span>Escuchar en:</span>
+        <a href="#" class="platform-badge">Spotify</a>
+        <a href="#" class="platform-badge">Apple Podcasts</a>
+        <a href="#" class="platform-badge">YouTube</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIOS ===== -->
+<section class="section testimonios" id="testimonios">
+  <div class="section-header fade-up">
+    <span class="tagline">Testimonios</span>
+    <h2>Lo que dicen nuestras familias</h2>
+  </div>
+  <div class="testimonios-grid">
+    <div class="testimonio-card fade-up">
+      <span class="testimonio-quote">&ldquo;</span>
+      <div class="testimonio-stars">
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+      </div>
+      <p class="testimonio-text">Pau nos ayudó a transformar nuestra cocina por completo. La diferencia en el sabor del agua y la tranquilidad de saber que cocinamos sin tóxicos no tiene precio.</p>
+      <div class="testimonio-author">
+        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" alt="" class="testimonio-avatar">
+        <div>
+          <div class="testimonio-name">María Fernanda López</div>
+          <div class="testimonio-context">Mamá de 2 · Monterrey</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonio-card fade-up">
+      <span class="testimonio-quote">&ldquo;</span>
+      <div class="testimonio-stars">
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+      </div>
+      <p class="testimonio-text">El plan de novios fue un regalo increíble. Pau nos asesoró con tanta paciencia y cariño, armamos nuestro hogar con todo lo mejor desde el primer día.</p>
+      <div class="testimonio-author">
+        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt="" class="testimonio-avatar">
+        <div>
+          <div class="testimonio-name">Carlos y Ana Martínez</div>
+          <div class="testimonio-context">Recién casados · CDMX</div>
+        </div>
+      </div>
+    </div>
+    <div class="testimonio-card fade-up">
+      <span class="testimonio-quote">&ldquo;</span>
+      <div class="testimonio-stars">
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+        <svg viewBox="0 0 24 24" fill="#D4AF37"><polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9"/></svg>
+      </div>
+      <p class="testimonio-text">La manta infrarroja cambió mis noches. Duermo mejor, me despierto sin dolor y me siento con más energía. Una inversión que vale cada peso.</p>
+      <div class="testimonio-author">
+        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" alt="" class="testimonio-avatar">
+        <div>
+          <div class="testimonio-name">Valentina Ruiz</div>
+          <div class="testimonio-context">Emprendedora · Guadalajara</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOBRE MÍ ===== -->
+<section class="sobre-mi" id="sobre-mi">
+  <div class="sobre-mi-inner">
+    <div class="sobre-mi-img fade-up">
+      <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&q=80" alt="Pau Henriques">
+    </div>
+    <div class="sobre-mi-text fade-up">
+      <span class="tagline">Conoce a Pau</span>
+      <h2>Apasionada por la salud integral y la vida consciente</h2>
+      <p>Soy Pau Henriques, y mi misión es ayudar a familias latinas a crear hogares más saludables. Después de años investigando cómo los productos cotidianos afectan nuestra salud, decidí dedicarme a ofrecer alternativas reales y accesibles.</p>
+      <p>Creo que todos merecemos un hogar libre de tóxicos, y que cuidar de nuestra familia empieza por las decisiones que tomamos cada día.</p>
+      <a href="#" class="btn btn-outline-dark">Sígueme en Instagram</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CTA FINAL ===== -->
+<section class="cta-final" id="contacto">
+  <h2 class="fade-up">¿Lista para transformar tu hogar?</h2>
+  <p class="fade-up">Escríbeme y juntas creamos un plan personalizado para ti y tu familia</p>
+  <a href="#" class="btn btn-caramelo fade-up">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.616l4.584-1.473A11.961 11.961 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.24 0-4.322-.724-6.016-1.955l-.42-.316-2.712.872.89-2.65-.346-.44A9.95 9.95 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+    Escríbeme por WhatsApp
+  </a>
+  <div class="social-icons fade-up">
+    <a href="#" class="social-icon" aria-label="Instagram">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+    </a>
+    <a href="#" class="social-icon" aria-label="Facebook">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+    </a>
+    <a href="#" class="social-icon" aria-label="YouTube">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+    <a href="#" class="social-icon" aria-label="TikTok">
+      <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <p>&copy; 2026 Pau Henriques. Todos los derechos reservados. &mdash; Mockup visual, no funcional.</p>
+</footer>
+
+<script>
+// ===== NAVBAR SCROLL =====
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+// ===== HERO CAROUSEL =====
+const slides = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.hero-dot');
+const slidesContainer = document.getElementById('heroSlides');
+let currentSlide = 0;
+let autoInterval;
+
+function goToSlide(n) {
+  slides[currentSlide].classList.remove('active');
+  dots[currentSlide].classList.remove('active');
+  currentSlide = n;
+  slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
+  slides[currentSlide].classList.add('active');
+  dots[currentSlide].classList.add('active');
+}
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    goToSlide(parseInt(dot.dataset.slide));
+    resetAuto();
+  });
+});
+
+function nextSlide() { goToSlide((currentSlide + 1) % slides.length); }
+function resetAuto() { clearInterval(autoInterval); autoInterval = setInterval(nextSlide, 5500); }
+autoInterval = setInterval(nextSlide, 5500);
+
+// ===== COUNT-UP =====
+const countEl = document.getElementById('countUp');
+let counted = false;
+function animateCount() {
+  if (counted) return;
+  counted = true;
+  let start = 0;
+  const end = 200;
+  const duration = 2000;
+  const startTime = performance.now();
+  function step(timestamp) {
+    const progress = Math.min((timestamp - startTime) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    countEl.textContent = Math.floor(eased * end);
+    if (progress < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ===== INTERSECTION OBSERVER (fade-in + count) =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      if (entry.target.closest('.impact')) animateCount();
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// ===== SMOOTH SCROLL =====
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>

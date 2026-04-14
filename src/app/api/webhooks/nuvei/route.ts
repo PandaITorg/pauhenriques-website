@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
+import { sendPaymentConfirmation, sendPaymentPending } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -82,17 +83,92 @@ export async function POST(request: NextRequest) {
     const shouldUpdateStatus =
       isApproved || !finalStatuses.includes(currentStatus);
 
-    await orderRef.update({
+    const orderData = orderDoc.data()!;
+    const webhookAuthCode = transaction.authorization_code;
+    const hasValidAuthCode =
+      typeof webhookAuthCode === "string" &&
+      webhookAuthCode.trim().length > 0 &&
+      webhookAuthCode !== "null";
+
+    const updatePayload: Record<string, unknown> = {
       ...(shouldUpdateStatus && {
         status: isApproved ? "paid" : "cancelled",
       }),
       paymentTransactionId: transaction.id,
-      authorizationCode: transaction.authorization_code || null,
+      authorizationCode: webhookAuthCode || null,
       webhookStatus: transaction.status,
       webhookStatusDetail: transaction.status_detail,
       webhookReceivedAt: new Date(),
       updatedAt: new Date(),
-    });
+    };
+
+    // If email was pending (verify returned success without auth_code) and
+    // webhook now brings the auth_code, send the confirmation email.
+    const shouldSendPendingEmail =
+      isApproved &&
+      orderData.emailPending === true &&
+      hasValidAuthCode &&
+      orderData.userEmail;
+
+    if (shouldSendPendingEmail) {
+      updatePayload.emailPending = FieldValue.delete();
+      updatePayload.missingAuthCodeFlagged = FieldValue.delete();
+      updatePayload.emailSentAt = new Date();
+    }
+
+    await orderRef.update(updatePayload);
+
+    if (shouldSendPendingEmail) {
+      try {
+        await sendPaymentConfirmation({
+          to: orderData.userEmail,
+          customerName: orderData.shippingAddress?.fullName || "",
+          orderId,
+          transactionId: transaction.id,
+          authorizationCode: webhookAuthCode as string,
+          items: orderData.items || [],
+          subtotal: orderData.subtotal || orderData.total || 0,
+          discount: orderData.discount || undefined,
+          couponCode: orderData.couponCode,
+          vat: orderData.vat || 0,
+          total: orderData.total || 0,
+        });
+        console.log(`[webhook] Pending confirmation email sent for order ${orderId}`);
+      } catch (err) {
+        console.error(`[webhook] Failed to send pending confirmation email:`, err);
+      }
+    } else if (
+      isApproved &&
+      orderData.emailPending === true &&
+      !hasValidAuthCode &&
+      orderData.userEmail
+    ) {
+      // Webhook approved the order but still NO auth_code — send pending email
+      // (not a success confirmation). Keep flag for audit.
+      console.error(
+        `[AUDIT:EMAIL_SENT_WITHOUT_AUTH_CODE] orderId=${orderId} txId=${transaction.id}`,
+      );
+      try {
+        await sendPaymentPending({
+          to: orderData.userEmail,
+          customerName: orderData.shippingAddress?.fullName || "",
+          orderId,
+          transactionId: transaction.id,
+          items: orderData.items || [],
+          subtotal: orderData.subtotal || orderData.total || 0,
+          discount: orderData.discount || undefined,
+          couponCode: orderData.couponCode,
+          vat: orderData.vat || 0,
+          total: orderData.total || 0,
+        });
+        await orderRef.update({
+          emailPending: FieldValue.delete(),
+          emailSentAt: new Date(),
+        });
+      } catch (err) {
+        console.error(`[webhook] Failed to send pending-status email:`, err);
+      }
+    }
 
     const newStatus = shouldUpdateStatus
       ? (isApproved ? "paid" : "cancelled")

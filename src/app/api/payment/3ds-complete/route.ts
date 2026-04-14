@@ -54,13 +54,22 @@ export async function POST(request: NextRequest) {
 
     const orderData = orderDoc.data()!;
 
-    // Idempotency: if already paid, return success
+    // Idempotency: if already paid, return success with stored data
     if (orderData.status === "paid") {
       return NextResponse.json({
         success: true,
         transactionId: orderData.paymentTransactionId,
+        authorizationCode: orderData.authorizationCode || null,
         orderId,
       });
+    }
+
+    // Strong idempotency: prevent concurrent verify calls (postMessage + polling race)
+    if (orderData.verifyCalledAt) {
+      console.log(`[3ds-complete] verify already called for order ${orderId}, returning current state`);
+      return NextResponse.json({
+        error: "Pago ya procesado",
+      }, { status: 409 });
     }
 
     if (orderData.status !== "3ds-pending" && orderData.status !== "otp-pending") {
@@ -143,15 +152,34 @@ export async function POST(request: NextRequest) {
     // Determine the value to send: cres for 3DS, otpCode for OTP
     const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
 
-    // Call Nuvei Verify API instead of a second debit
-    console.log("[3ds-complete] Calling verify:", { transactionId, type: actualType, hasValue: !!verifyValue });
+    // Optimistic lock: mark verify-in-progress atomically. If another
+    // concurrent call wins, throw ALREADY_CALLED and bail out.
+    const orderRef = dbAdmin.collection("orders").doc(orderId);
+    try {
+      await dbAdmin.runTransaction(async (tx) => {
+        const doc = await tx.get(orderRef);
+        if (doc.data()?.verifyCalledAt) {
+          throw new Error("ALREADY_CALLED");
+        }
+        tx.update(orderRef, { verifyCalledAt: new Date() });
+      });
+    } catch (err) {
+      if ((err as Error).message === "ALREADY_CALLED") {
+        console.log(`[3ds-complete] Lost verify lock race for order ${orderId}`);
+        return NextResponse.json({ error: "Pago ya procesado" }, { status: 409 });
+      }
+      throw err;
+    }
+
+    // Call Nuvei Verify API
+    console.log(`[3ds-complete] BEFORE verify: orderId=${orderId}, type=${actualType}, hasValue=${!!verifyValue}`);
     const verifyResult = await verifyThreeDS({
       transactionId,
       userId,
       type: actualType,
       value: verifyValue,
     });
-    console.log("[3ds-complete] Verify response:", JSON.stringify(verifyResult));
+    console.log(`[3ds-complete] AFTER verify: authCode=${verifyResult.transaction?.authorization_code ?? "MISSING"} status=${verifyResult.transaction?.status} detail=${verifyResult.transaction?.status_detail}`);
 
     // The verify API can return two different response structures:
     // 1. Nested (DebitResponse): { transaction: { status: "success", status_detail: 3, id: "..." } }
@@ -169,19 +197,42 @@ export async function POST(request: NextRequest) {
       (txStatus === "success" || txStatus === 1) && txStatusDetail === 3;
 
     if (isSuccess) {
-      const batch = dbAdmin.batch();
-      const orderRef = dbAdmin.collection("orders").doc(orderId);
+      const hasValidAuthCode =
+        typeof txAuthCode === "string" &&
+        txAuthCode.trim().length > 0 &&
+        txAuthCode !== "null";
 
-      batch.update(orderRef, {
-        status: "paid",
-        paymentTransactionId: txId,
-        authorizationCode: txAuthCode,
-        chargeResponseAt: new Date(),
-        updatedAt: new Date(),
-        threeDSCres: FieldValue.delete(),
-        threeDSTransStatus: FieldValue.delete(),
-        isDeviceFingerprint: FieldValue.delete(),
-      });
+      const batch = dbAdmin.batch();
+
+      if (hasValidAuthCode) {
+        batch.update(orderRef, {
+          status: "paid",
+          paymentTransactionId: txId,
+          authorizationCode: txAuthCode,
+          chargeResponseAt: new Date(),
+          updatedAt: new Date(),
+          threeDSCres: FieldValue.delete(),
+          threeDSTransStatus: FieldValue.delete(),
+          isDeviceFingerprint: FieldValue.delete(),
+        });
+      } else {
+        // Audit: verify succeeded but no auth_code — wait for webhook
+        console.error(
+          `[AUDIT:MISSING_AUTH_CODE] orderId=${orderId} txId=${txId} verifyResponse=${JSON.stringify(verifyResult)}`,
+        );
+        batch.update(orderRef, {
+          status: "paid",
+          paymentTransactionId: txId,
+          missingAuthCodeFlagged: true,
+          missingAuthCodeLoggedAt: new Date(),
+          emailPending: true,
+          chargeResponseAt: new Date(),
+          updatedAt: new Date(),
+          threeDSCres: FieldValue.delete(),
+          threeDSTransStatus: FieldValue.delete(),
+          isDeviceFingerprint: FieldValue.delete(),
+        });
+      }
 
       // Increment promotion usage if coupon was applied
       if (orderData.promotionId) {
@@ -200,21 +251,29 @@ export async function POST(request: NextRequest) {
 
       await batch.commit();
 
-      // Send confirmation email (non-blocking)
-      const userEmail = orderData.userEmail || decodedToken.email || "";
-      const emailResult = await sendPaymentConfirmation({
-        to: userEmail,
-        customerName: orderData.shippingAddress?.fullName || "",
-        orderId,
-        transactionId: txId,
-        authorizationCode: txAuthCode,
-        items: orderData.items || [],
-        subtotal: orderData.subtotal || orderData.total,
-        discount: orderData.discount || undefined,
-        couponCode: orderData.couponCode,
-        vat: orderData.vat || 0,
-        total: orderData.total,
-      }).catch(() => ({ success: false }));
+      // Send confirmation email ONLY if we have auth_code.
+      // Otherwise webhook will send it later (or timeout handler).
+      let emailSent = false;
+      if (hasValidAuthCode) {
+        const userEmail = orderData.userEmail || decodedToken.email || "";
+        const emailResult = await sendPaymentConfirmation({
+          to: userEmail,
+          customerName: orderData.shippingAddress?.fullName || "",
+          orderId,
+          transactionId: txId,
+          authorizationCode: txAuthCode as string,
+          items: orderData.items || [],
+          subtotal: orderData.subtotal || orderData.total,
+          discount: orderData.discount || undefined,
+          couponCode: orderData.couponCode,
+          vat: orderData.vat || 0,
+          total: orderData.total,
+        }).catch(() => ({ success: false }));
+        emailSent = emailResult.success;
+        if (emailSent) {
+          await orderRef.update({ emailSentAt: new Date() });
+        }
+      }
 
       // Delete card from Nuvei if user chose not to save it
       if (orderData.deleteCardAfterPayment && orderData.paymentToken) {
@@ -226,8 +285,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         transactionId: txId,
-        authorizationCode: txAuthCode,
-        emailSent: emailResult.success,
+        authorizationCode: hasValidAuthCode ? txAuthCode : null,
+        emailSent,
         orderId,
       });
     }

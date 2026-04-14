@@ -230,12 +230,14 @@ export default function CheckoutPage() {
     return () => clearTimeout(timer);
   }, [threeDSChallenge, user]);
 
-  // Listen for 3DS challenge completion via postMessage (works on localhost)
-  // AND poll verify API as fallback (works on Firebase App Hosting where callback POST is blocked)
+  // Listen for 3DS challenge completion via postMessage from Cloud Function.
+  // The Cloud Function receives the ACS callback, stores cres in Firestore,
+  // and sends postMessage to this parent window. Only ONE mechanism — no polling —
+  // to guarantee verify is called exactly once (prevents race conditions that
+  // trigger Nuvei's auto-reverse of the transaction).
   useEffect(() => {
     if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
 
-    // --- postMessage listener (fast path when callback works) ---
     async function handle3DSMessage(event: MessageEvent) {
       if (event.data?.type !== "3DS_COMPLETE") return;
       const { orderId, transStatus } = event.data;
@@ -276,67 +278,22 @@ export default function CheckoutPage() {
 
     window.addEventListener("message", handle3DSMessage);
 
-    // --- Polling fallback (for when postMessage doesn't arrive) ---
-    // Start polling after 10 seconds (give Cloud Function + postMessage time first)
-    // Then poll every 4 seconds for up to 2 minutes
-    let pollCount = 0;
-    const MAX_POLLS = 30; // 30 * 4s = 2 minutes
-    const POLL_DELAY = 10000; // wait 10s before first poll
-    const POLL_INTERVAL = 4000;
-
-    let pollIntervalRef: ReturnType<typeof setInterval> | null = null;
-
-    const pollTimer = setTimeout(() => {
-      pollIntervalRef = setInterval(async () => {
-        if (threeDSCompleteCalledRef.current) {
-          clearInterval(pollIntervalRef!);
-          return;
-        }
-        pollCount++;
-        if (pollCount > MAX_POLLS) {
-          clearInterval(pollIntervalRef!);
-          paymentLockRef.current = false;
-          setProcessingPayment(false);
-          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
-          setThreeDSChallenge(null);
-          return;
-        }
-
-        try {
-          const response = await fetch("/api/payment/3ds-complete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: threeDSChallenge.orderId,
-              userId: user.uid,
-              type: "AUTHENTICATION_CONTINUE",
-              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-            }),
-          });
-          const data = await response.json();
-
-          // If still pending (challenge not completed yet), keep polling
-          if (data.pending) return;
-
-          // If verify returned a definitive result, handle it
-          if (data.success || data.error) {
-            if (threeDSCompleteCalledRef.current) return;
-            threeDSCompleteCalledRef.current = true;
-            clearInterval(pollIntervalRef!);
-            setProcessingPayment(true);
-            setThreeDSChallenge(null);
-            handleVerifyResponse.current(data);
-          }
-        } catch {
-          // Network error — keep polling
-        }
-      }, POLL_INTERVAL);
-    }, POLL_DELAY);
+    // Safety timeout: if postMessage never arrives in 3 minutes, show error.
+    // Nuvei would have auto-reversed the transaction by then anyway.
+    const CHALLENGE_TIMEOUT_MS = 180_000;
+    const timeoutId = setTimeout(async () => {
+      if (threeDSCompleteCalledRef.current) return;
+      threeDSCompleteCalledRef.current = true;
+      paymentLockRef.current = false;
+      setProcessingPayment(false);
+      setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
+      setThreeDSChallenge(null);
+      try { await markOrderFailed(threeDSChallenge.orderId); } catch { /* best effort */ }
+    }, CHALLENGE_TIMEOUT_MS);
 
     return () => {
       window.removeEventListener("message", handle3DSMessage);
-      clearTimeout(pollTimer);
-      if (pollIntervalRef) clearInterval(pollIntervalRef);
+      clearTimeout(timeoutId);
     };
   }, [threeDSChallenge, user]);
 

@@ -67,9 +67,8 @@ export async function nuveiRequest<T>(
     return proxyResponse.json() as Promise<T>;
   }
 
-  // Direct call (works from local dev, fails from Cloud Run in production)
+  // Direct call
   const url = `${getBaseUrl()}${path}`;
-  console.log(`[nuvei] ${method} ${url} | env=${process.env.NUVEI_ENV}`);
 
   const options: RequestInit = {
     method,
@@ -84,16 +83,23 @@ export async function nuveiRequest<T>(
   }
 
   const response = await fetch(url, options);
+  const responseText = await response.text();
+  console.log(`[nuvei] ${method} ${path} → ${response.status} | body: ${responseText.slice(0, 300)}`);
+
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error(`[nuvei] ${method} ${path} failed with status ${response.status}. Body: ${errorBody}`);
+    console.error(`[nuvei] ${method} ${path} failed with status ${response.status}`);
     try {
-      return JSON.parse(errorBody) as T;
+      return JSON.parse(responseText) as T;
     } catch {
       throw new Error(`Nuvei ${method} ${path} failed: ${response.status}`);
     }
   }
-  return response.json() as Promise<T>;
+
+  try {
+    return JSON.parse(responseText) as T;
+  } catch {
+    throw new Error(`Nuvei ${method} ${path}: invalid JSON response`);
+  }
 }
 
 export async function listCards(uid: string) {
