@@ -245,23 +245,12 @@ export default function CheckoutPage() {
 
       setThreeDSChallenge(null);
 
-      if (transStatus && transStatus !== "Y" && transStatus !== "A") {
-        threeDSCompleteCalledRef.current = true;
-        paymentLockRef.current = false;
-        const msg =
-          transStatus === "N" ? "Autenticación 3DS rechazada por tu banco. Intenta con otra tarjeta." :
-          transStatus === "R" ? "Tu banco rechazó la autenticación 3DS." :
-          transStatus === "U" ? "No se pudo verificar la autenticación 3DS. Intenta de nuevo." :
-          "Autenticación 3DS cancelada o no completada.";
-        setPaymentFailed(msg);
-        try { await markOrderFailed(orderId); } catch { /* best effort */ }
-        return;
-      }
-
       if (threeDSCompleteCalledRef.current) return;
       threeDSCompleteCalledRef.current = true;
       setProcessingPayment(true);
 
+      // Always call the backend — it handles both success and failure cases
+      // (including sending the rejection email when transStatus is N/R/U).
       try {
         const response = await fetch("/api/payment/3ds-complete", {
           method: "POST",
@@ -288,7 +277,14 @@ export default function CheckoutPage() {
       setProcessingPayment(false);
       setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
       setThreeDSChallenge(null);
-      try { await markOrderFailed(threeDSChallenge.orderId); } catch { /* best effort */ }
+      // Call timeout endpoint to mark order failed AND send email
+      try {
+        await fetch("/api/payment/3ds-timeout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
+        });
+      } catch { /* best effort */ }
     }, CHALLENGE_TIMEOUT_MS);
 
     return () => {
