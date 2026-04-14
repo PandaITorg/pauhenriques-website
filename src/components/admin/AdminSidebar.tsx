@@ -11,20 +11,32 @@ import {
   FaTimes,
   FaExternalLinkAlt,
   FaGift,
+  FaHome,
+  FaExclamationTriangle,
 } from "react-icons/fa";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: FaTachometerAlt },
+  { href: "/admin/homepage", label: "Homepage", icon: FaHome },
   { href: "/admin/productos", label: "Productos", icon: FaBox },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
   { href: "/admin/promociones", label: "Promociones", icon: FaTag },
   { href: "/admin/plan-novios", label: "Plan Novios", icon: FaGift },
+  { href: "/admin/auditoria", label: "Auditoría", icon: FaExclamationTriangle },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [auditCount, setAuditCount] = useState<number>(0);
+
+  useEffect(() => {
+    fetch("/api/admin/auditoria")
+      .then((r) => (r.ok ? r.json() : { orders: [] }))
+      .then((d) => setAuditCount((d.orders || []).length))
+      .catch(() => {});
+  }, [pathname]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -45,21 +57,29 @@ export default function AdminSidebar() {
 
       {/* Nav items */}
       <div className="flex flex-col gap-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={() => setOpen(false)}
-            className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-              isActive(item.href)
-                ? "bg-primary text-white shadow-(--shadow-glow-primary)"
-                : "text-text-main/60 hover:bg-surface-elevated hover:text-text-main"
-            }`}
-          >
-            <item.icon className="w-4 h-4" />
-            {item.label}
-          </Link>
-        ))}
+        {navItems.map((item) => {
+          const showBadge = item.href === "/admin/auditoria" && auditCount > 0;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                isActive(item.href)
+                  ? "bg-primary text-white shadow-(--shadow-glow-primary)"
+                  : "text-text-main/60 hover:bg-surface-elevated hover:text-text-main"
+              }`}
+            >
+              <item.icon className="w-4 h-4" />
+              <span className="flex-1">{item.label}</span>
+              {showBadge && (
+                <span className="bg-warning text-bg-main text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-4.5 text-center">
+                  {auditCount}
+                </span>
+              )}
+            </Link>
+          );
+        })}
       </div>
 
       {/* Divider + Ver sitio */}

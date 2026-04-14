@@ -1,3 +1,14 @@
+export type HeroTitleFont = 'cormorant' | 'cormorant-italic' | 'dancing-script' | 'inter';
+export type HeroTitleSize = 'md' | 'lg' | 'xl' | 'xxl';
+export type HeroTextPosition =
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'center-left' | 'center' | 'center-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right';
+export type HeroTextBackground = 'none' | 'glass' | 'opaque' | 'gradient-left' | 'gradient-bottom' | 'spotlight';
+export type HeroOverlayDirection = 'none' | 'left' | 'right' | 'top' | 'bottom' | 'radial' | 'vignette';
+export type HeroImageEffect = 'none' | 'ken-burns' | 'parallax';
+export type HeroCtaStyle = 'primary' | 'secondary' | 'ghost' | 'gold' | 'whatsapp';
+
 export interface HeroSlide {
   id: string;
   title: string;
@@ -7,10 +18,21 @@ export interface HeroSlide {
   videoUrl?: string;
   ctaText: string;
   ctaLink: string;
-  ctaStyle: 'primary' | 'secondary';
+  ctaStyle: HeroCtaStyle;
   template: 'full-image' | 'split' | 'immersive';
+  /** @deprecated superseded by textBackground. Kept for legacy docs. */
   textStyle: 'none' | 'opaque' | 'glass';
   overlayOpacity: number;
+  // Granular customization (all optional, defaults applied in getActiveSlides)
+  kicker?: string;
+  titleFont?: HeroTitleFont;
+  titleSize?: HeroTitleSize;
+  titleColor?: string;
+  accentWord?: string;
+  textPosition?: HeroTextPosition;
+  textBackground?: HeroTextBackground;
+  overlayDirection?: HeroOverlayDirection;
+  imageEffect?: HeroImageEffect;
   order: number;
   active: boolean;
   createdAt: Date;
@@ -26,20 +48,42 @@ export interface HomepageMetric {
   active: boolean;
 }
 
-export interface FeaturedProduct {
+export interface CaricoCategory {
   id: string;
   name: string;
-  shortDescription: string;
-  price: number | null;
-  comparePrice?: number;
+  description: string;
   imageUrl: string;
-  badge: string | null;
-  ctaType: 'cart' | 'whatsapp' | 'link';
+  bgColor: string;
   ctaLink?: string;
-  storeType: 'wellme' | 'carico';
-  gridSpan?: 'normal' | 'wide' | 'tall';
   order: number;
   active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Firestore doc shape for `featured_products` — references a Product + presentation overrides. */
+export interface FeaturedProductRef {
+  id: string;
+  productId: string;
+  badge?: string | null;
+  bentoSize?: 'normal' | 'wide' | 'tall';
+  order: number;
+  active: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/** Hydrated shape returned by getFeaturedProducts: joins the ref with its Product. */
+export interface FeaturedProduct {
+  refId: string;
+  productId: string;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  badge?: string | null;
+  bentoSize: 'normal' | 'wide' | 'tall';
+  order: number;
 }
 
 export interface HomepageContent {

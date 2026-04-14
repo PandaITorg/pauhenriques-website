@@ -1,11 +1,22 @@
 import HomeSchema from "@/components/schemas/HomeSchema";
 import Footer from "@/components/layout/Footer";
-import Hero from "@/components/home/Hero";
-import SobreMi from "@/components/home/SobreMi";
-import CategoryShowcase from "@/components/home/CategoryShowcase";
-import PodcastSection from "@/components/home/PodcastSection";
 import Testimonios from "@/components/home/Testimonios";
+import HeroCarousel from "@/components/homepage/HeroCarousel";
+import ImpactStatement from "@/components/homepage/ImpactStatement";
+import CaricoShowcase from "@/components/homepage/CaricoShowcase";
+import WellMeProducts from "@/components/homepage/WellMeProducts";
+import PlanNoviosSection from "@/components/homepage/PlanNoviosSection";
+import PodcastSection from "@/components/homepage/PodcastSection";
+import CtaFinal from "@/components/homepage/CtaFinal";
+import {
+  getActiveSlides,
+  getActiveCaricoCategories,
+  getFeaturedProducts,
+} from "@/lib/homepage/queries";
+import { getLatestEpisodes } from "@/lib/homepage/podcast";
 import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Pau Henriques - Salud Integral, Bienestar y Vida Sin Tóxicos",
@@ -16,16 +27,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const [slides, caricoCategories, featuredProducts, podcastEpisodes] = await Promise.all([
+    getActiveSlides(),
+    getActiveCaricoCategories(),
+    getFeaturedProducts(),
+    getLatestEpisodes(3),
+  ]);
+
   return (
     <>
       <HomeSchema />
       <div className="overflow-x-hidden">
-        <Hero />
-        <SobreMi />
-        <CategoryShowcase />
-        <PodcastSection />
+        <HeroCarousel slides={slides} />
+        <ImpactStatement />
+        <CaricoShowcase categories={caricoCategories} />
+        <WellMeProducts products={featuredProducts} />
+        <PlanNoviosSection imageUrl="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fplan-novios%2Fproducto-portrait.webp?alt=media" />
+        <PodcastSection episodes={podcastEpisodes ?? undefined} />
         <Testimonios />
+        <CtaFinal />
         <Footer />
       </div>
     </>

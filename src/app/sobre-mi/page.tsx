@@ -1,5 +1,7 @@
 import pauSobreMi1 from "@/assets/pau-sobre-mi-1.jpg";
 import pauSobreMi2 from "@/assets/pau-sobre-mi-2.jpg";
+import sobreMiPauForrest from "@/assets/sobremi-Pau-Forrest.webp";
+import sobreMiJorgeYPau from "@/assets/sobre-mi-Jorge-y-Pau.webp";
 import SobreMiSchema from "@/components/schemas/SobreMiSchema";
 import SobreMiClient from "./SobreMiClient";
 import type { Metadata } from "next";
@@ -20,6 +22,8 @@ export default function SobreMi() {
       <SobreMiClient
         pauSobreMi1={pauSobreMi1}
         pauSobreMi2={pauSobreMi2}
+        pauForrest={sobreMiPauForrest}
+        jorgeYPau={sobreMiJorgeYPau}
       />
     </>
   );

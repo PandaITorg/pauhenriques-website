@@ -320,6 +320,49 @@ body {
   }
 }
 
+@keyframes ken-burns {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.08) translate(-1%, -1%);
+  }
+}
+
+.animate-ken-burns {
+  animation: ken-burns 9s ease-out forwards;
+}
+
+@keyframes wa-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(37, 211, 102, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 36px rgba(37, 211, 102, 0.55);
+  }
+}
+
+.animate-wa-pulse {
+  animation: wa-pulse 3s ease-in-out infinite;
+}
+
+@keyframes noviosFloat {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.12;
+  }
+  80% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: translateY(-90px);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

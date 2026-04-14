@@ -12,7 +12,7 @@ interface PaymentConfirmationParams {
   customerName: string;
   orderId: string;
   transactionId: string;
-  authorizationCode: string | null;
+  authorizationCode: string;
   items: Array<{ name: string; quantity: number; price: number }>;
   subtotal: number;
   discount?: number;
@@ -20,6 +20,16 @@ interface PaymentConfirmationParams {
   vat: number;
   total: number;
 }
+
+/**
+ * Fallback variant — use ONLY when authorization_code is unavailable
+ * after a reasonable timeout waiting for Nuvei webhook.
+ * The rendered email omits the authorization section entirely.
+ */
+type PaymentConfirmationNoAuthParams = Omit<
+  PaymentConfirmationParams,
+  "authorizationCode"
+>;
 
 export async function sendPaymentConfirmation(
   params: PaymentConfirmationParams,
@@ -32,6 +42,10 @@ export async function sendPaymentConfirmation(
   if (!params.to || !params.to.includes("@")) {
     console.warn("[email] Invalid recipient email, skipping:", params.to);
     return { success: false };
+  }
+
+  if (!params.authorizationCode || params.authorizationCode.trim() === "") {
+    throw new Error("sendPaymentConfirmation: authorizationCode is required");
   }
 
   try {
@@ -55,7 +69,50 @@ export async function sendPaymentConfirmation(
   }
 }
 
-function buildConfirmationHtml(params: PaymentConfirmationParams): string {
+/**
+ * Send PENDING-status email when authorization_code is unavailable.
+ * This is NOT a success confirmation — it tells the user their payment
+ * is being processed and they will receive a final confirmation shortly.
+ * Used as fallback when Nuvei webhook timeout expires without delivering
+ * the authorization_code (auditable edge case, logged to Firestore).
+ */
+export async function sendPaymentPending(
+  params: PaymentConfirmationNoAuthParams,
+): Promise<{ success: boolean }> {
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not configured — skipping email");
+    return { success: false };
+  }
+
+  if (!params.to || !params.to.includes("@")) {
+    console.warn("[email] Invalid recipient email, skipping:", params.to);
+    return { success: false };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: params.to,
+      subject: `Tu pago est\u00e1 siendo procesado - Orden ${params.orderId.slice(0, 8)}`,
+      html: buildPendingHtml(params),
+    });
+
+    if (error) {
+      console.error("[email] Failed to send pending email:", error);
+      return { success: false };
+    }
+
+    console.log("[email] Pending sent to:", params.to);
+    return { success: true };
+  } catch (err) {
+    console.error("[email] Error sending pending email:", err);
+    return { success: false };
+  }
+}
+
+function buildConfirmationHtml(
+  params: PaymentConfirmationParams | (PaymentConfirmationNoAuthParams & { authorizationCode?: string }),
+): string {
   /* ── Brand palette (from globals.css @theme) ──
    * bg body:       #0e120a  (bosque-profundo-900)
    * card bg:       #2b3322  (bosque-profundo-600)
@@ -201,12 +258,12 @@ function buildConfirmationHtml(params: PaymentConfirmationParams): string {
                           <div style="color: #778a63; font-size: 13px; font-family: Consolas, monospace; margin-top: 3px; word-break: break-all;">${params.transactionId}</div>
                         </td>
                       </tr>
-                      <tr>
+                      ${params.authorizationCode ? `<tr>
                         <td style="padding: 14px 20px;">
                           <span style="font-size: 11px; color: #556346; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Autorizaci\u00f3n</span>
-                          <div style="color: #778a63; font-size: 13px; font-family: Consolas, monospace; margin-top: 3px;">${params.authorizationCode || "N/A"}</div>
+                          <div style="color: #778a63; font-size: 13px; font-family: Consolas, monospace; margin-top: 3px;">${params.authorizationCode}</div>
                         </td>
-                      </tr>
+                      </tr>` : ""}
                     </table>
                   </td>
                 </tr>
@@ -311,6 +368,65 @@ function buildConfirmationHtml(params: PaymentConfirmationParams): string {
             </td>
           </tr>
 
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function buildPendingHtml(params: PaymentConfirmationNoAuthParams): string {
+  const totalFormatted = params.total.toFixed(2);
+  const shortOrderId = params.orderId.slice(0, 8);
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pago en procesamiento</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0e120a; font-family: Inter, system-ui, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #0e120a;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #2b3322; border-radius: 14px; overflow: hidden; border: 1px solid rgba(193,196,167,0.15);">
+          <tr>
+            <td style="padding: 40px 36px 24px; text-align: center;">
+              <div style="display: inline-block; width: 56px; height: 56px; border-radius: 50%; background-color: rgba(166,138,99,0.15); line-height: 56px; font-size: 28px; color: #a68a63;">\u29D6</div>
+              <h1 style="font-family: 'Cormorant Garamond', Georgia, serif; color: #c1c4a7; font-size: 26px; font-weight: 500; margin: 20px 0 8px;">Tu pago est&aacute; siendo procesado</h1>
+              <p style="color: #778a63; font-size: 14px; margin: 0;">Hola ${params.customerName || ""}, recibimos tu pago y lo estamos verificando con el banco.</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 36px 24px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #21281a; border: 1px solid rgba(193,196,167,0.10); border-radius: 10px;">
+                <tr>
+                  <td style="padding: 14px 20px; border-bottom: 1px solid rgba(193,196,167,0.08);">
+                    <span style="font-size: 11px; color: #556346; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Orden</span>
+                    <div style="color: #c1c4a7; font-size: 14px; margin-top: 3px;">#${shortOrderId}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 20px; border-bottom: 1px solid rgba(193,196,167,0.08);">
+                    <span style="font-size: 11px; color: #556346; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">ID Transacci\u00f3n</span>
+                    <div style="color: #778a63; font-size: 13px; font-family: Consolas, monospace; margin-top: 3px; word-break: break-all;">${params.transactionId}</div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 14px 20px;">
+                    <span style="font-size: 11px; color: #556346; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Total</span>
+                    <div style="color: #c1c4a7; font-size: 18px; font-weight: 600; margin-top: 3px;">$${totalFormatted}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 0 36px 36px;">
+              <p style="color: #778a63; font-size: 13px; line-height: 1.6; margin: 0;">Recibir&aacute;s una confirmaci&oacute;n final por correo en los pr&oacute;ximos minutos. Si no llega en las pr&oacute;ximas horas, responde a este correo y te ayudaremos.</p>
+            </td>
+          </tr>
         </table>
       </td>
     </tr>
@@ -561,3 +677,4 @@ function buildFailedHtml(params: PaymentFailedParams): string {
 </body>
 </html>`;
 }
+
