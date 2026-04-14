@@ -60,7 +60,7 @@ export default function ImpactStatement({
       ref={sectionRef}
       className="relative overflow-hidden"
       style={{
-        backgroundColor: 'var(--color-warm-900)',
+        background: 'linear-gradient(180deg, #3d2e1c 0%, #463528 100%)',
         paddingTop: 'clamp(80px, 10vw, 120px)',
         paddingBottom: 'clamp(80px, 10vw, 120px)',
       }}

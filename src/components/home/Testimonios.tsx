@@ -167,7 +167,10 @@ const Testimonios: React.FC = () => {
   }, [animateScroll]);
 
   return (
-    <section className="bg-background py-16 md:py-24">
+    <section
+      className="py-16 md:py-24"
+      style={{ background: 'linear-gradient(180deg, #38432e 0%, #343d2a 100%)' }}
+    >
       {/* Header */}
       <div className="container mx-auto text-center mb-10 md:mb-14 px-5">
         <h2 className="font-cormorant text-3xl md:text-4xl font-semibold text-text-main">

@@ -36,7 +36,7 @@ export default function CtaFinal() {
       className="relative overflow-hidden"
       style={{
         background:
-          'radial-gradient(ellipse at center, var(--color-background) 0%, #181d12 100%)',
+          'radial-gradient(ellipse at 50% 0%, #343d2a 0%, #181d12 75%)',
         paddingTop: 'clamp(96px, 12vw, 120px)',
         paddingBottom: 'clamp(96px, 12vw, 120px)',
       }}
