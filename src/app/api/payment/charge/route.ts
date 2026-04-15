@@ -218,10 +218,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build term_url for 3DS challenge callback
-    // TEMPORARY: point to Anthony's webhook so he can confirm CRES arrives.
-    // Revert to Cloud Function once diagnosed.
-    const termUrl = `https://lantechco.ec/img/callback3DS.php?orderId=${orderId}`;
+    // Build term_url for 3DS challenge callback — Cloud Function receives the
+    // CRES POST from Alignet (confirmed via webhook.site probe 2026-04-15).
+    const functionsBase = process.env.CLOUD_FUNCTIONS_BASE_URL
+      || "https://us-central1-pau-henriques-web-v1.cloudfunctions.net";
+    const termUrl = `${functionsBase}/threeDSCallback?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
     const clientIp =
