@@ -230,11 +230,11 @@ export default function CheckoutPage() {
     return () => clearTimeout(timer);
   }, [threeDSChallenge, user]);
 
-  // Listen for 3DS challenge completion via postMessage from Cloud Function.
-  // The Cloud Function receives the ACS callback, stores cres in Firestore,
-  // and sends postMessage to this parent window. Only ONE mechanism — no polling —
-  // to guarantee verify is called exactly once (prevents race conditions that
-  // trigger Nuvei's auto-reverse of the transaction).
+  // 3DS Challenge (status 36) — two mechanisms to detect completion:
+  //  1) postMessage from Cloud Function (if ACS does POST to term_url)
+  //  2) Polling with AUTHENTICATION_CONTINUE (fallback — Nuvei tracks CRES
+  //     internally and reports "pending" until ACS notifies them of result).
+  // Polling starts after 20s to let the user actually complete the challenge.
   useEffect(() => {
     if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
 
@@ -249,8 +249,6 @@ export default function CheckoutPage() {
       threeDSCompleteCalledRef.current = true;
       setProcessingPayment(true);
 
-      // Always call the backend — it handles both success and failure cases
-      // (including sending the rejection email when transStatus is N/R/U).
       try {
         const response = await fetch("/api/payment/3ds-complete", {
           method: "POST",
@@ -267,29 +265,76 @@ export default function CheckoutPage() {
 
     window.addEventListener("message", handle3DSMessage);
 
-    // Safety timeout: if postMessage never arrives in 3 minutes, show error.
-    // Nuvei would have auto-reversed the transaction by then anyway.
-    const CHALLENGE_TIMEOUT_MS = 180_000;
-    const timeoutId = setTimeout(async () => {
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      paymentLockRef.current = false;
-      setProcessingPayment(false);
-      setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
-      setThreeDSChallenge(null);
-      // Call timeout endpoint to mark order failed AND send email
-      try {
-        await fetch("/api/payment/3ds-timeout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
-        });
-      } catch { /* best effort */ }
-    }, CHALLENGE_TIMEOUT_MS);
+    // Polling (fallback when postMessage doesn't arrive): wait 20s before first
+    // poll so user has time to complete challenge. Then poll every 5s.
+    // Nuvei returns status_detail 36 while pending — we keep polling.
+    // When status_detail becomes 3 (success) or anything else, stop.
+    const POLL_DELAY_MS = 20_000;
+    const POLL_INTERVAL_MS = 5_000;
+    const MAX_POLLS = 36; // 36 * 5s = 3 minutes of polling after initial delay
+    let pollCount = 0;
+    let pollIntervalId: ReturnType<typeof setInterval> | null = null;
+
+    const pollStartTimeout = setTimeout(() => {
+      pollIntervalId = setInterval(async () => {
+        if (threeDSCompleteCalledRef.current) {
+          if (pollIntervalId) clearInterval(pollIntervalId);
+          return;
+        }
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+          if (pollIntervalId) clearInterval(pollIntervalId);
+          if (threeDSCompleteCalledRef.current) return;
+          threeDSCompleteCalledRef.current = true;
+          paymentLockRef.current = false;
+          setProcessingPayment(false);
+          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
+          setThreeDSChallenge(null);
+          try {
+            await fetch("/api/payment/3ds-timeout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
+            });
+          } catch { /* best effort */ }
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/payment/3ds-complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: threeDSChallenge.orderId,
+              userId: user!.uid,
+              type: "AUTHENTICATION_CONTINUE",
+              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
+            }),
+          });
+          const data = await response.json();
+
+          // Still pending? keep polling.
+          if (data.pending || data.stillPending) return;
+
+          // Definitive result (success or error) — stop polling and handle it.
+          if (data.success || data.error || data.challenge) {
+            if (threeDSCompleteCalledRef.current) return;
+            threeDSCompleteCalledRef.current = true;
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            setChallengeVerifying(true);
+            setThreeDSChallenge(null);
+            handleVerifyResponse.current(data);
+          }
+        } catch {
+          // Network error — keep polling
+        }
+      }, POLL_INTERVAL_MS);
+    }, POLL_DELAY_MS);
 
     return () => {
       window.removeEventListener("message", handle3DSMessage);
-      clearTimeout(timeoutId);
+      clearTimeout(pollStartTimeout);
+      if (pollIntervalId) clearInterval(pollIntervalId);
     };
   }, [threeDSChallenge, user]);
 
@@ -718,41 +763,6 @@ export default function CheckoutPage() {
                 style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "600px" }}
                 title="Autenticación 3DS"
                 sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
-                onLoad={async (e) => {
-                  // First load = initial challenge form from Nuvei.
-                  // Second load = ACS returned after user authenticated.
-                  const iframe = e.currentTarget;
-                  if (!iframe.dataset.initialLoad) {
-                    iframe.dataset.initialLoad = "true";
-                    return;
-                  }
-                  if (threeDSChallenge.isDeviceFingerprint) return;
-
-                  // User finished the challenge. Show spinner and call verify
-                  // with AUTHENTICATION_CONTINUE — Nuvei tracks the CRES
-                  // internally, so no client-side CRES is required.
-                  setChallengeVerifying(true);
-                  if (threeDSCompleteCalledRef.current || !user) return;
-                  threeDSCompleteCalledRef.current = true;
-                  try {
-                    const response = await fetch("/api/payment/3ds-complete", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        orderId: threeDSChallenge.orderId,
-                        userId: user.uid,
-                        type: "AUTHENTICATION_CONTINUE",
-                        nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-                      }),
-                    });
-                    handleVerifyResponse.current(await response.json());
-                  } catch {
-                    paymentLockRef.current = false;
-                    setProcessingPayment(false);
-                    setPaymentFailed("Error de conexión al verificar 3DS.");
-                    setThreeDSChallenge(null);
-                  }
-                }}
               />
               {threeDSChallenge.isDeviceFingerprint && (
                 <div className="flex flex-col items-center gap-3 py-10">

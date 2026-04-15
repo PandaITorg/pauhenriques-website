@@ -143,24 +143,12 @@ export async function POST(request: NextRequest) {
     // Determine the value to send: cres for 3DS, otpCode for OTP
     const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
 
-    // Optimistic lock: mark verify-in-progress atomically. If another
-    // concurrent call wins, throw ALREADY_CALLED and bail out.
+    // Note: removed pre-verify optimistic lock because the polling flow
+    // calls this endpoint many times. The order-status guard above already
+    // prevents double-processing once the order reaches a final state
+    // (paid / failed). Track last call time for diagnostics only.
     const orderRef = dbAdmin.collection("orders").doc(orderId);
-    try {
-      await dbAdmin.runTransaction(async (tx) => {
-        const doc = await tx.get(orderRef);
-        if (doc.data()?.verifyCalledAt) {
-          throw new Error("ALREADY_CALLED");
-        }
-        tx.update(orderRef, { verifyCalledAt: new Date() });
-      });
-    } catch (err) {
-      if ((err as Error).message === "ALREADY_CALLED") {
-        console.log(`[3ds-complete] Lost verify lock race for order ${orderId}`);
-        return NextResponse.json({ error: "Pago ya procesado" }, { status: 409 });
-      }
-      throw err;
-    }
+    await orderRef.update({ lastVerifyAttemptAt: new Date() });
 
     // Call Nuvei Verify API
     console.log(`[3ds-complete] BEFORE verify: orderId=${orderId}, type=${actualType}, hasValue=${!!verifyValue}`);
@@ -186,6 +174,23 @@ export async function POST(request: NextRequest) {
     // Success: status "success" or status 1, with status_detail 3
     const isSuccess =
       (txStatus === "success" || txStatus === 1) && txStatusDetail === 3;
+
+    // "Still pending": Nuvei hasn't received the CRES from ACS yet.
+    // status_detail 36/37 means challenge is still in progress.
+    // status "pending" without a final detail also means waiting.
+    // Return stillPending so the frontend keeps polling — don't mark failed.
+    const isStillPending =
+      !isSuccess &&
+      (txStatusDetail === 36 ||
+        txStatusDetail === 37 ||
+        txStatus === "pending");
+
+    if (isStillPending) {
+      console.log(
+        `[3ds-complete] Still pending: txStatus=${txStatus} detail=${txStatusDetail}. Polling continues.`,
+      );
+      return NextResponse.json({ stillPending: true });
+    }
 
     if (isSuccess) {
       const hasValidAuthCode =
