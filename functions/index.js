@@ -14,23 +14,67 @@ const db = getFirestore();
 exports.threeDSCallback = onRequest(
   { cors: true, region: "us-central1" },
   async (req, res) => {
+    // === DIAGNOSTIC LOGGING — full request dump ===
+    // This is the critical diagnostic to find where the CRES arrives (or doesn't).
+    try {
+      console.log("[3dsCallback] =============== INCOMING REQUEST ===============");
+      console.log("[3dsCallback] method:", req.method);
+      console.log("[3dsCallback] url:", req.url);
+      console.log("[3dsCallback] query:", JSON.stringify(req.query));
+      console.log("[3dsCallback] headers:", JSON.stringify(req.headers));
+      console.log("[3dsCallback] body (parsed):", JSON.stringify(req.body));
+      console.log("[3dsCallback] rawBody:", req.rawBody ? req.rawBody.toString("utf8") : "(none)");
+      console.log("[3dsCallback] body field names:", req.body && typeof req.body === "object" ? Object.keys(req.body).join(",") : "(n/a)");
+    } catch (logErr) {
+      console.error("[3dsCallback] log error:", logErr);
+    }
+
     const orderId = req.query.orderId || "";
     let transStatus = "U";
     let cres = "";
 
+    // Try to extract CRES from every possible field name, whatever casing
+    function pickCres(src) {
+      if (!src || typeof src !== "object") return "";
+      // Match any field that looks like cres/CRes/creq/value/param.value
+      for (const key of Object.keys(src)) {
+        const k = key.toLowerCase();
+        if (k === "cres" || k === "cres_value" || k === "cresvalue" || k === "value" || k === "param.value" || k === "paramvalue") {
+          const v = src[key];
+          if (typeof v === "string" && v.length > 0) return v;
+        }
+      }
+      return src.cres || src.CRes || src.CRES || src.value || "";
+    }
+
     if (req.method === "POST") {
       const contentType = req.headers["content-type"] || "";
       if (contentType.includes("application/x-www-form-urlencoded")) {
-        transStatus = req.body.transStatus || "U";
-        cres = req.body.cres || req.body.CRes || "";
+        transStatus = req.body?.transStatus || req.body?.TransStatus || "U";
+        cres = pickCres(req.body);
       } else if (typeof req.body === "object") {
-        transStatus = req.body.transStatus || "U";
-        cres = req.body.cres || req.body.CRes || "";
+        transStatus = req.body?.transStatus || req.body?.TransStatus || "U";
+        cres = pickCres(req.body);
+      }
+      // Last-resort fallback: parse rawBody manually
+      if (!cres && req.rawBody) {
+        const raw = req.rawBody.toString("utf8");
+        const params = new URLSearchParams(raw);
+        for (const [k, v] of params.entries()) {
+          const kl = k.toLowerCase();
+          if ((kl === "cres" || kl === "value" || kl === "param.value") && v) {
+            cres = v;
+            console.log("[3dsCallback] CRES extracted from rawBody fallback, key=" + k);
+            break;
+          }
+        }
       }
     } else if (req.method === "GET") {
       transStatus = req.query.transStatus || "U";
-      cres = req.query.cres || req.query.CRes || "";
+      cres = req.query.cres || req.query.CRes || req.query.value || "";
     }
+
+    console.log("[3dsCallback] Extracted: orderId=" + orderId + ", transStatus=" + transStatus + ", cres=" + (cres ? "YES(len=" + cres.length + ")" : "NO"));
 
     // Store cres on the order so 3ds-complete can use it for BY_CRES verify
     // Only update if order exists and is in 3ds-pending state (prevents tampering)

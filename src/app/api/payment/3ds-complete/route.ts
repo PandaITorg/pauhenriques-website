@@ -116,23 +116,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For AUTHENTICATION_CONTINUE on a 3DS challenge (36/37), check if the
-    // Cloud Function callback has stored the cres first. If not, the challenge
-    // is still in progress — return "pending" without calling Nuvei.
-    if (type === "AUTHENTICATION_CONTINUE" && orderData.threeDSCres) {
-      // Cloud Function already stored the cres — upgrade to BY_CRES
-      console.log("[3ds-complete] Polling detected stored cres, upgrading to BY_CRES");
-    } else if (type === "AUTHENTICATION_CONTINUE" && !orderData.isDeviceFingerprint) {
-      // Challenge still in progress — no cres yet, don't call Nuvei
-      return NextResponse.json({ pending: true });
-    }
-
-    // Determine the actual verify type and value
+    // Strategy: always call Nuvei's verify — Nuvei tracks CRES internally
+    // when the ACS completes the challenge (server-to-server), so
+    // AUTHENTICATION_CONTINUE is sufficient even for status 36/37. If we
+    // happen to have captured a CRES via term_url, prefer BY_CRES.
     const actualType = (type === "AUTHENTICATION_CONTINUE" && orderData.threeDSCres)
       ? "BY_CRES" as const
       : type;
 
-    // For BY_CRES, get the cres value stored by 3ds-callback
     const cresValue = (actualType === "BY_CRES") ? orderData.threeDSCres : undefined;
     if (actualType === "BY_CRES" && !cresValue) {
       return NextResponse.json(
