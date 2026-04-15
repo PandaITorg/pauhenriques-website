@@ -116,10 +116,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Strategy: always call Nuvei's verify — Nuvei tracks CRES internally
-    // when the ACS completes the challenge (server-to-server), so
-    // AUTHENTICATION_CONTINUE is sufficient even for status 36/37. If we
-    // happen to have captured a CRES via term_url, prefer BY_CRES.
+    // For status 36/37 (interactive challenge), verify MUST be called with
+    // BY_CRES + the CRES value. The CRES arrives via Cloud Function callback
+    // from Alignet's ACS. If the CRES hasn't been stored yet, the challenge
+    // is still in progress — return stillPending so the client keeps polling.
+    //
+    // Device fingerprint (status 35) is allowed to call AUTHENTICATION_CONTINUE
+    // without CRES because Nuvei completes it internally.
+    if (
+      type === "AUTHENTICATION_CONTINUE" &&
+      !orderData.threeDSCres &&
+      !orderData.isDeviceFingerprint
+    ) {
+      console.log(`[3ds-complete] No CRES yet for order ${orderId} — still pending`);
+      return NextResponse.json({ stillPending: true });
+    }
+
+    // Upgrade AUTHENTICATION_CONTINUE to BY_CRES if we have the CRES.
     const actualType = (type === "AUTHENTICATION_CONTINUE" && orderData.threeDSCres)
       ? "BY_CRES" as const
       : type;
