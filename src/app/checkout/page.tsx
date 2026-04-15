@@ -718,15 +718,39 @@ export default function CheckoutPage() {
                 style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "600px" }}
                 title="Autenticación 3DS"
                 sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
-                onLoad={(e) => {
-                  // Detect when iframe navigates away from challenge (user completed it)
-                  // The first load is the challenge form, subsequent loads mean the ACS
-                  // submitted to our callback — switch to verifying spinner
+                onLoad={async (e) => {
+                  // First load = initial challenge form from Nuvei.
+                  // Second load = ACS returned after user authenticated.
                   const iframe = e.currentTarget;
                   if (!iframe.dataset.initialLoad) {
                     iframe.dataset.initialLoad = "true";
-                  } else if (!threeDSChallenge.isDeviceFingerprint) {
-                    setChallengeVerifying(true);
+                    return;
+                  }
+                  if (threeDSChallenge.isDeviceFingerprint) return;
+
+                  // User finished the challenge. Show spinner and call verify
+                  // with AUTHENTICATION_CONTINUE — Nuvei tracks the CRES
+                  // internally, so no client-side CRES is required.
+                  setChallengeVerifying(true);
+                  if (threeDSCompleteCalledRef.current || !user) return;
+                  threeDSCompleteCalledRef.current = true;
+                  try {
+                    const response = await fetch("/api/payment/3ds-complete", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        orderId: threeDSChallenge.orderId,
+                        userId: user.uid,
+                        type: "AUTHENTICATION_CONTINUE",
+                        nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
+                      }),
+                    });
+                    handleVerifyResponse.current(await response.json());
+                  } catch {
+                    paymentLockRef.current = false;
+                    setProcessingPayment(false);
+                    setPaymentFailed("Error de conexión al verificar 3DS.");
+                    setThreeDSChallenge(null);
                   }
                 }}
               />
