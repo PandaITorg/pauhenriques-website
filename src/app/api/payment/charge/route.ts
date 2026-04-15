@@ -218,10 +218,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build term_url for 3DS challenge callback
-    // TEMPORARY: redirect to webhook.site to capture what Alignet actually sends.
-    // This is a diagnostic probe — revert to Cloud Function after confirming.
-    const termUrl = `https://webhook.site/04cfa6ed-c7f7-4a8c-b029-9d2b9f67888c?orderId=${orderId}`;
+    // Build term_url for 3DS challenge callback — Cloud Function receives the
+    // CRES POST from Alignet (confirmed via webhook.site probe 2026-04-15).
+    const functionsBase = process.env.CLOUD_FUNCTIONS_BASE_URL
+      || "https://us-central1-pau-henriques-web-v1.cloudfunctions.net";
+    const termUrl = `${functionsBase}/threeDSCallback?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
     const clientIp =
