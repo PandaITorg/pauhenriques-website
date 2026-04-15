@@ -219,9 +219,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Build term_url for 3DS challenge callback
-    // TEMPORARY: redirect to webhook.site to capture what Alignet actually sends.
-    // This is a diagnostic probe — revert to Cloud Function after confirming.
-    const termUrl = `https://webhook.site/04cfa6ed-c7f7-4a8c-b029-9d2b9f67888c?orderId=${orderId}`;
+    // TEMPORARY: point to Anthony's webhook so he can confirm CRES arrives.
+    // Revert to Cloud Function once diagnosed.
+    const termUrl = `https://lantechco.ec/img/callback3DS.php?orderId=${orderId}`;
 
     // Inject server-side client IP into browserInfo (required by Paymentez 3DS2)
     const clientIp =
