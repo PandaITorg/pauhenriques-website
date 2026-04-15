@@ -717,7 +717,7 @@ export default function CheckoutPage() {
                 className="w-full border-0"
                 style={{ height: threeDSChallenge.isDeviceFingerprint ? "1px" : "600px" }}
                 title="Autenticación 3DS"
-                sandbox="allow-forms allow-scripts allow-same-origin"
+                sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
                 onLoad={(e) => {
                   // Detect when iframe navigates away from challenge (user completed it)
                   // The first load is the challenge form, subsequent loads mean the ACS
