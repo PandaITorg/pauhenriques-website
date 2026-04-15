@@ -74,6 +74,24 @@ exports.threeDSCallback = onRequest(
       cres = req.query.cres || req.query.CRes || req.query.value || "";
     }
 
+    // Alignet does NOT send transStatus as a separate field — it's inside the
+    // CRES (base64url-encoded JSON). Decode the CRES payload to extract the
+    // real transStatus. If we can't decode, leave the default.
+    if (cres) {
+      try {
+        const base64 = cres.replace(/-/g, "+").replace(/_/g, "/");
+        const pad = base64.length % 4;
+        const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
+        const decoded = JSON.parse(Buffer.from(padded, "base64").toString("utf-8"));
+        if (decoded && typeof decoded.transStatus === "string") {
+          transStatus = decoded.transStatus;
+          console.log("[3dsCallback] transStatus decoded from CRES payload: " + transStatus);
+        }
+      } catch (e) {
+        console.warn("[3dsCallback] Could not decode CRES payload:", e.message);
+      }
+    }
+
     console.log("[3dsCallback] Extracted: orderId=" + orderId + ", transStatus=" + transStatus + ", cres=" + (cres ? "YES(len=" + cres.length + ")" : "NO"));
 
     // Store cres on the order so 3ds-complete can use it for BY_CRES verify
