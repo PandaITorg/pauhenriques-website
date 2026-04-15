@@ -265,13 +265,11 @@ export default function CheckoutPage() {
 
     window.addEventListener("message", handle3DSMessage);
 
-    // Polling (fallback when postMessage doesn't arrive): wait 20s before first
-    // poll so user has time to complete challenge. Then poll every 5s.
-    // Nuvei returns status_detail 36 while pending — we keep polling.
-    // When status_detail becomes 3 (success) or anything else, stop.
-    const POLL_DELAY_MS = 20_000;
-    const POLL_INTERVAL_MS = 5_000;
-    const MAX_POLLS = 36; // 36 * 5s = 3 minutes of polling after initial delay
+    // Polling: wait 10s before first poll (user takes time to complete),
+    // then poll every 3s. Nuvei returns "still pending" until ACS notifies.
+    const POLL_DELAY_MS = 10_000;
+    const POLL_INTERVAL_MS = 3_000;
+    const MAX_POLLS = 60; // 60 * 3s = 3 minutes of polling after initial delay
     let pollCount = 0;
     let pollIntervalId: ReturnType<typeof setInterval> | null = null;
 
