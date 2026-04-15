@@ -2,8 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendPaymentConfirmation, sendPaymentPending } from "@/lib/email";
+import { verifyThreeDS } from "@/lib/nuvei";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Extract CRES from webhook payload. Tries multiple possible field paths
+ * because Nuvei's webhook structure for 3DS callbacks is not fully documented
+ * and may vary (Anthony confirmed CRES arrives via debit webhook).
+ */
+function extractCres(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = payload as any;
+  const candidates = [
+    p?.cres,
+    p?.CRes,
+    p?.value,
+    p?.["3ds"]?.authentication?.cres,
+    p?.["3ds"]?.browser_response?.cres,
+    p?.["3ds"]?.cres,
+    p?.transaction?.cres,
+    p?.transaction?.["3ds"]?.authentication?.cres,
+  ];
+  for (const c of candidates) {
+    if (typeof c === "string" && c.trim().length > 0) return c;
+  }
+  return null;
+}
 
 /**
  * Nuvei Callback/Webhook endpoint.
@@ -36,11 +62,22 @@ export async function POST(request: NextRequest) {
   try {
     const payload: NuveiWebhookPayload = await request.json();
 
+    // Log full webhook payload to inspect 3DS structure (per Anthony: CRES
+    // may arrive via the debit webhook and must be captured for verify).
+    console.log("[webhook] Full payload:", JSON.stringify(payload));
+
     const { transaction } = payload;
     if (!transaction?.id || !transaction?.dev_reference) {
       return NextResponse.json(
         { error: "Payload inválido" },
         { status: 400 },
+      );
+    }
+
+    const incomingCres = extractCres(payload);
+    if (incomingCres) {
+      console.log(
+        `[webhook] CRES present in webhook payload (len=${incomingCres.length}) for txId=${transaction.id}`,
       );
     }
 
@@ -71,6 +108,106 @@ export async function POST(request: NextRequest) {
         { error: "Orden no encontrada" },
         { status: 404 },
       );
+    }
+
+    // If webhook brings CRES AND order is still in 3ds-pending (verify never
+    // called yet), complete the 3DS flow by calling verify with BY_CRES here.
+    // This covers the case where the browser-side postMessage never arrived
+    // but Nuvei's server-to-server webhook delivered the CRES.
+    const orderDataEarly = orderDoc.data()!;
+    if (
+      incomingCres &&
+      orderDataEarly.status === "3ds-pending" &&
+      !orderDataEarly.verifyCalledAt
+    ) {
+      try {
+        await dbAdmin.runTransaction(async (tx) => {
+          const doc = await tx.get(orderRef);
+          if (doc.data()?.verifyCalledAt) throw new Error("ALREADY_CALLED");
+          tx.update(orderRef, {
+            verifyCalledAt: new Date(),
+            threeDSCres: incomingCres,
+          });
+        });
+
+        console.log(`[webhook] Calling verify BY_CRES for order ${orderId}`);
+        const verifyResult = await verifyThreeDS({
+          transactionId: orderDataEarly.nuveiTransactionId || transaction.id,
+          userId: orderDataEarly.userId,
+          type: "BY_CRES",
+          value: incomingCres,
+        });
+        console.log(
+          `[webhook] verify response: ${JSON.stringify(verifyResult)}`,
+        );
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const raw = verifyResult as any;
+        const vStatus =
+          verifyResult.transaction?.status ?? raw.status;
+        const vDetail =
+          verifyResult.transaction?.status_detail ?? raw.status_detail;
+        const vAuthCode =
+          verifyResult.transaction?.authorization_code ??
+          raw.authorization_code ??
+          null;
+        const vTxId =
+          verifyResult.transaction?.id ??
+          raw.transaction_id ??
+          orderDataEarly.nuveiTransactionId ??
+          transaction.id;
+        const verifySuccess =
+          (vStatus === "success" || vStatus === 1) && vDetail === 3;
+
+        if (verifySuccess) {
+          const hasAuth =
+            typeof vAuthCode === "string" &&
+            vAuthCode.trim().length > 0 &&
+            vAuthCode !== "null";
+          await orderRef.update({
+            status: "paid",
+            paymentTransactionId: vTxId,
+            ...(hasAuth
+              ? { authorizationCode: vAuthCode }
+              : {
+                  missingAuthCodeFlagged: true,
+                  missingAuthCodeLoggedAt: new Date(),
+                  emailPending: true,
+                }),
+            chargeResponseAt: new Date(),
+            updatedAt: new Date(),
+            threeDSCres: FieldValue.delete(),
+            threeDSTransStatus: FieldValue.delete(),
+          });
+
+          if (hasAuth && orderDataEarly.userEmail) {
+            await sendPaymentConfirmation({
+              to: orderDataEarly.userEmail,
+              customerName:
+                orderDataEarly.shippingAddress?.fullName || "",
+              orderId,
+              transactionId: vTxId,
+              authorizationCode: vAuthCode as string,
+              items: orderDataEarly.items || [],
+              subtotal:
+                orderDataEarly.subtotal || orderDataEarly.total || 0,
+              discount: orderDataEarly.discount || undefined,
+              couponCode: orderDataEarly.couponCode,
+              vat: orderDataEarly.vat || 0,
+              total: orderDataEarly.total || 0,
+            }).catch(() => {});
+            await orderRef.update({ emailSentAt: new Date() });
+          }
+          return NextResponse.json({ received: true, verifiedFromWebhook: true });
+        }
+      } catch (err) {
+        if ((err as Error).message !== "ALREADY_CALLED") {
+          console.error(
+            `[webhook] Failed to verify BY_CRES for order ${orderId}:`,
+            err,
+          );
+        }
+      }
     }
 
     const isApproved =

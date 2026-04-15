@@ -248,7 +248,10 @@ export async function POST(request: NextRequest) {
       ...(installments ? { installments, installmentsType: installmentsType ?? 0 } : {}),
       ...(enrichedBrowserInfo ? { browserInfo: enrichedBrowserInfo, termUrl } : {}),
     });
-    console.log("[charge] Nuvei debit response:", JSON.stringify({
+    // Log FULL debit response to inspect all fields (per Anthony: cres / value
+    // may be returned directly in the debit response when status_detail is 36).
+    console.log("[charge] Nuvei debit response FULL:", JSON.stringify(nuveiData));
+    console.log("[charge] Nuvei debit response summary:", JSON.stringify({
       status: nuveiData.transaction?.status,
       status_detail: nuveiData.transaction?.status_detail,
       id: nuveiData.transaction?.id,
@@ -432,11 +435,27 @@ export async function POST(request: NextRequest) {
         threeDSData?.browser_response?.hidden_iframe ||
         "";
 
+      // Capture any CRES/value field the debit response may carry so verify
+      // can use it. Per Anthony: the value for verify BY_CRES is returned in
+      // the debit response when status_detail is 36.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rawDebit = nuveiData as any;
+      const debitCres: string | null =
+        rawDebit?.["3ds"]?.authentication?.cres ||
+        rawDebit?.["3ds"]?.browser_response?.cres ||
+        rawDebit?.["3ds"]?.cres ||
+        rawDebit?.transaction?.cres ||
+        rawDebit?.cres ||
+        rawDebit?.value ||
+        null;
+      console.log(`[charge] status 36 — debitCres captured: ${debitCres ? "YES (len=" + debitCres.length + ")" : "NO"}`);
+
       if (challengeHtml) {
         if (dbAdmin) {
           await dbAdmin.collection("orders").doc(orderId).update({
             status: "3ds-pending",
             nuveiTransactionId: nuveiData.transaction?.id || null,
+            ...(debitCres ? { threeDSCres: debitCres } : {}),
             updatedAt: new Date(),
           });
         }
