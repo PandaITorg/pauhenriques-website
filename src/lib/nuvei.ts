@@ -288,6 +288,7 @@ export async function verifyThreeDS(params: VerifyThreeDSParams): Promise<DebitR
     transaction: { id: params.transactionId },
     type: params.type,
     value: params.value ?? "",
+    more_info: true,
   };
   return nuveiRequest<DebitResponse>("/v2/transaction/verify/", "POST", body);
 }
