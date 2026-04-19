@@ -373,3 +373,80 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* --- Nuvei/Paymentez SDK form styling ---
+   The SDK renders its own form into #nuvei-tokenize-container. We style it
+   to match the rest of our checkout. Selectors are based on the SDK output.
+   These are scoped to the container so they don't leak elsewhere. */
+
+#nuvei-tokenize-container {
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--color-text-main);
+}
+
+#nuvei-tokenize-container input,
+#nuvei-tokenize-container select {
+  background-color: var(--color-surface-elevated, #1f2418);
+  border: 1px solid var(--color-border-subtle, rgba(193, 196, 167, 0.12));
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--color-text-main, #e8e6d6);
+  font-size: 0.95rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  width: 100%;
+}
+
+#nuvei-tokenize-container input:focus,
+#nuvei-tokenize-container select:focus {
+  outline: none;
+  border-color: var(--color-primary, #a68a63);
+  box-shadow: 0 0 0 3px rgba(166, 138, 99, 0.18);
+}
+
+#nuvei-tokenize-container input::placeholder {
+  color: rgba(193, 196, 167, 0.3);
+}
+
+#nuvei-tokenize-container label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(193, 196, 167, 0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+#nuvei-tokenize-container .tok_btn {
+  background: var(--color-primary, #a68a63);
+  color: #fff;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 0.5rem;
+  transition: background-color 150ms ease, transform 100ms ease;
+}
+
+#nuvei-tokenize-container .tok_btn:hover:not(:disabled) {
+  background: var(--color-primary-hover, #b89a73);
+}
+
+#nuvei-tokenize-container .tok_btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+#nuvei-tokenize-container .tok_btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error/validation messages from the SDK */
+#nuvei-tokenize-container .error,
+#nuvei-tokenize-container .invalid {
+  color: var(--color-error, #d97766);
+  font-size: 0.8rem;
+}

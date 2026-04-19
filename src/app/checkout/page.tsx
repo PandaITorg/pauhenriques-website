@@ -136,9 +136,40 @@ export default function CheckoutPage() {
   // Installments / diferidos
   const [installmentsType, setInstallmentsType] = useState<number>(0); // 0=corriente, 1=con intereses, 2=sin intereses
   const [installmentsCount, setInstallmentsCount] = useState<number>(0); // 0=corriente (no diferido)
+  // BIN info for selected card — used to filter installment options by carrier.
+  const [selectedCardBin, setSelectedCardBin] = useState<import("@/types/bin").BinInfo | null>(null);
 
   const INSTALLMENTS_WITH_INTEREST = [3, 6, 9, 12, 18, 24, 36];
   const INSTALLMENTS_WITHOUT_INTEREST = [3, 6];
+
+  // Diferidos solo soportados por DataFast (Bolivariano/Produbanco/Internacional via
+  // Medianet solamente aceptan Corriente). Si la tarjeta es Medianet only, ocultamos
+  // las opciones de diferido para evitar rechazos del banco.
+  const supportsDeferred = !selectedCardBin || selectedCardBin.carrier !== "medianet";
+
+  // Lookup BIN info when a card is selected
+  useEffect(() => {
+    if (!selectedCardInfo?.bin) {
+      setSelectedCardBin(null);
+      return;
+    }
+    let cancelled = false;
+    import("@/lib/bin-database").then(({ getBinDatabase, lookupBinSync }) => {
+      getBinDatabase().then((db) => {
+        if (cancelled) return;
+        setSelectedCardBin(lookupBinSync(selectedCardInfo.bin, db));
+      });
+    });
+    return () => { cancelled = true; };
+  }, [selectedCardInfo?.bin]);
+
+  // If user picked deferred but switched to a Medianet-only card, reset to Corriente.
+  useEffect(() => {
+    if (!supportsDeferred && installmentsType !== 0) {
+      setInstallmentsType(0);
+      setInstallmentsCount(0);
+    }
+  }, [supportsDeferred, installmentsType]);
 
   const items = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
@@ -1091,65 +1122,71 @@ export default function CheckoutPage() {
                     </label>
 
                     {/* Diferido con intereses */}
-                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${installmentsType === 1 ? "border-primary bg-primary/5" : "border-border-subtle hover:border-border-default"}`}>
-                      <input
-                        type="radio"
-                        name="installments"
-                        checked={installmentsType === 1}
-                        onChange={() => { setInstallmentsType(1); setInstallmentsCount(3); }}
-                        className="accent-primary"
-                      />
-                      <div className="grow">
-                        <p className="text-sm font-medium text-text-main">Diferido con intereses</p>
-                        <p className="text-xs text-text-main/50">Tu banco aplica intereses a las cuotas</p>
-                      </div>
-                    </label>
-                    {installmentsType === 1 && (
-                      <div className="flex flex-wrap gap-2 pl-9">
-                        {INSTALLMENTS_WITH_INTEREST.map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            onClick={() => setInstallmentsCount(n)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${installmentsCount === n ? "bg-primary text-white" : "bg-surface-elevated text-text-main/60 hover:text-text-main"}`}
-                          >
-                            {n} cuotas
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    {supportsDeferred && (
+                      <>
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${installmentsType === 1 ? "border-primary bg-primary/5" : "border-border-subtle hover:border-border-default"}`}>
+                          <input
+                            type="radio"
+                            name="installments"
+                            checked={installmentsType === 1}
+                            onChange={() => { setInstallmentsType(1); setInstallmentsCount(3); }}
+                            className="accent-primary"
+                          />
+                          <div className="grow">
+                            <p className="text-sm font-medium text-text-main">Diferido con intereses</p>
+                            <p className="text-xs text-text-main/50">Tu banco aplica intereses a las cuotas</p>
+                          </div>
+                        </label>
+                        {installmentsType === 1 && (
+                          <div className="flex flex-wrap gap-2 pl-9">
+                            {INSTALLMENTS_WITH_INTEREST.map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setInstallmentsCount(n)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${installmentsCount === n ? "bg-primary text-white" : "bg-surface-elevated text-text-main/60 hover:text-text-main"}`}
+                              >
+                                {n} cuotas
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
-                    {/* Diferido sin intereses */}
-                    <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${installmentsType === 2 ? "border-primary bg-primary/5" : "border-border-subtle hover:border-border-default"}`}>
-                      <input
-                        type="radio"
-                        name="installments"
-                        checked={installmentsType === 2}
-                        onChange={() => { setInstallmentsType(2); setInstallmentsCount(3); }}
-                        className="accent-primary"
-                      />
-                      <div className="grow">
-                        <p className="text-sm font-medium text-text-main">Diferido sin intereses</p>
-                        <p className="text-xs text-text-main/50">Meses sin intereses</p>
-                      </div>
-                    </label>
-                    {installmentsType === 2 && (
-                      <div className="flex flex-wrap gap-2 pl-9">
-                        {INSTALLMENTS_WITHOUT_INTEREST.map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            onClick={() => setInstallmentsCount(n)}
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${installmentsCount === n ? "bg-primary text-white" : "bg-surface-elevated text-text-main/60 hover:text-text-main"}`}
-                          >
-                            {n} cuotas
-                          </button>
-                        ))}
-                      </div>
+                        {/* Diferido sin intereses */}
+                        <label className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${installmentsType === 2 ? "border-primary bg-primary/5" : "border-border-subtle hover:border-border-default"}`}>
+                          <input
+                            type="radio"
+                            name="installments"
+                            checked={installmentsType === 2}
+                            onChange={() => { setInstallmentsType(2); setInstallmentsCount(3); }}
+                            className="accent-primary"
+                          />
+                          <div className="grow">
+                            <p className="text-sm font-medium text-text-main">Diferido sin intereses</p>
+                            <p className="text-xs text-text-main/50">Meses sin intereses</p>
+                          </div>
+                        </label>
+                        {installmentsType === 2 && (
+                          <div className="flex flex-wrap gap-2 pl-9">
+                            {INSTALLMENTS_WITHOUT_INTEREST.map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setInstallmentsCount(n)}
+                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${installmentsCount === n ? "bg-primary text-white" : "bg-surface-elevated text-text-main/60 hover:text-text-main"}`}
+                              >
+                                {n} cuotas
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                   <p className="text-xs text-text-main/40 mt-3">
-                    La disponibilidad de diferidos depende de tu banco emisor.
+                    {supportsDeferred
+                      ? "La disponibilidad de diferidos depende de tu banco emisor."
+                      : `Tu tarjeta de ${selectedCardBin?.bank ?? "este banco"} solo admite pagos corrientes.`}
                   </p>
                 </div>
 
