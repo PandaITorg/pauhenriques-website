@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getBinDatabase, lookupBinSync } from "@/lib/bin-database";
+import { lookupBankPalette } from "@/lib/bank-colors";
 import {
   CARD_BRAND_NAMES,
   CARD_TYPE_NAMES,
@@ -20,15 +21,15 @@ interface CardVisualProps {
   variant?: "compact" | "full";
 }
 
-// Brand gradients — universally recognizable colors per network.
-// Subtle so they don't fight with our dark theme.
-const BRAND_GRADIENT: Record<string, string> = {
-  vi: "from-[#1a1f71] via-[#2230a0] to-[#1a1f71]",
-  mc: "from-[#cc4d2e] via-[#9a2c1a] to-[#561a0e]",
-  ax: "from-[#016fcf] via-[#005ba9] to-[#003f7a]",
-  di: "from-[#2c3e50] via-[#1f2d3d] to-[#11161e]",
-  dc: "from-[#ff6f00] via-[#e65100] to-[#a83a00]",
-  default: "from-[#3a4632] via-[#2b3322] to-[#1a2014]",
+// Brand gradients — fallback when bank color is unknown.
+// Universally recognizable colors per network.
+const BRAND_GRADIENT: Record<string, { from: string; to: string }> = {
+  vi: { from: "#1a1f71", to: "#0d1240" },
+  mc: { from: "#cc4d2e", to: "#561a0e" },
+  ax: { from: "#016fcf", to: "#003f7a" },
+  di: { from: "#2c3e50", to: "#11161e" },
+  dc: { from: "#ff6f00", to: "#a83a00" },
+  default: { from: "#3a4632", to: "#1a2014" },
 };
 
 // Small SVG-ish brand mark using styled text — no external asset needed.
@@ -74,8 +75,15 @@ export default function CardVisual({
     };
   }, [bin]);
 
-  const gradient = BRAND_GRADIENT[brand] ?? BRAND_GRADIENT.default;
   const bankName = binInfo?.bank ?? "";
+  const bankPalette = lookupBankPalette(bankName);
+  // Bank color takes priority; fallback to network brand color.
+  const brandFallback = BRAND_GRADIENT[brand] ?? BRAND_GRADIENT.default;
+  const gradientFrom = bankPalette?.primary ?? brandFallback.from;
+  const gradientTo = bankPalette?.secondary ?? brandFallback.to;
+  const gradientStyle = {
+    background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+  };
   const cardType = binInfo?.type ? CARD_TYPE_NAMES[binInfo.type] || "" : "";
   const expiryShort = `${expiryMonth.padStart(2, "0")}/${String(expiryYear).slice(-2)}`;
 
@@ -84,7 +92,8 @@ export default function CardVisual({
     return (
       <div className="flex items-center gap-3 min-w-0">
         <div
-          className={`shrink-0 relative w-[88px] h-[56px] rounded-md bg-gradient-to-br ${gradient} shadow-md overflow-hidden`}
+          style={gradientStyle}
+          className="shrink-0 relative w-22 h-14 rounded-md shadow-md overflow-hidden"
         >
           {/* Subtle holographic shine */}
           <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
@@ -117,7 +126,8 @@ export default function CardVisual({
   // Full variant — full real-card look (for confirm step / detailed views)
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} shadow-xl p-5 aspect-[1.586/1] w-full max-w-sm`}
+      style={gradientStyle}
+      className="relative overflow-hidden rounded-2xl shadow-xl p-5 aspect-[1.586/1] w-full max-w-sm"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/30 pointer-events-none" />
       {/* Top row: type label + brand */}
