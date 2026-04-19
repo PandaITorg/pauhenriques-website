@@ -374,117 +374,27 @@ body {
   }
 }
 
-/* --- Nuvei/Paymentez SDK form styling ---
-   The SDK renders its own form into #nuvei-tokenize-container. The actual
-   classes the SDK creates are: .payment-form, .name-wrapper, .card-number-wrapper,
-   .expiry-wrapper, .cvc-wrapper, with inputs .name, .card-number, .expiry, .cvc.
-   We override these to match our dark theme. The SDK already paints its icons
-   with our gold (#a68a63) via the icon_colour config option. */
+/* --- Nuvei/Paymentez SDK form container ---
+   The SDK renders the form inside a cross-origin iframe (ccapi.paymentez.com),
+   so we cannot style the form fields directly — same-origin policy blocks it.
+   What we CAN do is style the container/iframe itself to make the white form
+   look intentional, like a payment widget on a card. The SDK already paints
+   its icons gold (#a68a63) via icon_colour config.
+
+   If Nuvei adds a style API in the future, we can revisit. */
 
 #nuvei-tokenize-container {
-  font-family: "Inter", system-ui, sans-serif;
-  color: var(--color-text-main);
-}
-
-/* Make the form layout breathe, override SDK default white box */
-#nuvei-tokenize-container .payment-form {
-  background: transparent !important;
-  padding: 0 !important;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-/* Wrappers — these contain input + icon side by side */
-#nuvei-tokenize-container .name-wrapper,
-#nuvei-tokenize-container .card-number-wrapper,
-#nuvei-tokenize-container .expiry-wrapper,
-#nuvei-tokenize-container .cvc-wrapper {
-  position: relative;
-  background: var(--color-surface-elevated, #2b3322);
-  border: 1px solid rgba(193, 196, 167, 0.15);
+  /* Frame the white SDK form like a real payment widget on a card */
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f7 100%);
   border-radius: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  display: flex;
-  align-items: center;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  border: 1px solid rgba(193, 196, 167, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  padding: 0.5rem;
+  overflow: hidden;
 }
 
-#nuvei-tokenize-container .name-wrapper:focus-within,
-#nuvei-tokenize-container .card-number-wrapper:focus-within,
-#nuvei-tokenize-container .expiry-wrapper:focus-within,
-#nuvei-tokenize-container .cvc-wrapper:focus-within {
-  border-color: var(--color-primary, #a68a63);
-  box-shadow: 0 0 0 3px rgba(166, 138, 99, 0.18);
-}
-
-/* Inputs — strip default chrome and inherit from wrapper */
-#nuvei-tokenize-container .payment-form input.name,
-#nuvei-tokenize-container .payment-form input.card-number,
-#nuvei-tokenize-container .payment-form input.expiry,
-#nuvei-tokenize-container .payment-form input.cvc {
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  padding: 0.65rem 0.5rem !important;
-  color: var(--color-text-main, #c1c4a7) !important;
-  font-size: 0.95rem !important;
-  font-family: inherit !important;
-  flex: 1;
+#nuvei-tokenize-container iframe {
   width: 100%;
-  min-width: 0;
-}
-
-#nuvei-tokenize-container .payment-form input::placeholder {
-  color: rgba(193, 196, 167, 0.35) !important;
-}
-
-#nuvei-tokenize-container .payment-form input.card-number {
-  font-family: ui-monospace, "SF Mono", Consolas, monospace !important;
-  letter-spacing: 0.05em;
-}
-
-#nuvei-tokenize-container .payment-form input.expiry,
-#nuvei-tokenize-container .payment-form input.cvc {
-  font-family: ui-monospace, "SF Mono", Consolas, monospace !important;
-}
-
-/* The icon SVG inside each wrapper */
-#nuvei-tokenize-container .icon {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* The card-type-icon (visa/mc logo that appears as user types) */
-#nuvei-tokenize-container .card-type-icon {
-  display: flex;
-  align-items: center;
-  margin-right: 0.25rem;
-}
-
-/* Side-by-side expiry + cvc */
-#nuvei-tokenize-container .expiry-container,
-#nuvei-tokenize-container .cvc-container {
-  flex: 1;
-}
-
-#nuvei-tokenize-container .payment-form > .expiry-container,
-#nuvei-tokenize-container .payment-form > .cvc-container {
-  display: inline-block;
-  width: 50%;
-  vertical-align: top;
-}
-
-/* Validation messages */
-#nuvei-tokenize-container #messages {
-  font-size: 0.8rem;
-  color: var(--color-warning, #d4a04b);
-}
-
-/* Hide any submit button the SDK might inject — we use our own */
-#nuvei-tokenize-container .tok_btn {
-  display: none !important;
+  border: none !important;
+  background: transparent;
 }
