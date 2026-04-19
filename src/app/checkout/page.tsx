@@ -142,10 +142,14 @@ export default function CheckoutPage() {
   const INSTALLMENTS_WITH_INTEREST = [3, 6, 9, 12, 18, 24, 36];
   const INSTALLMENTS_WITHOUT_INTEREST = [3, 6];
 
-  // Diferidos solo soportados por DataFast (Bolivariano/Produbanco/Internacional via
-  // Medianet solamente aceptan Corriente). Si la tarjeta es Medianet only, ocultamos
-  // las opciones de diferido para evitar rechazos del banco.
-  const supportsDeferred = !selectedCardBin || selectedCardBin.carrier !== "medianet";
+  // Reglas de diferidos:
+  //  - Solo tarjetas de crédito permiten diferidos (débito/prepago = solo Corriente).
+  //  - Carrier Medianet only (Bolivariano/Produbanco/Internacional) = solo Corriente.
+  //  - Si no tenemos info del BIN, asumimos que sí permite (mostrar opciones).
+  const isDebitOrPrepaid =
+    selectedCardBin?.type === "debit" || selectedCardBin?.type === "prepaid";
+  const isMedianetOnly = selectedCardBin?.carrier === "medianet";
+  const supportsDeferred = !isDebitOrPrepaid && !isMedianetOnly;
 
   // Lookup BIN info when a card is selected
   useEffect(() => {
@@ -1186,7 +1190,9 @@ export default function CheckoutPage() {
                   <p className="text-xs text-text-main/40 mt-3">
                     {supportsDeferred
                       ? "La disponibilidad de diferidos depende de tu banco emisor."
-                      : `Tu tarjeta de ${selectedCardBin?.bank ?? "este banco"} solo admite pagos corrientes.`}
+                      : isDebitOrPrepaid
+                        ? "Las tarjetas de débito y prepago solo admiten pagos corrientes."
+                        : `Tu tarjeta de ${selectedCardBin?.bank ?? "este banco"} solo admite pagos corrientes.`}
                   </p>
                 </div>
 
