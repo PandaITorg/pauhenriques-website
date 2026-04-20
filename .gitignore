@@ -41,5 +41,10 @@ docs/
 .documentacion-tecnica-nuvei.pdf
 terminos-y-condiciones.pdf
 
+# BIN database — source of truth is Firestore (config/bins).
+# These local files are intermediate artifacts for the upload script.
+Base de bines*.xlsx
+scripts/bins-data.json
+
 # Claude
 .claude

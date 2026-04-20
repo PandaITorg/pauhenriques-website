@@ -414,11 +414,10 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
         </div>
       ) : (
         <>
-          {/* SDK renders its iframe-based form inside this container */}
-          <div
-            id={CONTAINER_ID}
-            className="bg-surface-elevated border border-border-subtle rounded-xl p-4 min-h-16"
-          />
+          {/* SDK renders its iframe-based form inside this container.
+              Visual styling is in globals.css — the iframe is cross-origin,
+              so we can only style the wrapper, not the form inside. */}
+          <div id={CONTAINER_ID} className="min-h-16" />
 
           {/* Inline validation errors (incomplete fields, system errors) */}
           {error && (

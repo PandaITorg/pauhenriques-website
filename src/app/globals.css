@@ -373,3 +373,28 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* --- Nuvei/Paymentez SDK form container ---
+   The SDK renders the form inside a cross-origin iframe (ccapi.paymentez.com),
+   so we cannot style the form fields directly — same-origin policy blocks it.
+   What we CAN do is style the container/iframe itself to make the white form
+   look intentional, like a payment widget on a card. The SDK already paints
+   its icons gold (#a68a63) via icon_colour config.
+
+   If Nuvei adds a style API in the future, we can revisit. */
+
+#nuvei-tokenize-container {
+  /* Frame the white SDK form like a real payment widget on a card */
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f7 100%);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(193, 196, 167, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+#nuvei-tokenize-container iframe {
+  width: 100%;
+  border: none !important;
+  background: transparent;
+}

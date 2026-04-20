@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SavedCard, getCardBrandName } from "@/types/card";
+import { SavedCard } from "@/types/card";
 import {
   FaCheck,
-  FaCreditCard,
   FaLock,
   FaPlus,
   FaTrash,
   FaExclamationTriangle,
   FaShieldAlt,
 } from "react-icons/fa";
+import CardVisual from "./CardVisual";
 
 interface SavedCardsProps {
   onSelectCard: (card: SavedCard, cvc: string) => void;
@@ -128,16 +128,6 @@ export default function SavedCards({
     }
   }
 
-  function getCardColor(type: string) {
-    const colors: Record<string, string> = {
-      vi: "text-info",
-      mc: "text-warning",
-      ax: "text-success",
-      di: "text-info/70",
-    };
-    return colors[type] || "text-text-main/40";
-  }
-
   if (loading) {
     return (
       <div className="flex justify-center py-6">
@@ -176,26 +166,19 @@ export default function SavedCards({
                     : "border-border-default hover:border-border-strong"
                 }`}
               >
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FaCreditCard
-                      className={`w-5 h-5 ${getCardColor(card.type)}`}
+                <div className="p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <CardVisual
+                      bin={card.bin}
+                      brand={card.type}
+                      last4={card.number}
+                      holderName={card.holder_name}
+                      expiryMonth={card.expiry_month}
+                      expiryYear={card.expiry_year}
                     />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-text-main">
-                          {getCardBrandName(card.type)}{" "}
-                          <span className="font-mono">****{card.number}</span>
-                        </span>
-                        {isSelected && (
-                          <FaCheck className="w-3.5 h-3.5 text-primary" />
-                        )}
-                      </div>
-                      <p className="text-xs text-text-main/45">
-                        {card.holder_name} · Exp {card.expiry_month}/
-                        {card.expiry_year}
-                      </p>
-                    </div>
+                    {isSelected && (
+                      <FaCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                    )}
                   </div>
                   <button
                     onClick={(e) => {
@@ -203,7 +186,7 @@ export default function SavedCards({
                       handleDelete(card.token);
                     }}
                     disabled={deleting === card.token}
-                    className="text-text-main/30 hover:text-error p-1 disabled:opacity-50 transition-colors cursor-pointer"
+                    className="text-text-main/30 hover:text-error p-1 disabled:opacity-50 transition-colors cursor-pointer shrink-0"
                     title="Eliminar tarjeta"
                   >
                     <FaTrash className="w-3 h-3" />
@@ -261,31 +244,22 @@ export default function SavedCards({
                 className="border border-warning/30 bg-warning/5 rounded-lg overflow-hidden transition-all duration-200"
               >
                 {/* Card header */}
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <FaCreditCard
-                        className={`w-5 h-5 ${getCardColor(card.type)}`}
-                      />
-                      <FaExclamationTriangle className="w-2.5 h-2.5 text-warning absolute -top-1 -right-1.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-text-main">
-                          {getCardBrandName(card.type)}{" "}
-                          <span className="font-mono">****{card.number}</span>
-                        </span>
-                        <span className="text-[10px] font-medium uppercase tracking-wider bg-warning/15 text-warning px-1.5 py-0.5 rounded">
-                          Verificar
-                        </span>
-                      </div>
-                      <p className="text-xs text-text-main/45">
-                        {card.holder_name} · Exp {card.expiry_month}/
-                        {card.expiry_year}
-                      </p>
-                    </div>
+                <div className="p-4 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <CardVisual
+                      bin={card.bin}
+                      brand={card.type}
+                      last4={card.number}
+                      holderName={card.holder_name}
+                      expiryMonth={card.expiry_month}
+                      expiryYear={card.expiry_year}
+                    />
+                    <span className="text-[10px] font-medium uppercase tracking-wider bg-warning/15 text-warning px-1.5 py-0.5 rounded shrink-0 inline-flex items-center gap-1">
+                      <FaExclamationTriangle className="w-2.5 h-2.5" />
+                      Verificar
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     {!isExpanded && (
                       <button
                         onClick={() => {
