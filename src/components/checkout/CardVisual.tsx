@@ -96,9 +96,9 @@ export default function CardVisual({
           className="shrink-0 relative w-22 h-14 rounded-md shadow-md overflow-hidden"
         >
           {/* Subtle holographic shine */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
+          <div className="absolute inset-0 bg-linear-to-br from-white/10 via-transparent to-black/20 pointer-events-none" />
           {/* Chip */}
-          <div className="absolute top-2 left-2 w-3.5 h-2.5 rounded-sm bg-gradient-to-br from-yellow-200/80 to-yellow-600/80 border border-yellow-700/40" />
+          <div className="absolute top-2 left-2 w-3.5 h-2.5 rounded-sm bg-linear-to-br from-yellow-200/80 to-yellow-600/80 border border-yellow-700/40" />
           {/* Brand mark */}
           <div className="absolute top-1.5 right-2">
             <BrandMark brand={brand} />
@@ -129,7 +129,7 @@ export default function CardVisual({
       style={gradientStyle}
       className="relative overflow-hidden rounded-2xl shadow-xl p-5 aspect-[1.586/1] w-full max-w-sm"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/30 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-white/10 via-transparent to-black/30 pointer-events-none" />
       {/* Top row: type label + brand */}
       <div className="relative flex justify-between items-start">
         <div>
@@ -144,7 +144,7 @@ export default function CardVisual({
       </div>
 
       {/* Chip */}
-      <div className="relative mt-6 w-9 h-7 rounded-md bg-gradient-to-br from-yellow-200 to-yellow-600 border border-yellow-700/40 shadow-inner" />
+      <div className="relative mt-6 w-9 h-7 rounded-md bg-linear-to-br from-yellow-200 to-yellow-600 border border-yellow-700/40 shadow-inner" />
 
       {/* Card number */}
       <div className="relative mt-4">
