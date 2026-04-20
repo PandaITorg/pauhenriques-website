@@ -76,7 +76,7 @@ export default function CardVisual({
   }, [bin]);
 
   const bankName = binInfo?.bank ?? "";
-  const bankPalette = lookupBankPalette(bankName);
+  const bankPalette = lookupBankPalette(bankName, binInfo?.type);
   // Bank color takes priority; fallback to network brand color.
   const brandFallback = BRAND_GRADIENT[brand] ?? BRAND_GRADIENT.default;
   const gradientFrom = bankPalette?.primary ?? brandFallback.from;
