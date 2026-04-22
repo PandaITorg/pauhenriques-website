@@ -8,7 +8,7 @@ export const CURSO_TOXICA_SIN_TOXICOS = {
   shortDescription:
     "Curso online para transformar tu hogar, tu mesa y tu rutina eliminando tóxicos sin complicaciones.",
   longDescription:
-    "Un programa práctico y paso a paso para identificar los tóxicos ocultos en tu día a día y reemplazarlos por alternativas limpias, accesibles y sostenibles. Acceso de por vida desde cualquier dispositivo.",
+    "Un taller en vivo, práctico y paso a paso, para identificar los tóxicos ocultos en tu día a día y reemplazarlos por alternativas limpias, accesibles y sostenibles. Queda grabado para que lo puedas volver a ver luego desde cualquier dispositivo.",
   image: "/assets/de-toxica-a-sin-toxicos.webp",
   category: "Cursos",
   productType: "Infrarrojo" as const,
