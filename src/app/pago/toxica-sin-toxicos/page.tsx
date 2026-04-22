@@ -53,6 +53,15 @@ export default function PagoToxicaSinToxicosPage() {
     useState<ThreeDSChallenge | null>(null);
   const threeDSCompleteCalledRef = useRef(false);
 
+  // OTP challenge state (Nuvei status_detail 31)
+  const [otpChallenge, setOtpChallenge] = useState<{
+    orderId: string;
+    nuveiTransactionId: string;
+  } | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSubmitting, setOtpSubmitting] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
+
   // Bootstrap: ensure course product exists + anonymous session
   useEffect(() => {
     let cancelled = false;
@@ -237,6 +246,16 @@ export default function PagoToxicaSinToxicosPage() {
         setTimeout(() => {
           router.push(`/pago/toxica-sin-toxicos/exito?orderId=${orderId}&review=1`);
         }, 1200);
+      } else if (data.otpRequired) {
+        // Bank sent OTP via SMS — show input so user can enter it.
+        setProcessing(false);
+        paymentLockRef.current = false;
+        setOtpChallenge({
+          orderId: data.orderId,
+          nuveiTransactionId: data.nuveiTransactionId || "",
+        });
+        setOtpCode("");
+        setOtpError(null);
       } else if (data.challenge) {
         setProcessing(false);
         setThreeDSChallenge({
@@ -346,6 +365,114 @@ export default function PagoToxicaSinToxicosPage() {
         <p className="text-text-main/50 text-sm max-w-xs">
           No cierres esta página. Estamos verificando la transacción con el banco…
         </p>
+      </div>
+    );
+  }
+
+  if (otpChallenge) {
+    const handleOtpSubmit = async () => {
+      if (!otpCode.trim() || !user) return;
+      setOtpSubmitting(true);
+      setOtpError(null);
+      try {
+        const response = await fetch("/api/payment/3ds-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: otpChallenge.orderId,
+            userId: user.uid,
+            type: "BY_OTP",
+            nuveiTransactionId: otpChallenge.nuveiTransactionId,
+            otpCode: otpCode.trim(),
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          setOtpChallenge(null);
+          setPaymentSuccess(true);
+          setTimeout(() => {
+            router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
+          }, 1200);
+        } else {
+          setOtpError(data.error || "Código incorrecto. Intentá de nuevo.");
+        }
+      } catch {
+        setOtpError("Error de conexión. Intentá de nuevo.");
+      } finally {
+        setOtpSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-border-subtle flex items-center gap-3">
+              <FaShieldAlt className="w-4 h-4 text-primary" />
+              <div>
+                <p className="font-semibold text-text-main text-sm">
+                  Verificación del banco
+                </p>
+                <p className="text-text-main/50 text-xs">
+                  Tu banco envió un código por SMS
+                </p>
+              </div>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-text-main/70 text-center">
+                Ingresá el código OTP que recibiste en tu teléfono.
+              </p>
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={8}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="Código OTP"
+                className="w-full text-center text-2xl tracking-[0.3em] font-mono border border-border-default rounded-lg py-3 px-4 bg-background text-text-main placeholder:text-text-main/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleOtpSubmit();
+                }}
+              />
+              {otpError && (
+                <p className="text-error text-xs text-center">{otpError}</p>
+              )}
+              <button
+                onClick={handleOtpSubmit}
+                disabled={otpSubmitting || !otpCode.trim()}
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {otpSubmitting ? (
+                  <>
+                    <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
+                    Verificando…
+                  </>
+                ) : (
+                  <>
+                    <FaLock className="w-3.5 h-3.5" />
+                    Verificar código
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  setOtpChallenge(null);
+                  paymentLockRef.current = false;
+                  setPaymentFailed("Verificación OTP cancelada.");
+                }}
+                disabled={otpSubmitting}
+                className="w-full text-sm text-text-main/50 hover:text-text-main transition-colors py-2"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+          <p className="text-center text-xs text-text-main/40 mt-3">
+            No cierres esta página. Conexión segura con tu banco.
+          </p>
+        </div>
       </div>
     );
   }
