@@ -1,5 +1,30 @@
 # CLAUDE.md - pauhenriques-website
 
+## ⚠️ IMPORTANTE — Datos de contacto fijos
+
+El UNICO numero de WhatsApp valido para contacto de clientes en TODO el sitio es:
+
+- **+593 99 171 2532** — Maria Paula Henriques
+- Formato para links (wa.me / api.whatsapp.com): `593991712532` (sin espacios, sin +)
+- Formato para Schema.org / texto visible: `+593991712532` o "+593 99 171 2532"
+
+Regla absoluta:
+- TODO link `wa.me/` o `api.whatsapp.com/send?phone=` debe apuntar a `593991712532`. SIN excepciones. Ni placeholders, ni dummies, ni nada.
+- NUNCA invente otro numero. NUNCA use `593997733498` (numero viejo/incorrecto ya erradicado).
+- Antes de hacer push de cualquier cambio que agregue un link/texto WhatsApp, correr `grep -rn "wa\.me\|api\.whatsapp\.com" src/` y verificar que todos los numeros sean `593991712532`.
+
+Lugares donde aparece (mantener sincronizados):
+- Emails automaticos: `src/lib/email.ts`, `src/lib/email-plan-novios.ts`
+- Paginas legales: terminos-servicio, politica-privacidad
+- Pago-link: `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
+- Tienda: `src/components/tienda/*` + `src/components/ProductVideos.tsx`
+- Home/Footer: `src/components/home/Hero.tsx`, `src/components/homepage/CtaFinal.tsx`, `src/components/homepage/CaricoShowcase.tsx`, `src/components/layout/footer/Social.tsx`
+- Schema.org: `src/components/schemas/HomeSchema.tsx`
+- Link-tree: `src/app/links/page.tsx`
+- Plan novios: `src/app/plan-novios/PlanNoviosClient.tsx`
+
+---
+
 ## Sobre el Proyecto
 
 Plataforma web de **Pau Henriques** — modelo comercial hibrido:
