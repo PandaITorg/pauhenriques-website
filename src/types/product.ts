@@ -25,6 +25,12 @@ export interface BaseProduct {
   parentCategory?: string;
   subCategory?: string | null;
   tags?: string[];
+  /**
+   * Cuando es true, el producto NO aparece en /tienda ni en ninguna vista de
+   * catálogo pública. Sigue siendo accesible por ID para flujos específicos
+   * (por ejemplo productos digitales vendidos vía link de pago dedicado).
+   */
+  hiddenFromCatalog?: boolean;
 }
 
 export interface InfrrarrojoProduct extends BaseProduct {

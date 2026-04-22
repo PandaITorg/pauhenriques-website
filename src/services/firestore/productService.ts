@@ -28,7 +28,7 @@ export class ProductService {
       where("isActive", "==", true),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(this.mapDoc);
+    return snapshot.docs.map(this.mapDoc).filter((p) => !p.hiddenFromCatalog);
   }
 
   async getProductsByType(type: ProductType): Promise<Product[]> {
@@ -38,7 +38,7 @@ export class ProductService {
       where("isActive", "==", true),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(this.mapDoc);
+    return snapshot.docs.map(this.mapDoc).filter((p) => !p.hiddenFromCatalog);
   }
 
   async getProductById(id: string): Promise<Product | null> {
@@ -55,7 +55,7 @@ export class ProductService {
       where("isActive", "==", true),
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(this.mapDoc);
+    return snapshot.docs.map(this.mapDoc).filter((p) => !p.hiddenFromCatalog);
   }
 
   async searchProducts(term: string): Promise<Product[]> {
