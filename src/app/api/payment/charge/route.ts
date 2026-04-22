@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { debitWithToken, deleteCard } from "@/lib/nuvei";
 import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +39,20 @@ const THREEDS_AUTH_MESSAGES: Record<string, string> = {
   R: "Tu banco rechazó la autenticación 3DS.",
   U: "No se pudo verificar la autenticación 3DS. Intenta de nuevo.",
 };
+
+// Map course products to their dedicated guest checkout page so retry emails
+// take the user back to the correct flow (not /checkout which requires auth).
+const COURSE_RETRY_PATHS: Record<string, string> = {
+  "curso-toxica-sin-toxicos": "/pago/toxica-sin-toxicos",
+};
+
+function getRetryUrl(courseId?: string | null): string {
+  const base = "https://pauhenriques.com";
+  if (courseId && COURSE_RETRY_PATHS[courseId]) {
+    return `${base}${COURSE_RETRY_PATHS[courseId]}`;
+  }
+  return `${base}/checkout`;
+}
 
 function getNuveiUserMessage(statusDetail?: number, rawMessage?: string | null): string {
   if (statusDetail !== undefined && NUVEI_ERROR_MESSAGES[statusDetail]) {
@@ -97,6 +112,25 @@ export async function POST(request: NextRequest) {
       decodedToken = await auth.verifySessionCookie(sessionCookie, true);
     } catch {
       return NextResponse.json({ error: "Sesion invalida" }, { status: 401 });
+    }
+
+    // Rate limit: 10 charge attempts per IP per 15 minutes. Anti-abuse for
+    // guest flows where anyone with the link could otherwise hammer the
+    // endpoint with stolen cards. Legitimate users rarely retry > 3 times.
+    const clientIpForLimit =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const allowed = await checkRateLimit(
+      `charge:${clientIpForLimit}`,
+      10,
+      15 * 60 * 1000,
+    );
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Demasiados intentos. Intentá de nuevo en unos minutos." },
+        { status: 429 },
+      );
     }
 
     const body: ChargeRequestBody = await request.json();
@@ -523,6 +557,7 @@ export async function POST(request: NextRequest) {
             errorMessage: threeDSErrorMsg,
             items: orderData.items || [],
             total: orderData.total || amount,
+            retryUrl: getRetryUrl(orderData.courseId),
           }).catch(() => {});
         }
       }
@@ -560,6 +595,7 @@ export async function POST(request: NextRequest) {
           errorMessage: failedErrorMsg,
           items: orderData.items || [],
           total: orderData.total || amount,
+          retryUrl: getRetryUrl(orderData.courseId),
         }).catch(() => {});
       }
     }

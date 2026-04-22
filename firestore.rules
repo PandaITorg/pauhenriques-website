@@ -65,6 +65,11 @@ service cloud.firestore {
       allow write: if false; // Solo via Admin SDK (creación en charge.ts, update en admin)
     }
 
+    // Rate limiting store — solo via Admin SDK, cliente sin acceso.
+    match /rateLimits/{key} {
+      allow read, write: if false;
+    }
+
     // Plan Novios — registro de bodas
     match /planNovios/{planId} {
       allow read: if true; // Público (landing page, contribucion invitados)
