@@ -52,6 +52,7 @@ export default function PagoToxicaSinToxicosPage() {
   const [threeDSChallenge, setThreeDSChallenge] =
     useState<ThreeDSChallenge | null>(null);
   const threeDSCompleteCalledRef = useRef(false);
+  const [challengeVerifying, setChallengeVerifying] = useState(false);
 
   // OTP challenge state (Nuvei status_detail 31)
   const [otpChallenge, setOtpChallenge] = useState<{
@@ -61,6 +62,37 @@ export default function PagoToxicaSinToxicosPage() {
   const [otpCode, setOtpCode] = useState("");
   const [otpSubmitting, setOtpSubmitting] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
+
+  // Shared handler for verify API responses (status 35 timer + status 36 postMessage/polling)
+  const handleVerifyResponse = useRef((_data: Record<string, unknown>) => {});
+  handleVerifyResponse.current = (data: Record<string, unknown>) => {
+    if (data.success) {
+      setThreeDSChallenge(null);
+      setChallengeVerifying(false);
+      setProcessing(false);
+      setPaymentSuccess(true);
+      setTimeout(() => {
+        router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
+      }, 1200);
+    } else if (data.challenge) {
+      threeDSCompleteCalledRef.current = false;
+      setProcessing(false);
+      setChallengeVerifying(false);
+      setThreeDSChallenge({
+        html: data.challengeHtml as string,
+        orderId: data.orderId as string,
+        isDeviceFingerprint: false,
+        nuveiTransactionId: (data.nuveiTransactionId as string) || "",
+        statusDetail: (data.statusDetail as number) ?? 36,
+      });
+    } else {
+      paymentLockRef.current = false;
+      setProcessing(false);
+      setChallengeVerifying(false);
+      setPaymentFailed((data.error as string) || "Error al completar el pago 3DS.");
+      setThreeDSChallenge(null);
+    }
+  };
 
   // Bootstrap: ensure course product exists + anonymous session
   useEffect(() => {
@@ -84,9 +116,42 @@ export default function PagoToxicaSinToxicosPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Listen for 3DS completion postMessage from Cloud Function
+  // Timer for status_detail 35 (device fingerprint): wait 5s, then verify.
   useEffect(() => {
-    if (!threeDSChallenge || !user) return;
+    if (!threeDSChallenge || threeDSChallenge.statusDetail !== 35 || !user) return;
+
+    const timer = setTimeout(async () => {
+      if (threeDSCompleteCalledRef.current) return;
+      threeDSCompleteCalledRef.current = true;
+      setProcessing(true);
+      try {
+        const response = await fetch("/api/payment/3ds-complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: threeDSChallenge.orderId,
+            userId: user.uid,
+            type: "AUTHENTICATION_CONTINUE",
+            nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
+          }),
+        });
+        const data = await response.json();
+        handleVerifyResponse.current(data);
+      } catch {
+        paymentLockRef.current = false;
+        setProcessing(false);
+        setPaymentFailed("Error de conexión al verificar 3DS.");
+        setThreeDSChallenge(null);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [threeDSChallenge, user]);
+
+  // 3DS Challenge (status 36) — postMessage from Cloud Function + polling fallback.
+  // Nuvei tracks CRES internally and reports "pending" until ACS notifies them.
+  useEffect(() => {
+    if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
 
     async function handle3DSMessage(event: MessageEvent) {
       if (event.data?.type !== "3DS_COMPLETE") return;
@@ -104,18 +169,7 @@ export default function PagoToxicaSinToxicosPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, userId: user.uid, type: "BY_CRES" }),
         });
-        const data = await response.json();
-        if (data.success) {
-          setProcessing(false);
-          setPaymentSuccess(true);
-          setTimeout(() => {
-            router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
-          }, 1200);
-        } else {
-          paymentLockRef.current = false;
-          setProcessing(false);
-          setPaymentFailed(data.error || "La autenticación 3DS no se completó.");
-        }
+        handleVerifyResponse.current(await response.json());
       } catch {
         paymentLockRef.current = false;
         setProcessing(false);
@@ -124,8 +178,78 @@ export default function PagoToxicaSinToxicosPage() {
     }
 
     window.addEventListener("message", handle3DSMessage);
-    return () => window.removeEventListener("message", handle3DSMessage);
-  }, [threeDSChallenge, user, router]);
+
+    // Polling fallback: wait 10s before first poll (user takes time to complete),
+    // then poll every 3s for up to 3 minutes. Nuvei returns "still pending" until
+    // the ACS notifies them of the result.
+    const POLL_DELAY_MS = 10_000;
+    const POLL_INTERVAL_MS = 3_000;
+    const MAX_POLLS = 60;
+    let pollCount = 0;
+    let pollIntervalId: ReturnType<typeof setInterval> | null = null;
+
+    const pollStartTimeout = setTimeout(() => {
+      pollIntervalId = setInterval(async () => {
+        if (threeDSCompleteCalledRef.current) {
+          if (pollIntervalId) clearInterval(pollIntervalId);
+          return;
+        }
+        pollCount++;
+        if (pollCount > MAX_POLLS) {
+          if (pollIntervalId) clearInterval(pollIntervalId);
+          if (threeDSCompleteCalledRef.current) return;
+          threeDSCompleteCalledRef.current = true;
+          paymentLockRef.current = false;
+          setProcessing(false);
+          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intentá de nuevo.");
+          setThreeDSChallenge(null);
+          try {
+            await fetch("/api/payment/3ds-timeout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
+            });
+          } catch {
+            /* best effort */
+          }
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/payment/3ds-complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: threeDSChallenge.orderId,
+              userId: user!.uid,
+              type: "AUTHENTICATION_CONTINUE",
+              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
+            }),
+          });
+          const data = await response.json();
+
+          if (data.pending || data.stillPending) return;
+
+          if (data.success || data.error || data.challenge) {
+            if (threeDSCompleteCalledRef.current) return;
+            threeDSCompleteCalledRef.current = true;
+            if (pollIntervalId) clearInterval(pollIntervalId);
+            setChallengeVerifying(true);
+            setThreeDSChallenge(null);
+            handleVerifyResponse.current(data);
+          }
+        } catch {
+          // Network error — keep polling
+        }
+      }, POLL_INTERVAL_MS);
+    }, POLL_DELAY_MS);
+
+    return () => {
+      window.removeEventListener("message", handle3DSMessage);
+      clearTimeout(pollStartTimeout);
+      if (pollIntervalId) clearInterval(pollIntervalId);
+    };
+  }, [threeDSChallenge, user]);
 
   function handleGuestSubmit(values: GuestInfoValues) {
     setGuestInfo(values);
@@ -133,33 +257,21 @@ export default function PagoToxicaSinToxicosPage() {
   }
 
   function handleTokenSuccess(token: string) {
-    console.log("[pago-link] tokenize success, token:", token?.substring(0, 10) + "...");
     setPaymentError(null);
     // One-click: tokenize + charge immediately. No intermediate button.
     void handleConfirmPayment(token);
   }
 
   function handleTokenError(error: string) {
-    console.error("[pago-link] tokenize error:", error);
     setPaymentError(error);
   }
 
   async function handleConfirmPayment(token: string) {
-    console.log("[pago-link] handleConfirmPayment start", {
-      hasUser: !!user,
-      hasGuestInfo: !!guestInfo,
-      hasToken: !!token,
-      locked: paymentLockRef.current,
-    });
     if (!user || !guestInfo || !token) {
-      console.error("[pago-link] missing prerequisites — aborting");
       setPaymentError("Faltan datos para procesar el pago. Recargá la página.");
       return;
     }
-    if (paymentLockRef.current) {
-      console.warn("[pago-link] payment lock active — ignoring");
-      return;
-    }
+    if (paymentLockRef.current) return;
     paymentLockRef.current = true;
 
     setProcessing(true);
@@ -171,7 +283,6 @@ export default function PagoToxicaSinToxicosPage() {
     try {
       const fullName = `${guestInfo.firstName} ${guestInfo.lastName}`.trim();
 
-      console.log("[pago-link] creating order…");
       orderId = await createOrder({
         userId: user.uid,
         items: [
@@ -201,7 +312,6 @@ export default function PagoToxicaSinToxicosPage() {
         postPurchaseNote: COURSE.postPurchaseNote,
         courseId: COURSE.productId,
       });
-      console.log("[pago-link] order created:", orderId);
 
       const browserInfo = {
         accept_header: "text/html",
@@ -215,7 +325,6 @@ export default function PagoToxicaSinToxicosPage() {
         java_enabled: false,
       };
 
-      console.log("[pago-link] calling /api/payment/charge…");
       const response = await fetch("/api/payment/charge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -232,7 +341,6 @@ export default function PagoToxicaSinToxicosPage() {
         }),
       });
       const data = await response.json();
-      console.log("[pago-link] charge response:", { status: response.status, data });
 
       if (data.success) {
         setProcessing(false);
@@ -478,6 +586,27 @@ export default function PagoToxicaSinToxicosPage() {
   }
 
   if (threeDSChallenge) {
+    // Challenge was completed (via postMessage or polling) and verify is in flight.
+    if (challengeVerifying) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
+          <div className="bg-surface-card border border-border-subtle rounded-xl p-8 max-w-sm w-full shadow-xl">
+            <FaShieldAlt className="w-8 h-8 text-primary mx-auto mb-4" />
+            <div className="simple-spinner w-8! h-8! border-3! mx-auto mb-4" />
+            <h2 className="font-cormorant text-xl font-semibold text-text-main mb-2">
+              Verificando con tu banco
+            </h2>
+            <p className="text-text-main/50 text-sm">
+              Estamos confirmando tu autenticación. Esto puede tomar unos segundos…
+            </p>
+          </div>
+          <p className="text-center text-xs text-text-main/40 mt-3">
+            No cierres esta página.
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-lg">
@@ -495,15 +624,23 @@ export default function PagoToxicaSinToxicosPage() {
                 </p>
               </div>
             </div>
-            <iframe
-              srcDoc={threeDSChallenge.html}
-              className="w-full border-0"
-              style={{
-                height: threeDSChallenge.isDeviceFingerprint ? "1px" : "600px",
-              }}
-              title="Autenticación 3DS"
-              sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
-            />
+            <div className="relative">
+              <iframe
+                srcDoc={threeDSChallenge.html}
+                className="w-full border-0"
+                style={{
+                  height: threeDSChallenge.isDeviceFingerprint ? "1px" : "600px",
+                }}
+                title="Autenticación 3DS"
+                sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
+              />
+              {threeDSChallenge.isDeviceFingerprint && (
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <div className="simple-spinner" />
+                  <p className="text-sm text-text-main/60">Verificando tu dispositivo…</p>
+                </div>
+              )}
+            </div>
           </div>
           <p className="text-center text-xs text-text-main/40 mt-3">
             No cierres esta página. Conexión segura con tu banco.
