@@ -1,6 +1,8 @@
 const { onRequest } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore } = require("firebase-admin/firestore");
+const { getAuth } = require("firebase-admin/auth");
 const crypto = require("crypto");
 
 initializeApp();
@@ -164,6 +166,84 @@ Verificando autenticaci&oacute;n...
  *
  * The proxy forwards the Auth-Token and body to Nuvei and returns the response.
  */
+/**
+ * Cleanup anonymous Firebase users older than 7 days.
+ * The /pago/toxica-sin-toxicos guest checkout creates anonymous users for
+ * each visitor so Nuvei's tokenize SDK has a uid. Without cleanup the
+ * anonymous user count grows unbounded. This runs daily and deletes any
+ * anonymous user older than 7 days — 7 days is a generous buffer for
+ * support cases (re-auth to view a specific order etc.) but short enough
+ * that normal traffic doesn't accumulate.
+ *
+ * Also cleans up expired rateLimits/* docs (older than 1 day).
+ */
+exports.cleanupAnonymousUsers = onSchedule(
+  {
+    schedule: "every 24 hours",
+    region: "us-central1",
+    timeoutSeconds: 540,
+    memory: "256MiB",
+  },
+  async () => {
+    const auth = getAuth();
+    const sevenDaysAgoMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    let nextPageToken;
+    let scanned = 0;
+    let deleted = 0;
+
+    do {
+      const result = await auth.listUsers(1000, nextPageToken);
+      scanned += result.users.length;
+
+      const toDelete = result.users
+        .filter((u) => {
+          const isAnonymous = !u.providerData || u.providerData.length === 0;
+          if (!isAnonymous) return false;
+          const createdAt = u.metadata?.creationTime
+            ? new Date(u.metadata.creationTime).getTime()
+            : Date.now();
+          return createdAt < sevenDaysAgoMs;
+        })
+        .map((u) => u.uid);
+
+      if (toDelete.length > 0) {
+        const delResult = await auth.deleteUsers(toDelete);
+        deleted += delResult.successCount;
+        if (delResult.failureCount > 0) {
+          console.warn(
+            `[cleanupAnonymousUsers] ${delResult.failureCount} deletions failed in this batch`,
+          );
+        }
+      }
+
+      nextPageToken = result.pageToken;
+    } while (nextPageToken);
+
+    // Also purge expired rate limit docs (>1 day idle).
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    let rateLimitsPurged = 0;
+    try {
+      const stale = await db
+        .collection("rateLimits")
+        .where("updatedAt", "<", oneDayAgo)
+        .limit(500)
+        .get();
+      const batch = db.batch();
+      stale.docs.forEach((doc) => batch.delete(doc.ref));
+      if (stale.size > 0) {
+        await batch.commit();
+        rateLimitsPurged = stale.size;
+      }
+    } catch (err) {
+      console.error("[cleanupAnonymousUsers] rateLimits purge failed:", err);
+    }
+
+    console.log(
+      `[cleanupAnonymousUsers] scanned=${scanned} deleted=${deleted} rateLimitsPurged=${rateLimitsPurged}`,
+    );
+  },
+);
+
 exports.nuveiProxy = onRequest(
   { cors: true, region: "us-central1" },
   async (req, res) => {
