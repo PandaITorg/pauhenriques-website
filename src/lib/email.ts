@@ -19,6 +19,7 @@ interface PaymentConfirmationParams {
   couponCode?: string;
   vat: number;
   total: number;
+  postPurchaseNote?: string;
 }
 
 /**
@@ -161,6 +162,22 @@ function buildConfirmationHtml(
     month: "long",
     year: "numeric",
   });
+
+  const postPurchaseNoteHtml = params.postPurchaseNote
+    ? `
+                <tr>
+                  <td style="padding: 0 36px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: rgba(166,138,99,0.08); border: 1px solid rgba(166,138,99,0.25); border-radius: 10px;">
+                      <tr>
+                        <td style="padding: 18px 22px;">
+                          <span style="font-size: 11px; color: #a68a63; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600;">Siguiente paso</span>
+                          <div style="color: #c1c4a7; font-size: 14px; margin-top: 6px; line-height: 1.6;">${params.postPurchaseNote}</div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>`
+    : "";
 
   return `
 <!DOCTYPE html>
@@ -325,7 +342,9 @@ function buildConfirmationHtml(
                   </td>
                 </tr>
 
-                <!-- CTA -->
+                ${postPurchaseNoteHtml}
+
+                ${params.postPurchaseNote ? "" : `<!-- CTA -->
                 <tr>
                   <td style="padding: 0 36px 36px; text-align: center;">
                     <!--[if mso]>
@@ -340,7 +359,7 @@ function buildConfirmationHtml(
                     </a>
                     <!--<![endif]-->
                   </td>
-                </tr>
+                </tr>`}
 
               </table>
             </td>

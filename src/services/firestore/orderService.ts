@@ -11,7 +11,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { Order, OrderItem, ShippingAddress, OrderStatus } from "@/types/order";
+import { Order, OrderItem, ShippingAddress, OrderStatus, GuestInfo } from "@/types/order";
 import type { PromotionType } from "@/types/promotion";
 
 const ORDERS_COLLECTION = "orders";
@@ -35,6 +35,9 @@ export async function createOrder(params: {
   installments?: number;
   installmentsType?: number;
   deleteCardAfterPayment?: boolean;
+  guestInfo?: GuestInfo;
+  postPurchaseNote?: string;
+  courseId?: string;
 }): Promise<string> {
   const orderData = {
     ...params,

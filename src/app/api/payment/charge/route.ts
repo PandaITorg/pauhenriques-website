@@ -143,8 +143,9 @@ export async function POST(request: NextRequest) {
           );
         }
         const productData = productDoc.data()!;
+        const isDigital = productData.isDigital === true;
         const stock = productData.stock ?? 0;
-        if (stock < item.quantity) {
+        if (!isDigital && stock < item.quantity) {
           return NextResponse.json(
             { error: `Stock insuficiente para "${item.name}" (disponible: ${stock})` },
             { status: 409 },
@@ -319,6 +320,35 @@ export async function POST(request: NextRequest) {
 
         await batch.commit();
 
+        // If the order is a course enrollment (has guestInfo + courseId),
+        // create a courseEnrollments doc so admin can track access delivery.
+        // Best-effort write: if it fails we don't roll back the paid order.
+        const courseIdFromOrder: string | undefined = orderInfo?.courseId;
+        const guestInfo = orderInfo?.guestInfo;
+        if (courseIdFromOrder && guestInfo) {
+          try {
+            await dbAdmin.collection("courseEnrollments").add({
+              orderId,
+              courseId: courseIdFromOrder,
+              customerEmail: guestInfo.email,
+              customerFirstName: guestInfo.firstName,
+              customerLastName: guestInfo.lastName,
+              customerIdNumber: guestInfo.idNumber,
+              customerPhone: guestInfo.phone,
+              paidAt: new Date(),
+              amountPaid: amount,
+              accessStatus: "pending_access",
+              accessLink: null,
+              accessSentAt: null,
+              notes: "",
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          } catch (err) {
+            console.error(`[charge] Failed to create enrollment for order ${orderId}:`, err);
+          }
+        }
+
         // Send confirmation email ONLY if we have a valid auth_code.
         // Otherwise webhook or timeout handler will deliver it.
         let emailSent = false;
@@ -335,6 +365,7 @@ export async function POST(request: NextRequest) {
             couponCode: orderInfo?.couponCode,
             vat: orderInfo?.vat || vat,
             total: amount,
+            ...(orderInfo?.postPurchaseNote ? { postPurchaseNote: orderInfo.postPurchaseNote } : {}),
           }).catch(() => ({ success: false }));
           emailSent = emailResult.success;
           if (emailSent) {
