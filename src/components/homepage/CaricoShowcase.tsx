@@ -40,7 +40,7 @@ const FALLBACK: Array<Pick<CaricoCategory, 'name' | 'description' | 'bgColor' | 
 ];
 
 const WHATSAPP_CTA =
-  'https://wa.me/593000000000?text=Hola%20Pau%2C%20me%20gustar%C3%ADa%20agendar%20una%20asesor%C3%ADa%20personalizada%20sobre%20productos%20Carico';
+  'https://wa.me/593991712532?text=Hola%20Pau%2C%20me%20gustar%C3%ADa%20agendar%20una%20asesor%C3%ADa%20personalizada%20sobre%20productos%20Carico';
 
 export default function CaricoShowcase({ categories }: CaricoShowcaseProps) {
   const items = categories && categories.length > 0 ? categories : FALLBACK;
