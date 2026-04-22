@@ -64,7 +64,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
               Volver al inicio
             </Link>
             <a
-              href="https://wa.me/593997733498"
+              href="https://wa.me/593991712532"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-5 rounded-xl transition-colors text-sm"

@@ -373,7 +373,7 @@ function buildConfirmationHtml(
               </p>
               <p style="margin: 0 0 16px; color: #556346; font-size: 12px;">
                 Si tienes alguna pregunta, cont\u00e1ctanos por
-                <a href="https://wa.me/593997733498" style="color: #a68a63; text-decoration: underline;">WhatsApp</a>.
+                <a href="https://wa.me/593991712532" style="color: #a68a63; text-decoration: underline;">WhatsApp</a>.
               </p>
               <!-- Bottom accent line -->
               <table width="60" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 auto 16px;">
@@ -555,7 +555,7 @@ function buildCourseAccessHtml(params: CourseAccessParams): string {
             <td style="padding: 32px 20px 16px; text-align: center;">
               <p style="margin: 0 0 8px; color: #556346; font-size: 12px; line-height: 1.6;">
                 ¿Problemas con el acceso? Escribinos por
-                <a href="https://wa.me/593997733498" style="color: #a68a63; text-decoration: underline;">WhatsApp</a>.
+                <a href="https://wa.me/593991712532" style="color: #a68a63; text-decoration: underline;">WhatsApp</a>.
               </p>
               <p style="margin: 16px 0 0; color: #343d2a; font-size: 11px; letter-spacing: 0.5px;">
                 &copy; ${new Date().getFullYear()} Pau Henriques. Todos los derechos reservados.
@@ -579,6 +579,8 @@ interface PaymentFailedParams {
   errorMessage: string;
   items: Array<{ name: string; quantity: number; price: number }>;
   total: number;
+  /** Absolute retry URL. Defaults to ${retryUrl} when omitted. */
+  retryUrl?: string;
 }
 
 export async function sendPaymentFailed(
@@ -607,6 +609,7 @@ export async function sendPaymentFailed(
 }
 
 function buildFailedHtml(params: PaymentFailedParams): string {
+  const retryUrl = params.retryUrl || "${retryUrl}";
   const itemsHtml = params.items
     .map(
       (item, index) => `
@@ -770,13 +773,13 @@ function buildFailedHtml(params: PaymentFailedParams): string {
                 <tr>
                   <td style="padding: 0 36px 36px; text-align: center;">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://pauhenriques.com/checkout" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="17%" strokecolor="#6b9a5b" fillcolor="#6b9a5b">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${retryUrl}" style="height:48px;v-text-anchor:middle;width:220px;" arcsize="17%" strokecolor="#6b9a5b" fillcolor="#6b9a5b">
                       <w:anchorlock/>
                       <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Reintentar pago</center>
                     </v:roundrect>
                     <![endif]-->
                     <!--[if !mso]><!-->
-                    <a href="https://pauhenriques.com/checkout" style="display: inline-block; background-color: #6b9a5b; color: #ffffff; text-decoration: none; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 40px; border-radius: 8px; letter-spacing: 0.5px; mso-hide: all;">
+                    <a href="${retryUrl}" style="display: inline-block; background-color: #6b9a5b; color: #ffffff; text-decoration: none; font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 40px; border-radius: 8px; letter-spacing: 0.5px; mso-hide: all;">
                       Reintentar pago
                     </a>
                     <!--<![endif]-->
@@ -792,7 +795,7 @@ function buildFailedHtml(params: PaymentFailedParams): string {
             <td style="padding: 32px 20px 16px; text-align: center;">
               <p style="margin: 0 0 8px; color: #3d4a30; font-size: 12px; line-height: 1.6;">
                 Si el problema persiste, cont&aacute;ctanos por
-                <a href="https://wa.me/593997733498" style="color: #6b9a5b; text-decoration: underline;">WhatsApp</a>.
+                <a href="https://wa.me/593991712532" style="color: #6b9a5b; text-decoration: underline;">WhatsApp</a>.
               </p>
               <table width="60" cellpadding="0" cellspacing="0" role="presentation" style="margin: 16px auto;">
                 <tr>
