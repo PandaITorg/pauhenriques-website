@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Product, isInfrrarrojoProduct } from "@/types/product";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
+import PriceDisplay from "@/components/pricing/PriceDisplay";
 import { useCartStore } from "@/stores/cart.store";
 import { useState } from "react";
 import { FaEye, FaShoppingCart, FaCheck } from "react-icons/fa";
@@ -92,9 +93,14 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
 
         {/* Price */}
         {infraProduct && (
-          <p className="text-xl font-bold text-primary mb-3">
-            ${infraProduct.price.toFixed(2)}
-          </p>
+          <div className="mb-3">
+            <PriceDisplay
+              product={infraProduct}
+              variant="inline"
+              priceClassName="text-xl font-bold"
+              priceColorClassName="text-primary"
+            />
+          </div>
         )}
 
         {/* CTA — Add to Cart */}

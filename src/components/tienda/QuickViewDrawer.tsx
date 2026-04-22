@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FaTimes, FaShoppingCart, FaWhatsapp, FaCheck } from "react-icons/fa";
 import { Product, isInfrrarrojoProduct } from "@/types/product";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
+import PriceDisplay from "@/components/pricing/PriceDisplay";
 import Drawer from "@/components/ui/Drawer";
 import { useCartStore } from "@/stores/cart.store";
 import { useState } from "react";
@@ -100,9 +101,14 @@ const QuickViewDrawer = ({ product, isOpen, onClose }: QuickViewDrawerProps) => 
         </h2>
 
         {isInfrarrojo && (
-          <p className="text-2xl font-bold text-primary mb-3">
-            ${product.price.toFixed(2)}
-          </p>
+          <div className="mb-3">
+            <PriceDisplay
+              product={product}
+              variant="stacked"
+              priceClassName="text-2xl font-bold"
+              priceColorClassName="text-primary"
+            />
+          </div>
         )}
 
         <p className="text-sm text-text-main/60 leading-relaxed mb-4">
