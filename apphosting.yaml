@@ -8,7 +8,7 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: "AIzaSyCyDfV6yXA4-y2JSxniSdPU3RDwNTUEQEQ"
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    value: "pau-henriques-web-v1.firebaseapp.com"
+    value: "auth.pauhenriques.com"
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
     value: "pau-henriques-web-v1"
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
