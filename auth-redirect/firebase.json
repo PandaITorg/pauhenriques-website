@@ -1,0 +1,18 @@
+{
+  "hosting": {
+    "site": "pau-henriques-web-v1",
+    "public": "public",
+    "cleanUrls": true,
+    "redirects": [
+      { "source": "**", "destination": "https://pauhenriques.com", "type": 301 }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        ]
+      }
+    ]
+  }
+}
