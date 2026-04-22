@@ -9,7 +9,7 @@ interface CourseCardProps {
 export default function CourseCard({ course }: CourseCardProps) {
   return (
     <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
-      <div className="relative aspect-[16/10] bg-surface-elevated">
+      <div className="relative aspect-16/10 bg-surface-elevated">
         <Image
           src={course.image}
           alt={course.name}

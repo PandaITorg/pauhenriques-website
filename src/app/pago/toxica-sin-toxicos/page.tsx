@@ -21,7 +21,7 @@ import GuestInfoForm, {
 import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
 import { ensureAnonymousSession } from "@/lib/pago-link/anonymousAuth";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
-import { ensureCourseProduct } from "./actions";
+import { getCourseBootstrap, type SerializablePriceDisplay } from "./actions";
 
 type Step = "guest-info" | "payment" | "processing";
 
@@ -41,6 +41,7 @@ export default function PagoToxicaSinToxicosPage() {
 
   const [bootError, setBootError] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
+  const [pricing, setPricing] = useState<SerializablePriceDisplay | null>(null);
   const [step, setStep] = useState<Step>("guest-info");
   const [guestInfo, setGuestInfo] = useState<GuestInfoValues | null>(null);
 
@@ -94,15 +95,19 @@ export default function PagoToxicaSinToxicosPage() {
     }
   };
 
-  // Bootstrap: ensure course product exists + anonymous session
+  // Bootstrap: ensure course product exists + seed default discounts +
+  // compute current pricing + anonymous session.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const ensureRes = await ensureCourseProduct();
-        if (!ensureRes.ok) throw new Error(ensureRes.error || "No se pudo cargar el curso");
+        const bootstrap = await getCourseBootstrap();
+        if (!bootstrap.ok) throw new Error(bootstrap.error || "No se pudo cargar el curso");
         await ensureAnonymousSession(user);
-        if (!cancelled) setBooting(false);
+        if (!cancelled) {
+          setPricing(bootstrap.pricing);
+          setBooting(false);
+        }
       } catch (err) {
         if (cancelled) return;
         console.error("[pago-link] bootstrap error:", err);
@@ -267,7 +272,7 @@ export default function PagoToxicaSinToxicosPage() {
   }
 
   async function handleConfirmPayment(token: string) {
-    if (!user || !guestInfo || !token) {
+    if (!user || !guestInfo || !token || !pricing) {
       setPaymentError("Faltan datos para procesar el pago. Recargá la página.");
       return;
     }
@@ -290,14 +295,14 @@ export default function PagoToxicaSinToxicosPage() {
             productId: COURSE.productId,
             name: COURSE.name,
             brand: COURSE.brand,
-            price: COURSE.priceWithoutVat,
+            price: pricing.finalSubtotal,
             quantity: 1,
           },
         ],
-        subtotal: COURSE.priceWithoutVat,
-        vat: COURSE.vat,
+        subtotal: pricing.finalSubtotal,
+        vat: pricing.finalVat,
         shipping: 0,
-        total: COURSE.total,
+        total: pricing.finalPrice,
         shippingAddress: {
           fullName,
           phone: guestInfo.phone,
@@ -331,8 +336,8 @@ export default function PagoToxicaSinToxicosPage() {
         body: JSON.stringify({
           token,
           orderId,
-          amount: COURSE.total,
-          vat: COURSE.vat,
+          amount: pricing.finalPrice,
+          vat: pricing.finalVat,
           description: `Curso ${COURSE.name}`,
           userId: user.uid,
           userEmail: guestInfo.email,
@@ -746,7 +751,7 @@ export default function PagoToxicaSinToxicosPage() {
                     onTokenSuccess={handleTokenSuccess}
                     onTokenError={handleTokenError}
                     disabled={processing}
-                    buttonLabel={`Pagar $${COURSE.total.toFixed(2)}`}
+                    buttonLabel={`Pagar $${(pricing?.finalPrice ?? 0).toFixed(2)}`}
                     processingLabel="Procesando pago…"
                     showSaveCardCheckbox={false}
                   />
@@ -768,28 +773,54 @@ export default function PagoToxicaSinToxicosPage() {
           <aside className="lg:col-span-1">
             <div className="bg-surface-card border border-border-subtle p-5 sm:p-6 rounded-xl lg:sticky lg:top-24">
               <h2 className="text-lg font-semibold text-text-main mb-4">Resumen</h2>
+
+              {pricing?.hasActiveDiscount && pricing.label && (
+                <div className="mb-4 inline-flex items-center gap-1.5 bg-primary/15 text-primary text-[11px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full">
+                  🔥 {pricing.label}
+                </div>
+              )}
+
               <div className="flex items-start justify-between gap-3 text-sm pb-4 border-b border-border-subtle">
                 <div>
                   <p className="font-medium text-text-main leading-snug">
                     {COURSE.name}
                   </p>
-                  <p className="text-xs text-text-main/50 mt-0.5">Curso online</p>
+                  <p className="text-xs text-text-main/50 mt-0.5">Taller en vivo</p>
                 </div>
-                <p className="font-medium text-text-main whitespace-nowrap">
-                  ${COURSE.total.toFixed(2)}
-                </p>
+                <div className="text-right">
+                  {pricing?.hasActiveDiscount && (
+                    <p className="text-xs text-text-main/40 line-through">
+                      ${pricing.basePrice.toFixed(2)}
+                    </p>
+                  )}
+                  <p className="font-medium text-text-main whitespace-nowrap">
+                    ${(pricing?.finalPrice ?? 0).toFixed(2)}
+                  </p>
+                  {pricing?.hasActiveDiscount && (
+                    <p className="text-[11px] font-bold text-success mt-0.5">
+                      -{pricing.percentOff}% OFF
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div className="mt-4 space-y-1.5">
                 <div className="flex justify-between text-xs text-text-main/45">
                   <span>Incluye IVA (15%)</span>
-                  <span>${COURSE.vat.toFixed(2)}</span>
+                  <span>${(pricing?.finalVat ?? 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg text-primary pt-3 mt-3 border-t border-border-subtle">
                   <span>Total</span>
-                  <span>${COURSE.total.toFixed(2)}</span>
+                  <span>${(pricing?.finalPrice ?? 0).toFixed(2)}</span>
                 </div>
               </div>
+
+              {pricing?.hasActiveDiscount && pricing.validUntilIso && (
+                <DiscountCountdown
+                  validUntilIso={pricing.validUntilIso}
+                  amountOff={pricing.amountOff}
+                />
+              )}
 
               <div className="mt-5 pt-5 border-t border-border-subtle space-y-2.5">
                 <TrustRow icon={<FaLock className="w-3 h-3" />} text="Pago 100% seguro" />
@@ -840,6 +871,65 @@ function TrustRow({ icon, text }: { icon: React.ReactNode; text: string }) {
     <div className="flex items-center gap-2 text-xs text-text-main/50">
       <span className="text-text-main/40">{icon}</span>
       <span>{text}</span>
+    </div>
+  );
+}
+
+interface DiscountCountdownProps {
+  validUntilIso: string;
+  amountOff: number;
+}
+
+function DiscountCountdown({ validUntilIso, amountOff }: DiscountCountdownProps) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const target = new Date(validUntilIso).getTime();
+  const diffMs = target - now;
+
+  if (diffMs <= 0) return null;
+
+  const days = Math.floor(diffMs / 86_400_000);
+  const hours = Math.floor((diffMs % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
+
+  let parts: string;
+  if (days > 0) {
+    parts = `${days} día${days === 1 ? "" : "s"} y ${hours} hora${hours === 1 ? "" : "s"}`;
+  } else if (hours > 0) {
+    parts = `${hours} hora${hours === 1 ? "" : "s"} y ${minutes} minuto${minutes === 1 ? "" : "s"}`;
+  } else {
+    parts = `${minutes} minuto${minutes === 1 ? "" : "s"}`;
+  }
+
+  // "sábado 25 de abril, 23:59"
+  const dateLabel = new Intl.DateTimeFormat("es-EC", {
+    timeZone: "America/Guayaquil",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(validUntilIso));
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border-subtle">
+      <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2.5">
+        <p className="text-[11px] uppercase tracking-wider text-primary/80 font-semibold">
+          Ahorrás ${amountOff.toFixed(2)}
+        </p>
+        <p className="text-xs text-text-main/70 mt-1 leading-relaxed">
+          Faltan <strong className="text-text-main">{parts}</strong> para que suba el precio.
+        </p>
+        <p className="text-[10px] text-text-main/40 mt-1">
+          Hasta el {dateLabel} (hora Ecuador)
+        </p>
+      </div>
     </div>
   );
 }

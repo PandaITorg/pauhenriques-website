@@ -52,9 +52,16 @@ service cloud.firestore {
     }
 
     // Pedidos/órdenes
+    // Validación de montos exacta la hace /api/payment/charge contra el
+    // precio dinámico (auto-discounts). Acá solo rango sanity para
+    // bloquear órdenes con totales absurdos desde el cliente.
     match /orders/{orderId} {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.total is number
+        && request.resource.data.total >= 1
+        && request.resource.data.total <= 10000;
       allow update: if false; // Solo via Admin SDK
       allow delete: if false;
     }
