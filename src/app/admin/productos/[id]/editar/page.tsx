@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProductForm from "@/components/admin/ProductForm";
+import AutoDiscountsEditor from "@/components/admin/AutoDiscountsEditor";
 
 export default function EditarProductoPage() {
   const params = useParams();
@@ -58,11 +59,27 @@ export default function EditarProductoPage() {
       </div>
       <div className="h-px bg-linear-to-r from-transparent via-border-default to-transparent" />
 
-      <div className="px-5 lg:px-8 py-6 max-w-3xl">
-      <ProductForm
-        productId={productId}
-        initialData={product as Record<string, unknown>}
-      />
+      <div className="px-5 lg:px-8 py-6 max-w-3xl space-y-6">
+        <ProductForm
+          productId={productId}
+          initialData={product as Record<string, unknown>}
+        />
+
+        {typeof product.price === "number" && (
+          <AutoDiscountsEditor
+            productId={productId}
+            basePriceSubtotal={product.price as number}
+            initialDiscounts={
+              Array.isArray(product.autoDiscounts)
+                ? (product.autoDiscounts as Array<{
+                    finalPrice: number;
+                    label: string;
+                    validUntil?: unknown;
+                  }>)
+                : []
+            }
+          />
+        )}
       </div>
     </div>
   );
