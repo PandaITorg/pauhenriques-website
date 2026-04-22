@@ -16,6 +16,7 @@ import { useCartStore } from "@/stores/cart.store";
 import ProductGallery from "@/components/tienda/ProductGallery";
 import CompraCard from "@/components/tienda/CompraCard";
 import QuickViewDrawer from "@/components/tienda/QuickViewDrawer";
+import PriceDisplay from "@/components/pricing/PriceDisplay";
 
 interface InfrarrojoDetailProps {
   product: InfrrarrojoProduct;
@@ -116,19 +117,24 @@ export default function InfrarrojoDetail({
             </h1>
 
             {/* Price + Stock */}
-            <div className="flex items-center gap-3 mb-4">
-              <p className="text-3xl font-bold text-primary">
-                ${product.price.toFixed(2)}
-              </p>
-              <span
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  inStock
-                    ? "bg-success/15 text-success"
-                    : "bg-error/15 text-error"
-                }`}
-              >
-                {inStock ? "En stock" : "Agotado"}
-              </span>
+            <div className="mb-4">
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <PriceDisplay
+                  product={product}
+                  variant="stacked"
+                  priceClassName="text-3xl font-bold"
+                  priceColorClassName="text-primary"
+                />
+                <span
+                  className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
+                    inStock
+                      ? "bg-success/15 text-success"
+                      : "bg-error/15 text-error"
+                  }`}
+                >
+                  {inStock ? "En stock" : "Agotado"}
+                </span>
+              </div>
             </div>
 
             <p className="text-text-main/60 leading-relaxed mb-6 line-clamp-3">

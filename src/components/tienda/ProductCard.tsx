@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { Product, isInfrrarrojoProduct } from "@/types/product";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
+import PriceDisplay from "@/components/pricing/PriceDisplay";
 import { useCartStore } from "@/stores/cart.store";
 import { useState } from "react";
 import { FaEye, FaShoppingCart, FaWhatsapp } from "react-icons/fa";
@@ -77,9 +78,9 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
 
         {isInfrrarrojoProduct(product) ? (
           <div className="mt-auto">
-            <p className="font-bold text-lg text-text-inverted mb-2">
-              ${product.price.toFixed(2)}
-            </p>
+            <div className="mb-2">
+              <PriceDisplay product={product} variant="inline" />
+            </div>
             <button
               onClick={handleAddToCart}
               disabled={isAdded}
