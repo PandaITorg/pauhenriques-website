@@ -59,6 +59,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Inscripciones a cursos en línea — solo admin lee, escritura via Admin SDK
+    match /courseEnrollments/{enrollmentId} {
+      allow read: if request.auth != null && request.auth.token.admin == true;
+      allow write: if false; // Solo via Admin SDK (creación en charge.ts, update en admin)
+    }
+
     // Plan Novios — registro de bodas
     match /planNovios/{planId} {
       allow read: if true; // Público (landing page, contribucion invitados)

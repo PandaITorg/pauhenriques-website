@@ -73,6 +73,12 @@ interface NuveiPaymentFormProps {
   onTokenSuccess: (token: string, cardInfo: TokenizedCardInfo, saveCard: boolean) => void;
   onTokenError: (error: string) => void;
   disabled?: boolean;
+  /** Override button text (default: "Agregar Tarjeta" / "Continuar con pago") */
+  buttonLabel?: string;
+  /** Hide "Guardar tarjeta" checkbox — forces saveCard=false (guest flows) */
+  showSaveCardCheckbox?: boolean;
+  /** Text shown during processing (default: "Verificando…") */
+  processingLabel?: string;
 }
 
 const SDK_URL =
@@ -84,16 +90,19 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   email,
   onTokenSuccess,
   onTokenError,
+  buttonLabel,
+  showSaveCardCheckbox = true,
+  processingLabel = "Verificando…",
 }) => {
   const [sdkReady, setSdkReady] = useState(false);
   const [sdkTimedOut, setSdkTimedOut] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDeletingDuplicate, setIsDeletingDuplicate] = useState(false);
   const [error, setError] = useState<CardError | null>(null);
-  const [saveCard, setSaveCard] = useState(true);
+  const [saveCard, setSaveCard] = useState(showSaveCardCheckbox);
   const sdkInitRef = useRef(false);
   const pgSdkRef = useRef<PaymentGatewayInstance | null>(null);
-  const saveCardRef = useRef(true);
+  const saveCardRef = useRef(showSaveCardCheckbox);
 
   // Keep ref in sync for use inside memoized callback
   useEffect(() => { saveCardRef.current = saveCard; }, [saveCard]);
@@ -173,6 +182,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
 
   const responseCallback = useCallback(
     (response: any) => {
+      console.log("[NuveiPaymentForm] responseCallback fired:", {
+        hasError: !!response?.error,
+        hasCard: !!response?.card,
+        cardStatus: response?.card?.status,
+      });
       setIsProcessing(false);
 
       if (response.error) {
@@ -243,7 +257,11 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   }, []);
 
   const handlePay = () => {
-    if (!pgSdkRef.current) return;
+    if (!pgSdkRef.current) {
+      console.warn("[NuveiPaymentForm] handlePay called but SDK not ready");
+      return;
+    }
+    console.log("[NuveiPaymentForm] handlePay → calling tokenize()");
     setError(null);
     setIsProcessing(true);
     pgSdkRef.current.tokenize();
@@ -448,17 +466,19 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
 
           {sdkReady && (
             <>
-              <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={saveCard}
-                  onChange={(e) => setSaveCard(e.target.checked)}
-                  className="w-4 h-4 rounded border-border-default text-primary focus:ring-primary/30 cursor-pointer accent-primary"
-                />
-                <span className="text-sm text-text-main/60">
-                  Guardar tarjeta para futuras compras
-                </span>
-              </label>
+              {showSaveCardCheckbox && (
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={saveCard}
+                    onChange={(e) => setSaveCard(e.target.checked)}
+                    className="w-4 h-4 rounded border-border-default text-primary focus:ring-primary/30 cursor-pointer accent-primary"
+                  />
+                  <span className="text-sm text-text-main/60">
+                    Guardar tarjeta para futuras compras
+                  </span>
+                </label>
+              )}
               <button
                 type="button"
                 onClick={handlePay}
@@ -468,10 +488,10 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
                 {isProcessing ? (
                   <>
                     <div className="simple-spinner w-5! h-5! border-2! border-white! border-b-transparent!" />
-                    Verificando...
+                    {processingLabel}
                   </>
                 ) : (
-                  saveCard ? "Agregar Tarjeta" : "Continuar con pago"
+                  buttonLabel ?? (saveCard ? "Agregar Tarjeta" : "Continuar con pago")
                 )}
               </button>
             </>

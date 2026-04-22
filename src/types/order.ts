@@ -30,6 +30,14 @@ export interface ShippingAddress {
   country: string;
 }
 
+export interface GuestInfo {
+  firstName: string;
+  lastName: string;
+  idNumber: string;
+  email: string;
+  phone: string;
+}
+
 export interface Order {
   id: string;
   userId: string;
@@ -49,6 +57,9 @@ export interface Order {
   couponCode?: string;
   promotionId?: string;
   discountType?: PromotionType;
+  guestInfo?: GuestInfo;
+  postPurchaseNote?: string;
+  courseId?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
