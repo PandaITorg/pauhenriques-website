@@ -64,13 +64,13 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
               Volver al inicio
             </Link>
             <a
-              href="https://wa.me/593991712532"
+              href="https://wa.me/593982839650?text=Acabo%20de%20realizar%20el%20pago%20con%20tarjeta%20del%20taller%20De%20T%C3%B3xica%20a%20Sin%20T%C3%B3xicos"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-5 rounded-xl transition-colors text-sm"
             >
               <FaWhatsapp className="w-4 h-4" />
-              Escribinos por WhatsApp
+              Escríbenos por WhatsApp
             </a>
           </div>
         </div>

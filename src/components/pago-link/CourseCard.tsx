@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { FaCheckCircle, FaInfinity, FaMobileAlt } from "react-icons/fa";
+import { FaCheckCircle, FaVideo, FaMobileAlt } from "react-icons/fa";
 import type { CourseConfig } from "@/lib/pago-link/course";
 
 interface CourseCardProps {
@@ -38,8 +38,8 @@ export default function CourseCard({ course }: CourseCardProps) {
             <span>Acceso desde cualquier dispositivo</span>
           </li>
           <li className="flex items-start gap-2.5 text-sm text-text-main/70">
-            <FaInfinity className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-            <span>A tu propio ritmo, sin fecha de caducidad</span>
+            <FaVideo className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <span>Taller en vivo</span>
           </li>
           <li className="flex items-start gap-2.5 text-sm text-text-main/70">
             <FaMobileAlt className="w-4 h-4 text-primary shrink-0 mt-0.5" />

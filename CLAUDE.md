@@ -2,21 +2,32 @@
 
 ## ⚠️ IMPORTANTE — Datos de contacto fijos
 
-El UNICO numero de WhatsApp valido para contacto de clientes en TODO el sitio es:
+### Número general del sitio
+
+Para TODO contacto general de clientes (consultas, tienda, legales, emails automáticos, Schema.org, home, footer, links, plan novios):
 
 - **+593 99 171 2532** — Maria Paula Henriques
-- Formato para links (wa.me / api.whatsapp.com): `593991712532` (sin espacios, sin +)
+- Formato para links (wa.me / api.whatsapp.com): `593991712532`
 - Formato para Schema.org / texto visible: `+593991712532` o "+593 99 171 2532"
 
-Regla absoluta:
-- TODO link `wa.me/` o `api.whatsapp.com/send?phone=` debe apuntar a `593991712532`. SIN excepciones. Ni placeholders, ni dummies, ni nada.
-- NUNCA invente otro numero. NUNCA use `593997733498` (numero viejo/incorrecto ya erradicado).
-- Antes de hacer push de cualquier cambio que agregue un link/texto WhatsApp, correr `grep -rn "wa\.me\|api\.whatsapp\.com" src/` y verificar que todos los numeros sean `593991712532`.
+### Número del taller "Tóxica sin Tóxicos"
 
-Lugares donde aparece (mantener sincronizados):
+Excepción legítima — **el botón "Escríbenos por WhatsApp" en la página de éxito del pago del taller (`/pago/toxica-sin-toxicos/exito`) apunta a otro número**, que es el del organizador/instructor del taller:
+
+- **+593 98 283 9650** — contacto específico del taller en vivo
+- Formato link: `593982839650`
+- Incluye texto pre-rellenado: `?text=Acabo%20de%20realizar%20el%20pago%20con%20tarjeta%20del%20taller%20De%20T%C3%B3xica%20a%20Sin%20T%C3%B3xicos`
+- Única ubicación autorizada: `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
+
+### Reglas absolutas
+
+- NUNCA use `593997733498` (numero viejo/incorrecto ya erradicado).
+- Todo link WhatsApp nuevo por defecto apunta a `593991712532`. La excepción del taller solo aplica a la pantalla de confirmación de pago ya listada arriba.
+- Antes de push con cambios en WhatsApp, correr `grep -rnE "wa\.me|api\.whatsapp\.com" src/` y confirmar que cada número coincida con las reglas de arriba.
+
+### Lugares donde aparece el número general (mantener sincronizados):
 - Emails automaticos: `src/lib/email.ts`, `src/lib/email-plan-novios.ts`
 - Paginas legales: terminos-servicio, politica-privacidad
-- Pago-link: `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
 - Tienda: `src/components/tienda/*` + `src/components/ProductVideos.tsx`
 - Home/Footer: `src/components/home/Hero.tsx`, `src/components/homepage/CtaFinal.tsx`, `src/components/homepage/CaricoShowcase.tsx`, `src/components/layout/footer/Social.tsx`
 - Schema.org: `src/components/schemas/HomeSchema.tsx`
