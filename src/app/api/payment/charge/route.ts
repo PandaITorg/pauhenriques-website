@@ -4,6 +4,7 @@ import { debitWithToken, deleteCard } from "@/lib/nuvei";
 import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getPriceDisplay } from "@/lib/pricing";
+import { verifyTurnstile } from "@/lib/turnstile";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -98,6 +99,8 @@ interface ChargeRequestBody {
   installments?: number;
   installmentsType?: number;
   deleteCardAfterPayment?: boolean;
+  /** Token generado por el widget Turnstile en el cliente. */
+  turnstileToken?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -115,13 +118,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Sesion invalida" }, { status: 401 });
     }
 
-    // Rate limit: 10 charge attempts per IP per 15 minutes. Anti-abuse for
-    // guest flows where anyone with the link could otherwise hammer the
-    // endpoint with stolen cards. Legitimate users rarely retry > 3 times.
+    // Client IP — used both for rate limiting and as Turnstile remoteip hint.
     const clientIpForLimit =
       request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
+
+    // Rate limit: 10 charge attempts per IP per 15 minutes. Anti-abuse for
+    // guest flows where anyone with the link could otherwise hammer the
+    // endpoint with stolen cards. Legitimate users rarely retry > 3 times.
     const allowed = await checkRateLimit(
       `charge:${clientIpForLimit}`,
       10,
@@ -134,7 +139,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Turnstile — captcha v3 invisible. Fail-closed: si falta el token o la
+    // verificación falla, rechazamos. El cliente siempre manda el token
+    // porque el botón Pagar está disabled hasta que el widget produce uno.
     const body: ChargeRequestBody = await request.json();
+    const turnstileToken = body.turnstileToken;
+    if (!turnstileToken) {
+      return NextResponse.json(
+        { error: "Verificación de seguridad faltante. Recargá la página." },
+        { status: 403 },
+      );
+    }
+    const turnstileResult = await verifyTurnstile(
+      turnstileToken,
+      clientIpForLimit === "unknown" ? undefined : clientIpForLimit,
+    );
+    if (!turnstileResult.success) {
+      return NextResponse.json(
+        { error: "No pudimos verificar que sos humano. Recargá la página." },
+        { status: 403 },
+      );
+    }
+
     const { token, cvc, orderId, amount, vat, description, userId, userEmail, browserInfo, installments, installmentsType } = body;
 
     console.log("[charge] Request:", { token: token?.substring(0, 10) + "...", orderId, amount, userId: userId?.substring(0, 8) + "..." });

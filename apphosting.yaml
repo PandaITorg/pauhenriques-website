@@ -45,3 +45,9 @@ env:
   # Email — Resend
   - variable: RESEND_API_KEY
     secret: "resend-api-key"
+
+  # Cloudflare Turnstile — anti-bot en /pago/* guest checkout
+  - variable: NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    value: "0x4AAAAAADBX42G53jvUB1Nb"
+  - variable: TURNSTILE_SECRET_KEY
+    secret: "turnstile-secret-key"

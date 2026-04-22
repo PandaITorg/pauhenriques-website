@@ -14,6 +14,7 @@ import {
 
 import { useAuth } from "@/context/AuthContext";
 import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
+import TurnstileWidget from "@/components/pricing/TurnstileWidget";
 import CourseCard from "@/components/pago-link/CourseCard";
 import GuestInfoForm, {
   type GuestInfoValues,
@@ -44,6 +45,7 @@ export default function PagoToxicaSinToxicosPage() {
   const [pricing, setPricing] = useState<SerializablePriceDisplay | null>(null);
   const [step, setStep] = useState<Step>("guest-info");
   const [guestInfo, setGuestInfo] = useState<GuestInfoValues | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const [processing, setProcessing] = useState(false);
   const paymentLockRef = useRef(false);
@@ -276,6 +278,12 @@ export default function PagoToxicaSinToxicosPage() {
       setPaymentError("Faltan datos para procesar el pago. Recargá la página.");
       return;
     }
+    if (!turnstileToken) {
+      setPaymentError(
+        "Verificación de seguridad en curso. Esperá un segundo e intentá de nuevo.",
+      );
+      return;
+    }
     if (paymentLockRef.current) return;
     paymentLockRef.current = true;
 
@@ -343,6 +351,7 @@ export default function PagoToxicaSinToxicosPage() {
           userEmail: guestInfo.email,
           browserInfo,
           deleteCardAfterPayment: true,
+          turnstileToken,
         }),
       });
       const data = await response.json();
@@ -750,11 +759,15 @@ export default function PagoToxicaSinToxicosPage() {
                     email={guestInfo.email}
                     onTokenSuccess={handleTokenSuccess}
                     onTokenError={handleTokenError}
-                    disabled={processing}
+                    disabled={processing || !turnstileToken}
                     buttonLabel={`Pagar $${(pricing?.finalPrice ?? 0).toFixed(2)}`}
                     processingLabel="Procesando pago…"
                     showSaveCardCheckbox={false}
                   />
+
+                  <div className="mt-4 flex justify-center">
+                    <TurnstileWidget onToken={setTurnstileToken} />
+                  </div>
 
                   <button
                     onClick={() => setStep("guest-info")}
