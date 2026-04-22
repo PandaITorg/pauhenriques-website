@@ -2,6 +2,20 @@ import { Timestamp } from "firebase/firestore";
 
 export type ProductType = "Infrarrojo" | "Carico";
 
+/**
+ * Descuento automático (sin código de cupón) programado por fecha.
+ * `finalPrice` es el precio CON IVA que paga el cliente durante la
+ * ventana activa. `validUntil` puede ser null = descuento permanente.
+ *
+ * Cuando hay varios, se aplica el primero cuyo validUntil >= now
+ * una vez ordenados cronológicamente (ver getPriceDisplay).
+ */
+export interface AutoDiscount {
+  finalPrice: number;
+  label: string;
+  validUntil: Timestamp | null;
+}
+
 export interface BaseProduct {
   id: string;
   name: string;
@@ -31,6 +45,11 @@ export interface BaseProduct {
    * (por ejemplo productos digitales vendidos vía link de pago dedicado).
    */
   hiddenFromCatalog?: boolean;
+  /**
+   * Descuentos automáticos programados (sin cupón). Ver AutoDiscount y
+   * getPriceDisplay() en @/lib/pricing.
+   */
+  autoDiscounts?: AutoDiscount[];
 }
 
 export interface InfrrarrojoProduct extends BaseProduct {

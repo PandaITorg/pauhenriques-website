@@ -3,6 +3,7 @@ import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { debitWithToken, deleteCard } from "@/lib/nuvei";
 import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { getPriceDisplay } from "@/lib/pricing";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -185,14 +186,23 @@ export async function POST(request: NextRequest) {
             { status: 409 },
           );
         }
-        const currentPrice = productData.price ?? 0;
-        if (currentPrice !== item.price) {
+        // Precio efectivo = descuento auto activo o precio base. Si el item
+        // trae un precio distinto al que el servidor calcula AHORA, se
+        // rechaza para que el cliente recargue la página.
+        const display = getPriceDisplay({
+          price: productData.price ?? 0,
+          autoDiscounts: productData.autoDiscounts,
+        });
+        const expectedItemSubtotal = display.finalSubtotal;
+        if (Math.abs(expectedItemSubtotal - item.price) > 0.02) {
           return NextResponse.json(
-            { error: `El precio de "${item.name}" ha cambiado. Por favor, actualiza tu carrito.` },
+            {
+              error: `El precio de "${item.name}" cambió. Recargá la página para ver el precio actualizado.`,
+            },
             { status: 409 },
           );
         }
-        verifiedSubtotal += currentPrice * item.quantity;
+        verifiedSubtotal += expectedItemSubtotal * item.quantity;
       }
 
       // Re-validate coupon if one was applied to the order
