@@ -19,11 +19,29 @@ Excepción legítima — **el botón "Escríbenos por WhatsApp" en la página de
 - Incluye texto pre-rellenado: `?text=Acabo%20de%20realizar%20el%20pago%20con%20tarjeta%20del%20taller%20De%20T%C3%B3xica%20a%20Sin%20T%C3%B3xicos`
 - Única ubicación autorizada: `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
 
+### Regla para organizadores externos (talleres, cursos, eventos)
+
+Cuando un producto del sitio tiene un **organizador o instructor externo** (distinto a Pau Henriques), el número de WhatsApp de ese organizador puede usarse EXCLUSIVAMENTE en los touchpoints post-compra de ese flujo específico:
+
+- Página de confirmación / éxito del pago
+- Email automático de confirmación de pago (si el organizador lo pide explicitamente, con instrucción escrita del cliente)
+- Botón "Contactar al organizador" o similar dentro del flow dedicado
+
+La regla aplica cuando se cumple TODO lo siguiente:
+1. El contacto es específico a ese producto/evento (no al sitio en general).
+2. Andres (cliente) lo pidió explícitamente con el número validado.
+3. Queda documentado en esta sección de CLAUDE.md con el número exacto, dónde se usa, y por qué.
+
+Casos actualmente autorizados:
+- Taller "Tóxica sin Tóxicos" → `593982839650` en `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
+
+El resto del sitio (home, tienda, emails generales, legales, footer, link-tree, etc.) SIEMPRE usa el número general `593991712532`.
+
 ### Reglas absolutas
 
 - NUNCA use `593997733498` (numero viejo/incorrecto ya erradicado).
-- Todo link WhatsApp nuevo por defecto apunta a `593991712532`. La excepción del taller solo aplica a la pantalla de confirmación de pago ya listada arriba.
-- Antes de push con cambios en WhatsApp, correr `grep -rnE "wa\.me|api\.whatsapp\.com" src/` y confirmar que cada número coincida con las reglas de arriba.
+- Todo link WhatsApp nuevo por defecto apunta a `593991712532`, salvo que la nueva ubicación califique como "touchpoint post-compra de organizador externo" según la regla de arriba.
+- Antes de push con cambios en WhatsApp, correr `grep -rnE "wa\.me|api\.whatsapp\.com" src/` y confirmar que cada número coincida con las reglas.
 
 ### Lugares donde aparece el número general (mantener sincronizados):
 - Emails automaticos: `src/lib/email.ts`, `src/lib/email-plan-novios.ts`
