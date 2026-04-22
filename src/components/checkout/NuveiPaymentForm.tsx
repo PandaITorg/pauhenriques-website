@@ -182,11 +182,6 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
 
   const responseCallback = useCallback(
     (response: any) => {
-      console.log("[NuveiPaymentForm] responseCallback fired:", {
-        hasError: !!response?.error,
-        hasCard: !!response?.card,
-        cardStatus: response?.card?.status,
-      });
       setIsProcessing(false);
 
       if (response.error) {
@@ -257,11 +252,7 @@ const NuveiPaymentForm: React.FC<NuveiPaymentFormProps> = ({
   }, []);
 
   const handlePay = () => {
-    if (!pgSdkRef.current) {
-      console.warn("[NuveiPaymentForm] handlePay called but SDK not ready");
-      return;
-    }
-    console.log("[NuveiPaymentForm] handlePay → calling tokenize()");
+    if (!pgSdkRef.current) return;
     setError(null);
     setIsProcessing(true);
     pgSdkRef.current.tokenize();
