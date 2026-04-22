@@ -454,6 +454,122 @@ function buildPendingHtml(params: PaymentConfirmationNoAuthParams): string {
 </html>`;
 }
 
+// ─── Course Access Email ─────────────────────────────────────────────────────
+
+interface CourseAccessParams {
+  to: string;
+  customerName: string;
+  courseName: string;
+  accessLink: string;
+  customMessage?: string;
+}
+
+export async function sendCourseAccessEmail(
+  params: CourseAccessParams,
+): Promise<{ success: boolean }> {
+  if (!resend) return { success: false };
+  if (!params.to || !params.to.includes("@")) return { success: false };
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: params.to,
+      subject: `Tu acceso al curso ${params.courseName}`,
+      html: buildCourseAccessHtml(params),
+    });
+    if (error) {
+      console.error("[email] Failed to send course access:", error);
+      return { success: false };
+    }
+    console.log("[email] Course access sent to:", params.to);
+    return { success: true };
+  } catch (err) {
+    console.error("[email] Error sending course access email:", err);
+    return { success: false };
+  }
+}
+
+function buildCourseAccessHtml(params: CourseAccessParams): string {
+  const customMessageHtml = params.customMessage
+    ? `<tr>
+        <td style="padding: 0 36px 20px;">
+          <p style="color: #c1c4a7; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${params.customMessage}</p>
+        </td>
+      </tr>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tu acceso al curso</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0e120a; font-family: Inter, system-ui, Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #0e120a; padding: 40px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 560px;">
+          <tr>
+            <td style="padding: 0 0 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td style="height: 2px; background: linear-gradient(90deg, transparent 0%, #a68a63 50%, transparent 100%); font-size: 0; line-height: 0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="text-align: center; padding: 0 0 36px;">
+              <img src="https://firebasestorage.googleapis.com/v0/b/pau-henriques-web-v1.firebasestorage.app/o/public-assets%2Fpauhenriques-lightest-green.png?alt=media" alt="Pau Henriques" width="200" style="display: inline-block; max-width: 200px; height: auto;" />
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #2b3322; border: 1px solid rgba(193,196,167,0.15); border-radius: 16px; overflow: hidden;">
+                <tr>
+                  <td style="padding: 40px 36px 24px; text-align: center;">
+                    <h1 style="margin: 0 0 10px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 400; color: #c1c4a7; letter-spacing: 0.3px;">
+                      Tu acceso está listo
+                    </h1>
+                    <p style="margin: 0; color: #778a63; font-size: 14px; line-height: 1.6;">
+                      ${params.customerName ? `Hola <strong style="color: #c1c4a7; font-weight: 500;">${params.customerName}</strong>, a` : "A"}cá tenés el acceso a <strong style="color: #c1c4a7; font-weight: 500;">${params.courseName}</strong>.
+                    </p>
+                  </td>
+                </tr>
+                ${customMessageHtml}
+                <tr>
+                  <td style="padding: 8px 36px 32px; text-align: center;">
+                    <a href="${params.accessLink}" style="display: inline-block; background-color: #a68a63; color: #ffffff; text-decoration: none; font-family: Inter, system-ui, Arial, sans-serif; font-size: 14px; font-weight: 600; padding: 14px 40px; border-radius: 8px; letter-spacing: 0.5px;">
+                      Entrar al curso
+                    </a>
+                    <p style="color: #556346; font-size: 11px; margin: 16px 0 0; word-break: break-all;">
+                      Si el botón no funciona: <a href="${params.accessLink}" style="color: #a68a63; text-decoration: underline;">${params.accessLink}</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 20px 16px; text-align: center;">
+              <p style="margin: 0 0 8px; color: #556346; font-size: 12px; line-height: 1.6;">
+                ¿Problemas con el acceso? Escribinos por
+                <a href="https://wa.me/593997733498" style="color: #a68a63; text-decoration: underline;">WhatsApp</a>.
+              </p>
+              <p style="margin: 16px 0 0; color: #343d2a; font-size: 11px; letter-spacing: 0.5px;">
+                &copy; ${new Date().getFullYear()} Pau Henriques. Todos los derechos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
 // ─── Failed Payment Email ────────────────────────────────────────────────────
 
 interface PaymentFailedParams {

@@ -13,6 +13,7 @@ import {
   FaGift,
   FaHome,
   FaExclamationTriangle,
+  FaGraduationCap,
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
 
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/admin/homepage", label: "Homepage", icon: FaHome },
   { href: "/admin/productos", label: "Productos", icon: FaBox },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
+  { href: "/admin/cursos", label: "Cursos", icon: FaGraduationCap },
   { href: "/admin/promociones", label: "Promociones", icon: FaTag },
   { href: "/admin/plan-novios", label: "Plan Novios", icon: FaGift },
   { href: "/admin/auditoria", label: "Auditoría", icon: FaExclamationTriangle },
@@ -30,11 +32,17 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [auditCount, setAuditCount] = useState<number>(0);
+  const [cursosPendingCount, setCursosPendingCount] = useState<number>(0);
 
   useEffect(() => {
     fetch("/api/admin/auditoria")
       .then((r) => (r.ok ? r.json() : { orders: [] }))
       .then((d) => setAuditCount((d.orders || []).length))
+      .catch(() => {});
+
+    fetch("/api/admin/cursos/enrollments?accessStatus=pending_access")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => setCursosPendingCount(Array.isArray(list) ? list.length : 0))
       .catch(() => {});
   }, [pathname]);
 
@@ -58,7 +66,10 @@ export default function AdminSidebar() {
       {/* Nav items */}
       <div className="flex flex-col gap-1">
         {navItems.map((item) => {
-          const showBadge = item.href === "/admin/auditoria" && auditCount > 0;
+          let badgeCount = 0;
+          if (item.href === "/admin/auditoria") badgeCount = auditCount;
+          if (item.href === "/admin/cursos") badgeCount = cursosPendingCount;
+          const showBadge = badgeCount > 0;
           return (
             <Link
               key={item.href}
@@ -74,7 +85,7 @@ export default function AdminSidebar() {
               <span className="flex-1">{item.label}</span>
               {showBadge && (
                 <span className="bg-warning text-bg-main text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-4.5 text-center">
-                  {auditCount}
+                  {badgeCount}
                 </span>
               )}
             </Link>
