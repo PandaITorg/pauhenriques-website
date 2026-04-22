@@ -12,6 +12,9 @@ export const CURSO_TOXICA_SIN_TOXICOS = {
   image: "/assets/de-toxica-a-sin-toxicos.webp",
   category: "Cursos",
   productType: "Infrarrojo" as const,
+  // El curso se vende exclusivamente a través del link /pago/toxica-sin-toxicos.
+  // No debe aparecer en /tienda ni en ningún listado de catálogo.
+  hiddenFromCatalog: true,
   // Pricing (IVA Ecuador 15%)
   priceWithoutVat: 47.83,
   vat: 7.17,
