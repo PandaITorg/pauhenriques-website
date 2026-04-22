@@ -1,0 +1,21 @@
+# Firebase App Hosting — Staging environment overrides
+# Activated when the backend environment is named "staging".
+# Base config lives in apphosting.yaml (shared across environments).
+# https://firebase.google.com/docs/app-hosting/configure#environment-specific
+
+runtime: "nodejs18"
+
+env:
+  # Nuvei Payment Gateway — STAGING credentials (test cards only, no real charges)
+  - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_CODE
+    value: "MODIRUMTESTADDCARD-EC"
+  - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_KEY
+    value: "DdfZCEm71Lq7e29ByRRC3KM9rFEw6c"
+  - variable: NEXT_PUBLIC_NUVEI_ENV
+    value: "stg"
+  - variable: NUVEI_SERVER_APP_CODE
+    value: "MODIRUMTEST-EC"
+  - variable: NUVEI_SERVER_APP_KEY
+    value: "NXaK6ukvqwaPshOtFfJAhN9dkPnloR"
+  - variable: NUVEI_ENV
+    value: "stg"
