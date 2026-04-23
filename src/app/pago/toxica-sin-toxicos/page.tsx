@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -22,17 +22,10 @@ import GuestInfoForm, {
 import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
 import { ensureAnonymousSession } from "@/lib/pago-link/anonymousAuth";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
+import { useNuveiChallenges } from "@/hooks/useNuveiChallenges";
 import { getCourseBootstrap, type SerializablePriceDisplay } from "./actions";
 
 type Step = "guest-info" | "payment" | "processing";
-
-interface ThreeDSChallenge {
-  html: string;
-  orderId: string;
-  isDeviceFingerprint: boolean;
-  nuveiTransactionId: string;
-  statusDetail: number;
-}
 
 const COURSE = CURSO_TOXICA_SIN_TOXICOS;
 
@@ -48,54 +41,38 @@ export default function PagoToxicaSinToxicosPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const [processing, setProcessing] = useState(false);
-  const paymentLockRef = useRef(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
-  const [threeDSChallenge, setThreeDSChallenge] =
-    useState<ThreeDSChallenge | null>(null);
-  const threeDSCompleteCalledRef = useRef(false);
-  const [challengeVerifying, setChallengeVerifying] = useState(false);
 
-  // OTP challenge state (Nuvei status_detail 31)
-  const [otpChallenge, setOtpChallenge] = useState<{
-    orderId: string;
-    nuveiTransactionId: string;
-  } | null>(null);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpSubmitting, setOtpSubmitting] = useState(false);
-  const [otpError, setOtpError] = useState<string | null>(null);
-
-  // Shared handler for verify API responses (status 35 timer + status 36 postMessage/polling)
-  const handleVerifyResponse = useRef((_data: Record<string, unknown>) => {});
-  handleVerifyResponse.current = (data: Record<string, unknown>) => {
-    if (data.success) {
-      setThreeDSChallenge(null);
-      setChallengeVerifying(false);
-      setProcessing(false);
+  const challenges = useNuveiChallenges({
+    user,
+    onSuccess: ({ orderId }) => {
       setPaymentSuccess(true);
       setTimeout(() => {
-        router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
+        router.push(`/pago/toxica-sin-toxicos/exito?orderId=${orderId}`);
       }, 1200);
-    } else if (data.challenge) {
-      threeDSCompleteCalledRef.current = false;
-      setProcessing(false);
-      setChallengeVerifying(false);
-      setThreeDSChallenge({
-        html: data.challengeHtml as string,
-        orderId: data.orderId as string,
-        isDeviceFingerprint: false,
-        nuveiTransactionId: (data.nuveiTransactionId as string) || "",
-        statusDetail: (data.statusDetail as number) ?? 36,
-      });
-    } else {
-      paymentLockRef.current = false;
-      setProcessing(false);
-      setChallengeVerifying(false);
-      setPaymentFailed((data.error as string) || "Error al completar el pago 3DS.");
-      setThreeDSChallenge(null);
-    }
-  };
+    },
+    onFailed: (error) => setPaymentFailed(error),
+    onProcessingChange: setProcessing,
+  });
+
+  // Shortcuts for readability below.
+  const {
+    threeDSChallenge,
+    setThreeDSChallenge,
+    otpChallenge,
+    setOtpChallenge,
+    otpCode,
+    setOtpCode,
+    otpSubmitting,
+    otpError,
+    setOtpError,
+    challengeVerifying,
+    paymentLockRef,
+    threeDSCompleteCalledRef,
+    submitOtp,
+  } = challenges;
 
   // Bootstrap: ensure course product exists + seed default discounts +
   // compute current pricing + anonymous session.
@@ -122,141 +99,6 @@ export default function PagoToxicaSinToxicosPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Timer for status_detail 35 (device fingerprint): wait 5s, then verify.
-  useEffect(() => {
-    if (!threeDSChallenge || threeDSChallenge.statusDetail !== 35 || !user) return;
-
-    const timer = setTimeout(async () => {
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      setProcessing(true);
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: threeDSChallenge.orderId,
-            userId: user.uid,
-            type: "AUTHENTICATION_CONTINUE",
-            nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-          }),
-        });
-        const data = await response.json();
-        handleVerifyResponse.current(data);
-      } catch {
-        paymentLockRef.current = false;
-        setProcessing(false);
-        setPaymentFailed("Error de conexión al verificar 3DS.");
-        setThreeDSChallenge(null);
-      }
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [threeDSChallenge, user]);
-
-  // 3DS Challenge (status 36) — postMessage from Cloud Function + polling fallback.
-  // Nuvei tracks CRES internally and reports "pending" until ACS notifies them.
-  useEffect(() => {
-    if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
-
-    async function handle3DSMessage(event: MessageEvent) {
-      if (event.data?.type !== "3DS_COMPLETE") return;
-      const { orderId } = event.data;
-      if (!orderId || !user) return;
-
-      setThreeDSChallenge(null);
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      setProcessing(true);
-
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, userId: user.uid, type: "BY_CRES" }),
-        });
-        handleVerifyResponse.current(await response.json());
-      } catch {
-        paymentLockRef.current = false;
-        setProcessing(false);
-        setPaymentFailed("Error de conexión al completar la autenticación 3DS.");
-      }
-    }
-
-    window.addEventListener("message", handle3DSMessage);
-
-    // Polling fallback: wait 10s before first poll (user takes time to complete),
-    // then poll every 3s for up to 3 minutes. Nuvei returns "still pending" until
-    // the ACS notifies them of the result.
-    const POLL_DELAY_MS = 10_000;
-    const POLL_INTERVAL_MS = 3_000;
-    const MAX_POLLS = 60;
-    let pollCount = 0;
-    let pollIntervalId: ReturnType<typeof setInterval> | null = null;
-
-    const pollStartTimeout = setTimeout(() => {
-      pollIntervalId = setInterval(async () => {
-        if (threeDSCompleteCalledRef.current) {
-          if (pollIntervalId) clearInterval(pollIntervalId);
-          return;
-        }
-        pollCount++;
-        if (pollCount > MAX_POLLS) {
-          if (pollIntervalId) clearInterval(pollIntervalId);
-          if (threeDSCompleteCalledRef.current) return;
-          threeDSCompleteCalledRef.current = true;
-          paymentLockRef.current = false;
-          setProcessing(false);
-          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intentá de nuevo.");
-          setThreeDSChallenge(null);
-          try {
-            await fetch("/api/payment/3ds-timeout", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
-            });
-          } catch {
-            /* best effort */
-          }
-          return;
-        }
-
-        try {
-          const response = await fetch("/api/payment/3ds-complete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: threeDSChallenge.orderId,
-              userId: user!.uid,
-              type: "AUTHENTICATION_CONTINUE",
-              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-            }),
-          });
-          const data = await response.json();
-
-          if (data.pending || data.stillPending) return;
-
-          if (data.success || data.error || data.challenge) {
-            if (threeDSCompleteCalledRef.current) return;
-            threeDSCompleteCalledRef.current = true;
-            if (pollIntervalId) clearInterval(pollIntervalId);
-            setChallengeVerifying(true);
-            setThreeDSChallenge(null);
-            handleVerifyResponse.current(data);
-          }
-        } catch {
-          // Network error — keep polling
-        }
-      }, POLL_INTERVAL_MS);
-    }, POLL_DELAY_MS);
-
-    return () => {
-      window.removeEventListener("message", handle3DSMessage);
-      clearTimeout(pollStartTimeout);
-      if (pollIntervalId) clearInterval(pollIntervalId);
-    };
-  }, [threeDSChallenge, user]);
 
   function handleGuestSubmit(values: GuestInfoValues) {
     setGuestInfo(values);
@@ -492,39 +334,6 @@ export default function PagoToxicaSinToxicosPage() {
   }
 
   if (otpChallenge) {
-    const handleOtpSubmit = async () => {
-      if (!otpCode.trim() || !user) return;
-      setOtpSubmitting(true);
-      setOtpError(null);
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: otpChallenge.orderId,
-            userId: user.uid,
-            type: "BY_OTP",
-            nuveiTransactionId: otpChallenge.nuveiTransactionId,
-            otpCode: otpCode.trim(),
-          }),
-        });
-        const data = await response.json();
-        if (data.success) {
-          setOtpChallenge(null);
-          setPaymentSuccess(true);
-          setTimeout(() => {
-            router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
-          }, 1200);
-        } else {
-          setOtpError(data.error || "Código incorrecto. Intentá de nuevo.");
-        }
-      } catch {
-        setOtpError("Error de conexión. Intentá de nuevo.");
-      } finally {
-        setOtpSubmitting(false);
-      }
-    };
-
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
@@ -555,14 +364,14 @@ export default function PagoToxicaSinToxicosPage() {
                 className="w-full text-center text-2xl tracking-[0.3em] font-mono border border-border-default rounded-lg py-3 px-4 bg-background text-text-main placeholder:text-text-main/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleOtpSubmit();
+                  if (e.key === "Enter") submitOtp();
                 }}
               />
               {otpError && (
                 <p className="text-error text-xs text-center">{otpError}</p>
               )}
               <button
-                onClick={handleOtpSubmit}
+                onClick={submitOtp}
                 disabled={otpSubmitting || !otpCode.trim()}
                 className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
