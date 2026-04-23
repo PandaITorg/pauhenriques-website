@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -28,6 +28,7 @@ import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
 import { ShippingAddress } from "@/types/order";
 import { SavedCard, getCardBrandName } from "@/types/card";
+import { useNuveiChallenges } from "@/hooks/useNuveiChallenges";
 
 type Step = "cart" | "shipping" | "payment" | "confirm";
 
@@ -96,30 +97,14 @@ const CartItemRow = ({
   );
 };
 
-interface ThreeDSChallenge {
-  html: string;
-  orderId: string;
-  isDeviceFingerprint: boolean;
-  nuveiTransactionId: string;
-  statusDetail: number;
-}
-
 export default function CheckoutPage() {
   const [isClient, setIsClient] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [processingPayment, setProcessingPayment] = useState(false);
-  const paymentLockRef = useRef(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingAddress | null>(null);
-  const [threeDSChallenge, setThreeDSChallenge] = useState<ThreeDSChallenge | null>(null);
-  const threeDSCompleteCalledRef = useRef(false);
-  const [otpChallenge, setOtpChallenge] = useState<{ orderId: string; nuveiTransactionId: string } | null>(null);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpSubmitting, setOtpSubmitting] = useState(false);
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [challengeVerifying, setChallengeVerifying] = useState(false);
 
   const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
   const [selectedCardToken, setSelectedCardToken] = useState<string | null>(
@@ -197,179 +182,35 @@ export default function CheckoutPage() {
     setIsClient(true);
   }, []);
 
-  // Shared handler for verify API responses (used by both status 35 timer and status 36 postMessage)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleVerifyResponse = useRef((_data: any) => {});
-  handleVerifyResponse.current = (data: any) => {
-    if (data.success) {
-      setThreeDSChallenge(null);
-      setChallengeVerifying(false);
-      setProcessingPayment(false);
+  const challenges = useNuveiChallenges({
+    user,
+    onSuccess: ({ orderId, emailSent }) => {
       setPaymentSuccess(true);
       clearCart();
-      const emailParam3ds = data.emailSent === false ? "&emailSent=false" : "";
+      const emailParam = emailSent === false ? "&emailSent=false" : "";
       setTimeout(() => {
-        router.push(`/checkout/confirmacion?orderId=${data.orderId}${emailParam3ds}`);
+        router.push(`/checkout/confirmacion?orderId=${orderId}${emailParam}`);
       }, 1500);
-    } else if (data.challenge) {
-      // Escalation: status 35 → 36 (or verify returned another challenge)
-      // Reset the ref so postMessage/polling can resolve the new challenge
-      threeDSCompleteCalledRef.current = false;
-      setProcessingPayment(false);
-      setChallengeVerifying(false);
-      setThreeDSChallenge({
-        html: data.challengeHtml,
-        orderId: data.orderId,
-        isDeviceFingerprint: false,
-        nuveiTransactionId: data.nuveiTransactionId,
-        statusDetail: data.statusDetail,
-      });
-    } else {
-      paymentLockRef.current = false;
-      setProcessingPayment(false);
-      setChallengeVerifying(false);
-      setPaymentFailed(data.error || "Error al completar el pago 3DS.");
-      setThreeDSChallenge(null);
-    }
-  };
+    },
+    onFailed: (error) => setPaymentFailed(error),
+    onProcessingChange: setProcessingPayment,
+  });
 
-  // Timer for status_detail 35: wait 5 seconds, then call verify with AUTHENTICATION_CONTINUE
-  useEffect(() => {
-    if (!threeDSChallenge || threeDSChallenge.statusDetail !== 35 || !user) return;
-
-    const timer = setTimeout(async () => {
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      setProcessingPayment(true);
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: threeDSChallenge.orderId,
-            userId: user.uid,
-            type: "AUTHENTICATION_CONTINUE",
-            nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-          }),
-        });
-        const data = await response.json();
-        handleVerifyResponse.current(data);
-      } catch {
-        paymentLockRef.current = false;
-        setProcessingPayment(false);
-        setPaymentFailed("Error de conexión al verificar 3DS.");
-        setThreeDSChallenge(null);
-      }
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [threeDSChallenge, user]);
-
-  // 3DS Challenge (status 36) — two mechanisms to detect completion:
-  //  1) postMessage from Cloud Function (if ACS does POST to term_url)
-  //  2) Polling with AUTHENTICATION_CONTINUE (fallback — Nuvei tracks CRES
-  //     internally and reports "pending" until ACS notifies them of result).
-  // Polling starts after 20s to let the user actually complete the challenge.
-  useEffect(() => {
-    if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
-
-    async function handle3DSMessage(event: MessageEvent) {
-      if (event.data?.type !== "3DS_COMPLETE") return;
-      const { orderId, transStatus } = event.data;
-      if (!orderId || !user) return;
-
-      setThreeDSChallenge(null);
-
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      setProcessingPayment(true);
-
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, userId: user.uid, type: "BY_CRES" }),
-        });
-        handleVerifyResponse.current(await response.json());
-      } catch {
-        paymentLockRef.current = false;
-        setProcessingPayment(false);
-        setPaymentFailed("Error de conexión al completar la autenticación 3DS.");
-      }
-    }
-
-    window.addEventListener("message", handle3DSMessage);
-
-    // Polling: wait 10s before first poll (user takes time to complete),
-    // then poll every 3s. Nuvei returns "still pending" until ACS notifies.
-    const POLL_DELAY_MS = 10_000;
-    const POLL_INTERVAL_MS = 3_000;
-    const MAX_POLLS = 60; // 60 * 3s = 3 minutes of polling after initial delay
-    let pollCount = 0;
-    let pollIntervalId: ReturnType<typeof setInterval> | null = null;
-
-    const pollStartTimeout = setTimeout(() => {
-      pollIntervalId = setInterval(async () => {
-        if (threeDSCompleteCalledRef.current) {
-          if (pollIntervalId) clearInterval(pollIntervalId);
-          return;
-        }
-        pollCount++;
-        if (pollCount > MAX_POLLS) {
-          if (pollIntervalId) clearInterval(pollIntervalId);
-          if (threeDSCompleteCalledRef.current) return;
-          threeDSCompleteCalledRef.current = true;
-          paymentLockRef.current = false;
-          setProcessingPayment(false);
-          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intenta de nuevo.");
-          setThreeDSChallenge(null);
-          try {
-            await fetch("/api/payment/3ds-timeout", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
-            });
-          } catch { /* best effort */ }
-          return;
-        }
-
-        try {
-          const response = await fetch("/api/payment/3ds-complete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: threeDSChallenge.orderId,
-              userId: user!.uid,
-              type: "AUTHENTICATION_CONTINUE",
-              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-            }),
-          });
-          const data = await response.json();
-
-          // Still pending? keep polling.
-          if (data.pending || data.stillPending) return;
-
-          // Definitive result (success or error) — stop polling and handle it.
-          if (data.success || data.error || data.challenge) {
-            if (threeDSCompleteCalledRef.current) return;
-            threeDSCompleteCalledRef.current = true;
-            if (pollIntervalId) clearInterval(pollIntervalId);
-            setChallengeVerifying(true);
-            setThreeDSChallenge(null);
-            handleVerifyResponse.current(data);
-          }
-        } catch {
-          // Network error — keep polling
-        }
-      }, POLL_INTERVAL_MS);
-    }, POLL_DELAY_MS);
-
-    return () => {
-      window.removeEventListener("message", handle3DSMessage);
-      clearTimeout(pollStartTimeout);
-      if (pollIntervalId) clearInterval(pollIntervalId);
-    };
-  }, [threeDSChallenge, user]);
+  const {
+    threeDSChallenge,
+    setThreeDSChallenge,
+    otpChallenge,
+    setOtpChallenge,
+    otpCode,
+    setOtpCode,
+    otpSubmitting,
+    otpError,
+    setOtpError,
+    challengeVerifying,
+    paymentLockRef,
+    threeDSCompleteCalledRef,
+    submitOtp,
+  } = challenges;
 
   const currentStepIndex = STEPS.indexOf(step);
 
@@ -639,41 +480,6 @@ export default function CheckoutPage() {
 
   // OTP Challenge — shown when bank requires OTP verification (status_detail 31)
   if (otpChallenge) {
-    const handleOtpSubmit = async () => {
-      if (!otpCode.trim() || !user) return;
-      setOtpSubmitting(true);
-      setOtpError(null);
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: otpChallenge.orderId,
-            userId: user.uid,
-            type: "BY_OTP",
-            nuveiTransactionId: otpChallenge.nuveiTransactionId,
-            otpCode: otpCode.trim(),
-          }),
-        });
-        const data = await response.json();
-        if (data.success) {
-          setOtpChallenge(null);
-          setPaymentSuccess(true);
-          clearCart();
-          const emailParamOtp = data.emailSent === false ? "&emailSent=false" : "";
-          setTimeout(() => {
-            router.push(`/checkout/confirmacion?orderId=${data.orderId}${emailParamOtp}`);
-          }, 1500);
-        } else {
-          setOtpError(data.error || "Código OTP incorrecto. Intenta de nuevo.");
-        }
-      } catch {
-        setOtpError("Error de conexión. Intenta de nuevo.");
-      } finally {
-        setOtpSubmitting(false);
-      }
-    };
-
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
@@ -704,14 +510,14 @@ export default function CheckoutPage() {
                 className="w-full text-center text-2xl tracking-[0.3em] font-mono border border-border-default rounded-lg py-3 px-4 bg-background text-text-main placeholder:text-text-main/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleOtpSubmit();
+                  if (e.key === "Enter") submitOtp();
                 }}
               />
               {otpError && (
                 <p className="text-error text-xs text-center">{otpError}</p>
               )}
               <button
-                onClick={handleOtpSubmit}
+                onClick={submitOtp}
                 disabled={otpSubmitting || !otpCode.trim()}
                 className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
               >
