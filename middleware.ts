@@ -31,6 +31,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Block /admin/* on public domain — panel solo accesible vía admin.pauhenriques.com.
+  // Excepción: localhost/127.0.0.1 en desarrollo (sin subdominio real).
+  const isLocalhost = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  if (!isAdminHost && !isLocalhost && pathname.startsWith("/admin")) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
   // Protect /admin/* routes — require authenticated admin
   if (pathname.startsWith("/admin")) {
     const decoded = await verifySession(request);
