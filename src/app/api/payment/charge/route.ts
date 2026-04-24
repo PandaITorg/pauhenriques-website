@@ -413,9 +413,33 @@ export async function POST(request: NextRequest) {
               notes: "",
               createdAt: new Date(),
               updatedAt: new Date(),
+              ...(orderInfo?.paymentLinkId
+                ? { paymentLinkId: orderInfo.paymentLinkId }
+                : {}),
             });
           } catch (err) {
             console.error(`[charge] Failed to create enrollment for order ${orderId}:`, err);
+          }
+        }
+
+        // Si el pago vino desde un paymentLink, incrementar timesPaid y
+        // registrar lastPaidAt para que el admin vea cuantas veces se uso.
+        const paymentLinkId: string | undefined = orderInfo?.paymentLinkId;
+        if (paymentLinkId) {
+          try {
+            await dbAdmin
+              .collection("paymentLinks")
+              .doc(paymentLinkId)
+              .update({
+                timesPaid: FieldValue.increment(1),
+                lastPaidAt: new Date(),
+                updatedAt: new Date(),
+              });
+          } catch (err) {
+            console.error(
+              `[charge] Failed to increment paymentLink ${paymentLinkId}:`,
+              err,
+            );
           }
         }
 
