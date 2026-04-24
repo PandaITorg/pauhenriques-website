@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "./src/lib/firebase-admin";
+import { getRoleFromClaims } from "./src/lib/auth/roles";
 
 const ADMIN_HOSTNAME = "admin.pauhenriques.com";
 
@@ -48,8 +49,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Check admin custom claim
-    if (!decoded.admin) {
+    // Check role claim (admin | staff | cursos). Legacy { admin: true } → role='admin'.
+    const role = getRoleFromClaims(decoded as unknown as Record<string, unknown>);
+    if (!role) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
