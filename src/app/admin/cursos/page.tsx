@@ -103,9 +103,9 @@ export default function AdminCursosPage() {
           <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-1">
             Gestión
           </span>
-          <h1 className="text-2xl font-semibold text-text-main">Cursos</h1>
+          <h1 className="text-2xl font-semibold text-text-main">Talleres</h1>
           <p className="text-sm text-text-main/50 mt-1">
-            Inscripciones al curso Tóxica sin Tóxicos. Enviá el acceso manualmente cuando esté listo.
+            Inscripciones al taller Tóxica sin Tóxicos. Enviá el acceso manualmente cuando esté listo.
           </p>
         </div>
       </div>

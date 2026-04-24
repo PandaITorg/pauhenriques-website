@@ -766,7 +766,7 @@ function RoleHelp({ role }: { role: Role }) {
   const text: Record<Role, string> = {
     admin: "Acceso total. Puede gestionar otros usuarios.",
     staff: "Pedidos, productos, promociones, plan novios, auditoria.",
-    cursos: "Solo enrollments del taller.",
+    cursos: "Solo inscripciones y links de pago del taller.",
   };
   return <p className="text-[11px] text-text-main/40 mt-1">{text[role]}</p>;
 }

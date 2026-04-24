@@ -5,7 +5,7 @@ export const ROLES: readonly Role[] = ["admin", "staff", "cursos"] as const;
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Administrador",
   staff: "Staff / Ventas",
-  cursos: "Cursos",
+  cursos: "Talleres",
 };
 
 export type AdminSection =
