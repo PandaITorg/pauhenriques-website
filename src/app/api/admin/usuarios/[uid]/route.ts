@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { auth } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
+import { auth, dbAdmin } from "@/lib/firebase-admin";
 import { requireSection } from "@/lib/auth/server";
 import { ROLES, getRoleFromClaims, type Role } from "@/lib/auth/roles";
 import { writeUserAudit } from "@/lib/auth/audit";
@@ -11,10 +12,17 @@ const UpdateUserSchema = z
   .object({
     role: z.enum(ROLES as readonly [Role, ...Role[]]).optional(),
     password: z.string().min(8, "Minimo 8 caracteres").max(128).optional(),
-    displayName: z.string().trim().min(1).max(80).optional(),
+    nombre: z.string().trim().min(2).max(50).optional(),
+    apellido: z.string().trim().min(2).max(50).optional(),
+    telefono: z.string().trim().max(40).optional(),
   })
   .refine(
-    (d) => d.role !== undefined || d.password !== undefined || d.displayName !== undefined,
+    (d) =>
+      d.role !== undefined ||
+      d.password !== undefined ||
+      d.nombre !== undefined ||
+      d.apellido !== undefined ||
+      d.telefono !== undefined,
     { message: "Sin cambios" },
   );
 
@@ -26,8 +34,8 @@ export async function PATCH(
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  if (!auth) {
-    return NextResponse.json({ error: "Auth not available" }, { status: 500 });
+  if (!auth || !dbAdmin) {
+    return NextResponse.json({ error: "Backend not available" }, { status: 500 });
   }
 
   const { uid } = await params;
@@ -63,20 +71,79 @@ export async function PATCH(
       );
     }
 
-    const { role, password, displayName } = parsed.data;
+    const { role, password, nombre, apellido, telefono } = parsed.data;
 
-    if (password !== undefined || displayName !== undefined) {
+    const profileRef = dbAdmin.collection("users").doc(uid);
+    const profileSnap = await profileRef.get();
+    const existingProfile = profileSnap.exists ? profileSnap.data() ?? {} : {};
+
+    const effectiveNombre =
+      nombre ??
+      (typeof existingProfile.nombre === "string"
+        ? existingProfile.nombre
+        : undefined);
+    const effectiveApellido =
+      apellido ??
+      (typeof existingProfile.apellido === "string"
+        ? existingProfile.apellido
+        : undefined);
+
+    const nameChanged = nombre !== undefined || apellido !== undefined;
+    const newDisplayName =
+      nameChanged && effectiveNombre && effectiveApellido
+        ? `${effectiveNombre} ${effectiveApellido}`.trim()
+        : undefined;
+
+    if (password !== undefined || newDisplayName !== undefined) {
       await auth.updateUser(uid, {
         ...(password !== undefined ? { password } : {}),
-        ...(displayName !== undefined ? { displayName } : {}),
+        ...(newDisplayName !== undefined ? { displayName: newDisplayName } : {}),
       });
+    }
+
+    const profileUpdates: Record<string, unknown> = {
+      updatedAt: FieldValue.serverTimestamp(),
+    };
+    if (nombre !== undefined) profileUpdates.nombre = nombre;
+    if (apellido !== undefined) profileUpdates.apellido = apellido;
+    if (telefono !== undefined) profileUpdates.telefono = telefono.length > 0 ? telefono : null;
+
+    const hasProfileChanges =
+      nombre !== undefined || apellido !== undefined || telefono !== undefined;
+
+    if (hasProfileChanges || !profileSnap.exists) {
+      // Lazy backfill: si el doc no existe, lo creamos con la mejor info disponible.
+      if (!profileSnap.exists) {
+        const fallbackParts = (target.displayName ?? "").trim().split(/\s+/);
+        const fallbackNombre = fallbackParts[0] ?? "";
+        const fallbackApellido =
+          fallbackParts.length > 1 ? fallbackParts.slice(1).join(" ") : "";
+        await profileRef.set({
+          uid,
+          nombre: nombre ?? fallbackNombre,
+          apellido: apellido ?? fallbackApellido,
+          email: target.email ?? null,
+          telefono:
+            telefono !== undefined
+              ? telefono.length > 0
+                ? telefono
+                : null
+              : null,
+          photoURL: target.photoURL ?? null,
+          provider: "email",
+          role: "customer",
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } else if (hasProfileChanges) {
+        await profileRef.update(profileUpdates);
+      }
     }
 
     if (role !== undefined && role !== previousRole) {
       await auth.setCustomUserClaims(uid, { role });
     }
 
-    // Revoke refresh tokens on role or password change to force re-login.
     if (
       (role !== undefined && role !== previousRole) ||
       password !== undefined
@@ -98,7 +165,7 @@ export async function PATCH(
         target: { uid, email: target.email ?? null },
       });
     }
-    if (displayName !== undefined) {
+    if (nameChanged || telefono !== undefined) {
       await writeUserAudit(session, {
         action: "update-displayName",
         target: { uid, email: target.email ?? null },
@@ -121,8 +188,8 @@ export async function DELETE(
   if (!session) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
-  if (!auth) {
-    return NextResponse.json({ error: "Auth not available" }, { status: 500 });
+  if (!auth || !dbAdmin) {
+    return NextResponse.json({ error: "Backend not available" }, { status: 500 });
   }
 
   const { uid } = await params;
@@ -154,6 +221,7 @@ export async function DELETE(
     );
 
     await auth.deleteUser(uid);
+    await dbAdmin.collection("users").doc(uid).delete().catch(() => {});
 
     await writeUserAudit(session, {
       action: "delete",

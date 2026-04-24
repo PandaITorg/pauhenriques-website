@@ -18,7 +18,9 @@ import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
 interface UserListItem {
   uid: string;
   email: string | null;
-  displayName: string | null;
+  nombre: string | null;
+  apellido: string | null;
+  telefono: string | null;
   role: Role;
   disabled: boolean;
   createdAt: string | null;
@@ -41,6 +43,11 @@ function formatDate(iso: string | null): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function fullName(u: { nombre: string | null; apellido: string | null }): string {
+  const parts = [u.nombre, u.apellido].filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : "(sin nombre)";
 }
 
 export default function UsuariosClient({ currentUid }: { currentUid: string }) {
@@ -80,7 +87,9 @@ export default function UsuariosClient({ currentUid }: { currentUid: string }) {
     return users.filter(
       (u) =>
         u.email?.toLowerCase().includes(q) ||
-        u.displayName?.toLowerCase().includes(q) ||
+        u.nombre?.toLowerCase().includes(q) ||
+        u.apellido?.toLowerCase().includes(q) ||
+        u.telefono?.toLowerCase().includes(q) ||
         u.role.includes(q),
     );
   }, [users, search]);
@@ -108,7 +117,7 @@ export default function UsuariosClient({ currentUid }: { currentUid: string }) {
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
             <input
               type="text"
-              placeholder="Buscar por email, nombre o rol…"
+              placeholder="Buscar por nombre, email, telefono o rol…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className={`${inputClass} w-full pl-9 pr-3 py-2.5`}
@@ -142,6 +151,7 @@ export default function UsuariosClient({ currentUid }: { currentUid: string }) {
                 <thead>
                   <tr className="border-b border-border-subtle bg-surface-elevated">
                     <th className="text-left p-4 font-medium text-text-main/50">Usuario</th>
+                    <th className="text-left p-4 font-medium text-text-main/50">Telefono</th>
                     <th className="text-left p-4 font-medium text-text-main/50">Rol</th>
                     <th className="text-left p-4 font-medium text-text-main/50">Creado</th>
                     <th className="text-left p-4 font-medium text-text-main/50">Ultimo login</th>
@@ -158,12 +168,15 @@ export default function UsuariosClient({ currentUid }: { currentUid: string }) {
                       >
                         <td className="p-4">
                           <div className="font-medium text-text-main">
-                            {u.displayName || "(sin nombre)"}
+                            {fullName(u)}
                             {isSelf && (
                               <span className="ml-2 text-[10px] text-primary/70 font-mono">(vos)</span>
                             )}
                           </div>
                           <div className="text-xs text-text-main/50">{u.email ?? "—"}</div>
+                        </td>
+                        <td className="p-4 text-text-main/70 text-xs whitespace-nowrap">
+                          {u.telefono ?? "—"}
                         </td>
                         <td className="p-4">
                           <span
@@ -252,7 +265,9 @@ function CreateUserModal({
   onCreated: () => void;
 }) {
   const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(true);
   const [role, setRole] = useState<Role>("staff");
@@ -260,7 +275,12 @@ function CreateUserModal({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const canSubmit = email.trim().length > 0 && password.length >= 8 && !submitting;
+  const canSubmit =
+    email.trim().length > 0 &&
+    nombre.trim().length >= 2 &&
+    apellido.trim().length >= 2 &&
+    password.length >= 8 &&
+    !submitting;
 
   const handleCopy = async () => {
     try {
@@ -286,7 +306,9 @@ function CreateUserModal({
         body: JSON.stringify({
           email: email.trim(),
           password,
-          displayName: displayName.trim() || undefined,
+          nombre: nombre.trim(),
+          apellido: apellido.trim(),
+          telefono: telefono.trim() || undefined,
           role,
         }),
       });
@@ -318,14 +340,37 @@ function CreateUserModal({
           />
         </Field>
 
-        <Field label="Nombre (opcional)">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Nombre" required>
+            <input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              disabled={submitting}
+              className={`${inputClass} w-full px-3 py-2.5`}
+              placeholder="Maria"
+            />
+          </Field>
+          <Field label="Apellido" required>
+            <input
+              type="text"
+              value={apellido}
+              onChange={(e) => setApellido(e.target.value)}
+              disabled={submitting}
+              className={`${inputClass} w-full px-3 py-2.5`}
+              placeholder="Gonzalez"
+            />
+          </Field>
+        </div>
+
+        <Field label="Telefono (opcional)">
           <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            type="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
             disabled={submitting}
             className={`${inputClass} w-full px-3 py-2.5`}
-            placeholder="Maria Gonzalez"
+            placeholder="+593 99 123 4567"
           />
         </Field>
 
@@ -412,7 +457,9 @@ function EditUserModal({
   onSaved: () => void;
 }) {
   const [role, setRole] = useState<Role>(user.role);
-  const [displayName, setDisplayName] = useState(user.displayName ?? "");
+  const [nombre, setNombre] = useState(user.nombre ?? "");
+  const [apellido, setApellido] = useState(user.apellido ?? "");
+  const [telefono, setTelefono] = useState(user.telefono ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -420,7 +467,9 @@ function EditUserModal({
 
   const dirty =
     role !== user.role ||
-    displayName !== (user.displayName ?? "") ||
+    nombre !== (user.nombre ?? "") ||
+    apellido !== (user.apellido ?? "") ||
+    telefono !== (user.telefono ?? "") ||
     password.length > 0;
 
   const handleSubmit = async () => {
@@ -431,9 +480,9 @@ function EditUserModal({
     }
     const payload: Record<string, string> = {};
     if (role !== user.role) payload.role = role;
-    if (displayName !== (user.displayName ?? "")) {
-      payload.displayName = displayName.trim();
-    }
+    if (nombre !== (user.nombre ?? "")) payload.nombre = nombre.trim();
+    if (apellido !== (user.apellido ?? "")) payload.apellido = apellido.trim();
+    if (telefono !== (user.telefono ?? "")) payload.telefono = telefono.trim();
     if (password.length > 0) payload.password = password;
 
     setSubmitting(true);
@@ -459,14 +508,35 @@ function EditUserModal({
   return (
     <ModalShell title={`Editar ${user.email ?? user.uid}`} onClose={onClose} disabled={submitting}>
       <div className="space-y-4">
-        <Field label="Nombre">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Nombre">
+            <input
+              type="text"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              disabled={submitting}
+              className={`${inputClass} w-full px-3 py-2.5`}
+            />
+          </Field>
+          <Field label="Apellido">
+            <input
+              type="text"
+              value={apellido}
+              onChange={(e) => setApellido(e.target.value)}
+              disabled={submitting}
+              className={`${inputClass} w-full px-3 py-2.5`}
+            />
+          </Field>
+        </div>
+
+        <Field label="Telefono">
           <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
+            type="tel"
+            value={telefono}
+            onChange={(e) => setTelefono(e.target.value)}
             disabled={submitting}
             className={`${inputClass} w-full px-3 py-2.5`}
-            placeholder="(sin nombre)"
+            placeholder="—"
           />
         </Field>
 
