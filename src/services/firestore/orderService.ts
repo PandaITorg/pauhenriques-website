@@ -38,6 +38,7 @@ export async function createOrder(params: {
   guestInfo?: GuestInfo;
   postPurchaseNote?: string;
   courseId?: string;
+  paymentLinkId?: string;
 }): Promise<string> {
   const orderData = {
     ...params,

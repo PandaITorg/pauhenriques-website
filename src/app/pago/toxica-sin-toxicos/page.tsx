@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   FaLock,
@@ -24,18 +24,36 @@ import { ensureAnonymousSession } from "@/lib/pago-link/anonymousAuth";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
 import { useNuveiChallenges } from "@/hooks/useNuveiChallenges";
 import { getCourseBootstrap, type SerializablePriceDisplay } from "./actions";
+import { getPaymentLinkBootstrap } from "@/lib/pago-link/linkBootstrap";
 
 type Step = "guest-info" | "payment" | "processing";
 
 const COURSE = CURSO_TOXICA_SIN_TOXICOS;
 
 export default function PagoToxicaSinToxicosPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="simple-spinner" />
+        </div>
+      }
+    >
+      <PagoToxicaSinToxicosInner />
+    </Suspense>
+  );
+}
+
+function PagoToxicaSinToxicosInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const linkToken = searchParams.get("lt");
   const { user } = useAuth();
 
   const [bootError, setBootError] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
   const [pricing, setPricing] = useState<SerializablePriceDisplay | null>(null);
+  const [paymentLinkId, setPaymentLinkId] = useState<string | null>(null);
   const [step, setStep] = useState<Step>("guest-info");
   const [guestInfo, setGuestInfo] = useState<GuestInfoValues | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -76,10 +94,24 @@ export default function PagoToxicaSinToxicosPage() {
 
   // Bootstrap: ensure course product exists + seed default discounts +
   // compute current pricing + anonymous session.
+  // Si viene searchParam ?lt=<token>, usa el pricing del paymentLink en vez
+  // del curso base (precio fijo, ignora autoDiscounts).
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        if (linkToken) {
+          const bootstrap = await getPaymentLinkBootstrap(linkToken);
+          if (!bootstrap.ok) throw new Error(bootstrap.error);
+          await ensureAnonymousSession(user);
+          if (!cancelled) {
+            setPricing(bootstrap.pricing);
+            setPaymentLinkId(bootstrap.linkId);
+            setBooting(false);
+          }
+          return;
+        }
+
         const bootstrap = await getCourseBootstrap();
         if (!bootstrap.ok) throw new Error(bootstrap.error || "No se pudo cargar el curso");
         await ensureAnonymousSession(user);
@@ -98,7 +130,7 @@ export default function PagoToxicaSinToxicosPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [linkToken]);
 
   function handleGuestSubmit(values: GuestInfoValues) {
     setGuestInfo(values);
@@ -166,6 +198,7 @@ export default function PagoToxicaSinToxicosPage() {
         guestInfo,
         postPurchaseNote: COURSE.postPurchaseNote,
         courseId: COURSE.productId,
+        paymentLinkId: paymentLinkId ?? undefined,
       });
 
       const browserInfo = {
