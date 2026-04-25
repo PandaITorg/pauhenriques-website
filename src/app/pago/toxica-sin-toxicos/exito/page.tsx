@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { FaCheckCircle, FaEnvelope, FaWhatsapp } from "react-icons/fa";
 
-import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
+// Ruta legacy mantenida para órdenes en vuelo creadas antes de la migración
+// a /pago/t/[token]/exito. Solo muestra un mensaje genérico — toda compra
+// nueva aterriza en la ruta dinámica que sí conoce el taller específico.
 
 interface ExitoPageProps {
   searchParams: Promise<{ orderId?: string; review?: string }>;
@@ -11,6 +13,13 @@ export const metadata = {
   title: "Pago confirmado · Pau Henriques",
   robots: { index: false, follow: false },
 };
+
+const TALLER_NAME = "Tóxica sin Tóxicos";
+// WhatsApp del organizador del taller (ver CLAUDE.md, regla organizador externo).
+const WHATSAPP = "593982839650";
+const WHATSAPP_TEXT = encodeURIComponent(
+  `Acabo de realizar el pago con tarjeta del taller De Tóxica a Sin Tóxicos`,
+);
 
 export default async function ExitoPage({ searchParams }: ExitoPageProps) {
   const params = await searchParams;
@@ -28,7 +37,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
           <p className="text-text-main/60 text-sm sm:text-base leading-relaxed">
             {isReview
               ? "Tu pago está siendo revisado por el banco. Te avisaremos por correo en las próximas horas cuando quede confirmado."
-              : `Gracias por tu compra del curso "${CURSO_TOXICA_SIN_TOXICOS.name}".`}
+              : `Gracias por tu compra del taller "${TALLER_NAME}".`}
           </p>
 
           {orderId && (
@@ -48,9 +57,9 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
                   Revisa tu correo
                 </p>
                 <p className="text-xs text-text-main/60 mt-1 leading-relaxed">
-                  Te acabamos de enviar el comprobante de pago. El acceso al curso
-                  te llegará en un máximo de 24 horas. Si no lo recibís, revisá
-                  spam o escríbenos.
+                  Te acabamos de enviar el comprobante de pago. El acceso al
+                  taller te llegará en un máximo de 24 horas. Si no lo
+                  recibís, revisá spam o escríbenos.
                 </p>
               </div>
             </div>
@@ -64,7 +73,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
               Volver al inicio
             </Link>
             <a
-              href="https://wa.me/593982839650?text=Acabo%20de%20realizar%20el%20pago%20con%20tarjeta%20del%20taller%20De%20T%C3%B3xica%20a%20Sin%20T%C3%B3xicos"
+              href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_TEXT}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-5 rounded-xl transition-colors text-sm"
