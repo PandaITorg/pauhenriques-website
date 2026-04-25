@@ -40,7 +40,15 @@ const STATUS_TABS: Array<{ key: "pending_access" | "access_sent" | ""; label: st
 const inputClass =
   "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
 
-export default function EnrollmentsSection() {
+interface EnrollmentsSectionProps {
+  /**
+   * Si está, filtra inscripciones a este courseId (= taller.id en el
+   * nuevo modelo). Si no, muestra el cross-taller pipeline global.
+   */
+  courseId?: string;
+}
+
+export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps = {}) {
   const [tab, setTab] = useState<"pending_access" | "access_sent" | "">("pending_access");
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +59,13 @@ export default function EnrollmentsSection() {
   const fetchEnrollments = useCallback(async () => {
     setLoading(true);
     try {
-      const url = tab ? `/api/admin/cursos/enrollments?accessStatus=${tab}` : "/api/admin/cursos/enrollments";
+      const params = new URLSearchParams();
+      if (tab) params.set("accessStatus", tab);
+      if (courseId) params.set("courseId", courseId);
+      const qs = params.toString();
+      const url = qs
+        ? `/api/admin/cursos/enrollments?${qs}`
+        : "/api/admin/cursos/enrollments";
       const res = await fetch(url);
       if (res.ok) setEnrollments(await res.json());
     } catch (err) {
@@ -59,7 +73,7 @@ export default function EnrollmentsSection() {
     } finally {
       setLoading(false);
     }
-  }, [tab]);
+  }, [tab, courseId]);
 
   useEffect(() => {
     fetchEnrollments();
@@ -99,7 +113,10 @@ export default function EnrollmentsSection() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await fetch("/api/admin/cursos/enrollments/export");
+      const exportUrl = courseId
+        ? `/api/admin/cursos/enrollments/export?courseId=${encodeURIComponent(courseId)}`
+        : "/api/admin/cursos/enrollments/export";
+      const res = await fetch(exportUrl);
       if (!res.ok) {
         alert("Error al descargar el CSV");
         return;

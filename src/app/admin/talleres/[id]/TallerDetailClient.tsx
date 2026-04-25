@@ -14,6 +14,7 @@ import {
 import type { Taller } from "@/lib/talleres/types";
 import TallerInfoForm from "@/components/admin/talleres/TallerInfoForm";
 import PaymentLinksSection from "@/components/admin/talleres/PaymentLinksSection";
+import EnrollmentsSection from "@/components/admin/talleres/EnrollmentsSection";
 
 type SubTab = "info" | "links" | "inscripciones";
 
@@ -143,9 +144,7 @@ export default function TallerDetailClient({ taller }: TallerDetailClientProps) 
       <div className="px-5 lg:px-8 py-6">
         {tab === "info" && <TallerInfoForm taller={taller} />}
         {tab === "links" && <PaymentLinksSection tallerId={taller.id} />}
-        {tab === "inscripciones" && (
-          <Placeholder text="Inscripciones de este taller (próximo commit)" />
-        )}
+        {tab === "inscripciones" && <EnrollmentsSection courseId={taller.id} />}
       </div>
     </div>
   );

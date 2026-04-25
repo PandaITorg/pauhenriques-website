@@ -43,11 +43,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "DB not available" }, { status: 500 });
   }
 
-  const snap = await dbAdmin
-    .collection("courseEnrollments")
-    .orderBy("paidAt", "desc")
-    .limit(5000)
-    .get();
+  const { searchParams } = new URL(request.url);
+  const courseId = searchParams.get("courseId");
+
+  let query: FirebaseFirestore.Query = dbAdmin.collection("courseEnrollments");
+  if (courseId) query = query.where("courseId", "==", courseId);
+  query = query.orderBy("paidAt", "desc").limit(5000);
+
+  const snap = await query.get();
 
   const rows: string[] = [];
   rows.push(CSV_HEADERS.join(","));
