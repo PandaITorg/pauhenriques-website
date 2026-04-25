@@ -14,19 +14,15 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const accessStatus = searchParams.get("accessStatus");
+  const courseId = searchParams.get("courseId");
 
-  let query = dbAdmin
-    .collection("courseEnrollments")
-    .orderBy("paidAt", "desc")
-    .limit(200);
-
-  if (accessStatus) {
-    query = dbAdmin
-      .collection("courseEnrollments")
-      .where("accessStatus", "==", accessStatus)
-      .orderBy("paidAt", "desc")
-      .limit(200);
-  }
+  // Encadenamos filtros opcionales. Firestore exige composite indexes para
+  // queries con varios `where` + `orderBy`; los del console se crean
+  // automáticamente al primer error de query si llegan a faltar.
+  let query: FirebaseFirestore.Query = dbAdmin.collection("courseEnrollments");
+  if (accessStatus) query = query.where("accessStatus", "==", accessStatus);
+  if (courseId) query = query.where("courseId", "==", courseId);
+  query = query.orderBy("paidAt", "desc").limit(200);
 
   const snapshot = await query.get();
   const enrollments = snapshot.docs.map((doc) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FaPlus,
   FaPencilAlt,
@@ -159,7 +160,13 @@ function TallerRow({
   onEdit: () => void;
   onChange: () => void;
 }) {
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const goToDetail = () => router.push(`/admin/talleres/${taller.id}`);
+  const stop = (handler: () => void) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handler();
+  };
 
   const toggleActive = async () => {
     if (busy) return;
@@ -200,7 +207,10 @@ function TallerRow({
   };
 
   return (
-    <tr className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0">
+    <tr
+      onClick={goToDetail}
+      className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0 cursor-pointer"
+    >
       <td className="p-4 min-w-64">
         <div className="font-medium text-text-main">{taller.name}</div>
         <div className="text-xs text-text-main/50 mt-0.5 line-clamp-1">
@@ -232,14 +242,14 @@ function TallerRow({
       <td className="p-4 text-right">
         <div className="inline-flex items-center gap-1.5">
           <button
-            onClick={onEdit}
+            onClick={stop(onEdit)}
             className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer"
             title="Editar"
           >
             <FaPencilAlt className="w-3 h-3" />
           </button>
           <button
-            onClick={toggleActive}
+            onClick={stop(toggleActive)}
             disabled={busy}
             className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40"
             title={taller.active ? "Desactivar" : "Reactivar"}
@@ -251,7 +261,7 @@ function TallerRow({
             )}
           </button>
           <button
-            onClick={remove}
+            onClick={stop(remove)}
             disabled={busy || taller.active}
             className="inline-flex items-center gap-1.5 border border-error/30 text-error hover:bg-error/10 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
             title={taller.active ? "Desactivá primero" : "Eliminar"}

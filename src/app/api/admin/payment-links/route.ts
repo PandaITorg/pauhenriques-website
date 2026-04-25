@@ -76,12 +76,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "DB not available" }, { status: 500 });
   }
 
-  const snap = await dbAdmin
-    .collection("paymentLinks")
-    .orderBy("createdAt", "desc")
-    .limit(500)
-    .get();
+  const { searchParams } = new URL(request.url);
+  const tallerId = searchParams.get("tallerId");
 
+  let query: FirebaseFirestore.Query = dbAdmin.collection("paymentLinks");
+  if (tallerId) query = query.where("tallerId", "==", tallerId);
+  query = query.orderBy("createdAt", "desc").limit(500);
+
+  const snap = await query.get();
   const links = snap.docs.map(docToPaymentLink);
   return NextResponse.json({ links });
 }
