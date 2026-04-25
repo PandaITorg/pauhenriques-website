@@ -18,6 +18,14 @@ service cloud.firestore {
       allow write: if false; // Solo escritura via Admin SDK
     }
 
+    // Talleres / cursos (dominio separado de products).
+    // Lectura pública para renderizar la página del link de pago.
+    // Escritura solo via Admin SDK (APIs /api/admin/talleres).
+    match /talleres/{tallerId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Homepage — Hero slides (lectura pública)
     match /hero_slides/{slideId} {
       allow read: if true;
