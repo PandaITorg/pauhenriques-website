@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -61,15 +62,25 @@ export default function PagoLinkClient({
   const router = useRouter();
   const { user } = useAuth();
 
-  const [authReady, setAuthReady] = useState(false);
   const [step, setStep] = useState<Step>("guest-info");
   const [guestInfo, setGuestInfo] = useState<GuestInfoValues | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // Sesión anónima diferida: solo se establece cuando el cliente confirma
+  // que va a pagar (pasa al step "payment"). Antes de eso el link es 100%
+  // público — cualquiera puede ver el taller sin necesidad de Firebase Auth.
+  const [anonUser, setAnonUser] = useState<User | null>(null);
+  const [anonAuthing, setAnonAuthing] = useState(false);
+  const [anonAuthError, setAnonAuthError] = useState<string | null>(null);
 
   const [processing, setProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
+
+  // El user efectivo para pagar: si el visitante ya tenía sesión real
+  // (ej. admin testeando), la usamos; si no, el anonymous on-demand.
+  const payingUser = user ?? anonUser;
 
   const challenges = useNuveiChallenges({
     user,
@@ -99,26 +110,26 @@ export default function PagoLinkClient({
     submitOtp,
   } = challenges;
 
-  // Anonymous auth — required by createOrder so the request has a uid even
-  // for guest checkouts via paymentLink.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        await ensureAnonymousSession(user);
-        if (!cancelled) setAuthReady(true);
-      } catch (err) {
-        console.error("[pago-link] anon auth error:", err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-  function handleGuestSubmit(values: GuestInfoValues) {
+  async function handleGuestSubmit(values: GuestInfoValues) {
     setGuestInfo(values);
     setStep("payment");
+    // Iniciar sesión anónima en background apenas el cliente confirma
+    // sus datos. Cuando llegue al click "Pagar" ya estará lista.
+    if (!payingUser && !anonAuthing) {
+      setAnonAuthing(true);
+      setAnonAuthError(null);
+      try {
+        const u = await ensureAnonymousSession(null);
+        setAnonUser(u);
+      } catch (err) {
+        console.error("[pago-link] anon auth failed:", err);
+        setAnonAuthError(
+          "No se pudo iniciar la sesión segura. Recargá la página e intentá de nuevo.",
+        );
+      } finally {
+        setAnonAuthing(false);
+      }
+    }
   }
 
   function handleTokenSuccess(token: string) {
@@ -131,7 +142,7 @@ export default function PagoLinkClient({
   }
 
   async function handleConfirmPayment(cardToken: string) {
-    if (!user || !guestInfo || !cardToken) {
+    if (!guestInfo || !cardToken) {
       setPaymentError("Faltan datos para procesar el pago. Recargá la página.");
       return;
     }
@@ -148,13 +159,32 @@ export default function PagoLinkClient({
     setPaymentError(null);
     threeDSCompleteCalledRef.current = false;
 
+    // Re-asegurar sesión anónima si por algún motivo no está lista todavía
+    // (el sign-in se dispara al pasar al step payment, pero por seguridad
+    // lo verificamos otra vez antes de cobrar).
+    let confirmedUser = payingUser;
+    if (!confirmedUser) {
+      try {
+        confirmedUser = await ensureAnonymousSession(null);
+        setAnonUser(confirmedUser);
+      } catch (err) {
+        console.error("[pago-link] anon auth failed:", err);
+        paymentLockRef.current = false;
+        setProcessing(false);
+        setPaymentError(
+          "No se pudo iniciar la sesión segura. Recargá la página e intentá de nuevo.",
+        );
+        return;
+      }
+    }
+
     let orderId: string | null = null;
 
     try {
       const fullName = `${guestInfo.firstName} ${guestInfo.lastName}`.trim();
 
       orderId = await createOrder({
-        userId: user.uid,
+        userId: confirmedUser.uid,
         items: [
           {
             productId: taller.id,
@@ -206,7 +236,7 @@ export default function PagoLinkClient({
           amount: pricing.finalPrice,
           vat: pricing.finalVat,
           description: paymentDescription,
-          userId: user.uid,
+          userId: confirmedUser.uid,
           userEmail: guestInfo.email,
           browserInfo,
           deleteCardAfterPayment: true,
@@ -270,14 +300,6 @@ export default function PagoLinkClient({
         err instanceof Error ? err.message : "Error de conexión. Intenta de nuevo.";
       setPaymentFailed(msg);
     }
-  }
-
-  if (!authReady) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="simple-spinner" />
-      </div>
-    );
   }
 
   if (paymentSuccess) {
@@ -556,20 +578,37 @@ export default function PagoLinkClient({
                     </div>
                   )}
 
-                  <NuveiPaymentForm
-                    uid={user!.uid}
-                    email={guestInfo.email}
-                    onTokenSuccess={handleTokenSuccess}
-                    onTokenError={handleTokenError}
-                    disabled={processing || !turnstileToken}
-                    buttonLabel={`Pagar $${pricing.finalPrice.toFixed(2)}`}
-                    processingLabel="Procesando pago…"
-                    showSaveCardCheckbox={false}
-                  />
+                  {anonAuthError && (
+                    <div className="bg-error/10 text-error p-3 rounded-lg mb-4 text-sm">
+                      {anonAuthError}
+                    </div>
+                  )}
 
-                  <div className="mt-4 flex justify-center">
-                    <TurnstileWidget onToken={setTurnstileToken} />
-                  </div>
+                  {!payingUser ? (
+                    <div className="flex items-center justify-center gap-3 py-8">
+                      <div className="simple-spinner" />
+                      <span className="text-sm text-text-main/60">
+                        Preparando el formulario de pago seguro…
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <NuveiPaymentForm
+                        uid={payingUser.uid}
+                        email={guestInfo.email}
+                        onTokenSuccess={handleTokenSuccess}
+                        onTokenError={handleTokenError}
+                        disabled={processing || !turnstileToken}
+                        buttonLabel={`Pagar $${pricing.finalPrice.toFixed(2)}`}
+                        processingLabel="Procesando pago…"
+                        showSaveCardCheckbox={false}
+                      />
+
+                      <div className="mt-4 flex justify-center">
+                        <TurnstileWidget onToken={setTurnstileToken} />
+                      </div>
+                    </>
+                  )}
 
                   <button
                     onClick={() => setStep("guest-info")}
