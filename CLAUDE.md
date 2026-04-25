@@ -10,30 +10,34 @@ Para TODO contacto general de clientes (consultas, tienda, legales, emails autom
 - Formato para links (wa.me / api.whatsapp.com): `593991712532`
 - Formato para Schema.org / texto visible: `+593991712532` o "+593 99 171 2532"
 
-### Número del taller "Tóxica sin Tóxicos"
+### WhatsApp por taller (campo `whatsappContact` del Taller)
 
-Excepción legítima — **el botón "Escríbenos por WhatsApp" en la página de éxito del pago del taller (`/pago/toxica-sin-toxicos/exito`) apunta a otro número**, que es el del organizador/instructor del taller:
+Cada taller en la colección `talleres/` tiene un campo `whatsappContact` (nullable). Cuando está poblado, **se usa exclusivamente en los touchpoints post-compra del paymentLink de ese taller**:
 
-- **+593 98 283 9650** — contacto específico del taller en vivo
-- Formato link: `593982839650`
-- Incluye texto pre-rellenado: `?text=Acabo%20de%20realizar%20el%20pago%20con%20tarjeta%20del%20taller%20De%20T%C3%B3xica%20a%20Sin%20T%C3%B3xicos`
-- Única ubicación autorizada: `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
+- Página dinámica de éxito: `src/app/pago/t/[token]/exito/page.tsx` — el botón "Escríbenos por WhatsApp" enlaza a `wa.me/${taller.whatsappContact}` y el texto del mensaje incluye el nombre del taller
+- Si en el futuro un email post-compra se personaliza por taller, también puede leer este campo
+
+Casos actualmente poblados:
+- Taller `toxica-sin-toxicos` → `593982839650` (organizador del taller en vivo)
+
+Si `whatsappContact` está vacío o `null`, el touchpoint usa automáticamente el número general del sitio (`593991712532`).
+
+### Página legacy de éxito (in-flight orders)
+
+Mantenida temporalmente: `src/app/pago/toxica-sin-toxicos/exito/page.tsx`. Solo recibe órdenes creadas antes de la migración a `/pago/t/[token]/exito`. Tiene el número `593982839650` hardcodeado (mismo que el campo del Taller, por consistencia visual). Se puede borrar una vez confirmado que no quedan órdenes en vuelo apuntando a esta ruta.
 
 ### Regla para organizadores externos (talleres, cursos, eventos)
 
-Cuando un producto del sitio tiene un **organizador o instructor externo** (distinto a Pau Henriques), el número de WhatsApp de ese organizador puede usarse EXCLUSIVAMENTE en los touchpoints post-compra de ese flujo específico:
+Cuando un taller tiene un **organizador o instructor externo** (distinto a Pau Henriques), el número de WhatsApp de ese organizador puede usarse EXCLUSIVAMENTE en los touchpoints post-compra de ese flujo específico, vía el campo `whatsappContact` del doc en `talleres/`:
 
-- Página de confirmación / éxito del pago
-- Email automático de confirmación de pago (si el organizador lo pide explicitamente, con instrucción escrita del cliente)
-- Botón "Contactar al organizador" o similar dentro del flow dedicado
+- Página dinámica de éxito del paymentLink (`/pago/t/[token]/exito`)
+- Email automático de confirmación de pago (si se personaliza a futuro)
+- Botón "Contactar al organizador" o similar dentro del flow dedicado al taller
 
 La regla aplica cuando se cumple TODO lo siguiente:
-1. El contacto es específico a ese producto/evento (no al sitio en general).
+1. El contacto es específico a ese taller (no al sitio en general).
 2. Andres (cliente) lo pidió explícitamente con el número validado.
-3. Queda documentado en esta sección de CLAUDE.md con el número exacto, dónde se usa, y por qué.
-
-Casos actualmente autorizados:
-- Taller "Tóxica sin Tóxicos" → `593982839650` en `src/app/pago/toxica-sin-toxicos/exito/page.tsx`
+3. Queda registrado en el campo `whatsappContact` del doc del taller (gestionado desde `/admin/talleres`).
 
 El resto del sitio (home, tienda, emails generales, legales, footer, link-tree, etc.) SIEMPRE usa el número general `593991712532`.
 
