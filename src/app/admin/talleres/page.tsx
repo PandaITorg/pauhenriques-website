@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { FaClipboardList, FaLink } from "react-icons/fa";
+import { FaGraduationCap, FaClipboardList, FaLink } from "react-icons/fa";
 import EnrollmentsSection from "@/components/admin/talleres/EnrollmentsSection";
 import PaymentLinksSection from "@/components/admin/talleres/PaymentLinksSection";
+import TalleresSection from "@/components/admin/talleres/TalleresSection";
 
-type TopTab = "inscripciones" | "links";
+type TopTab = "talleres" | "inscripciones" | "links";
 
 const TOP_TABS: Array<{ key: TopTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+  { key: "talleres", label: "Talleres", icon: FaGraduationCap },
   { key: "inscripciones", label: "Inscripciones", icon: FaClipboardList },
   { key: "links", label: "Links de pago", icon: FaLink },
 ];
 
 export default function AdminTalleresPage() {
-  const [topTab, setTopTab] = useState<TopTab>("inscripciones");
+  const [topTab, setTopTab] = useState<TopTab>("talleres");
 
   return (
     <div>
@@ -25,7 +27,7 @@ export default function AdminTalleresPage() {
           </span>
           <h1 className="text-2xl font-semibold text-text-main">Talleres</h1>
           <p className="text-sm text-text-main/50 mt-1">
-            Inscripciones al taller Tóxica sin Tóxicos y links de pago personalizados.
+            Catálogo de talleres, inscripciones y links de pago personalizados.
           </p>
         </div>
       </div>
@@ -56,7 +58,9 @@ export default function AdminTalleresPage() {
       </div>
 
       <div className="px-5 lg:px-8 py-6">
-        {topTab === "inscripciones" ? <EnrollmentsSection /> : <PaymentLinksSection />}
+        {topTab === "talleres" && <TalleresSection />}
+        {topTab === "inscripciones" && <EnrollmentsSection />}
+        {topTab === "links" && <PaymentLinksSection />}
       </div>
     </div>
   );

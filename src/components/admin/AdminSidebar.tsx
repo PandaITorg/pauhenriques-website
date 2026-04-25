@@ -32,7 +32,7 @@ const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/admin/homepage", label: "Homepage", icon: FaHome, section: "homepage" },
   { href: "/admin/productos", label: "Productos", icon: FaBox, section: "productos" },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList, section: "pedidos" },
-  { href: "/admin/cursos", label: "Talleres", icon: FaGraduationCap, section: "cursos" },
+  { href: "/admin/talleres", label: "Talleres", icon: FaGraduationCap, section: "cursos" },
   { href: "/admin/promociones", label: "Promociones", icon: FaTag, section: "promociones" },
   { href: "/admin/plan-novios", label: "Plan Novios", icon: FaGift, section: "planNovios" },
   { href: "/admin/auditoria", label: "Auditoría", icon: FaExclamationTriangle, section: "auditoria" },
@@ -94,7 +94,7 @@ export default function AdminSidebar() {
         {navItems.map((item) => {
           let badgeCount = 0;
           if (item.href === "/admin/auditoria") badgeCount = auditCount;
-          if (item.href === "/admin/cursos") badgeCount = cursosPendingCount;
+          if (item.href === "/admin/talleres") badgeCount = cursosPendingCount;
           const showBadge = badgeCount > 0;
           return (
             <Link
