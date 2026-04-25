@@ -36,23 +36,62 @@ function formatDateTime(iso: string | null): string {
   });
 }
 
+interface CountsByTaller {
+  links: Map<string, number>;
+  enrollments: Map<string, number>;
+}
+
 export default function TalleresSection() {
   const [talleres, setTalleres] = useState<Taller[]>([]);
+  const [counts, setCounts] = useState<CountsByTaller>({
+    links: new Map(),
+    enrollments: new Map(),
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Taller | "new" | null>(null);
 
-  const fetchTalleres = useCallback(async () => {
+  const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/talleres");
-      if (!res.ok) {
+      const [talleresRes, linksRes, enrollmentsRes] = await Promise.all([
+        fetch("/api/admin/talleres"),
+        fetch("/api/admin/payment-links"),
+        fetch("/api/admin/cursos/enrollments"),
+      ]);
+      if (!talleresRes.ok) {
         setError("No se pudo cargar la lista");
         return;
       }
-      const data = (await res.json()) as { talleres: Taller[] };
+      const data = (await talleresRes.json()) as { talleres: Taller[] };
       setTalleres(data.talleres ?? []);
+
+      const linkCounts = new Map<string, number>();
+      if (linksRes.ok) {
+        const d = (await linksRes.json()) as {
+          links: Array<{ tallerId: string; active: boolean; expiresAt: string }>;
+        };
+        const now = Date.now();
+        for (const l of d.links ?? []) {
+          if (!l.active) continue;
+          if (new Date(l.expiresAt).getTime() < now) continue;
+          linkCounts.set(l.tallerId, (linkCounts.get(l.tallerId) ?? 0) + 1);
+        }
+      }
+
+      const enrollmentCounts = new Map<string, number>();
+      if (enrollmentsRes.ok) {
+        const list = (await enrollmentsRes.json()) as Array<{ courseId: string }>;
+        for (const e of list ?? []) {
+          enrollmentCounts.set(
+            e.courseId,
+            (enrollmentCounts.get(e.courseId) ?? 0) + 1,
+          );
+        }
+      }
+
+      setCounts({ links: linkCounts, enrollments: enrollmentCounts });
     } catch {
       setError("Error de conexión");
     } finally {
@@ -61,8 +100,8 @@ export default function TalleresSection() {
   }, []);
 
   useEffect(() => {
-    fetchTalleres();
-  }, [fetchTalleres]);
+    fetchAll();
+  }, [fetchAll]);
 
   return (
     <>
@@ -105,17 +144,17 @@ export default function TalleresSection() {
                   <th className="text-left p-4 font-medium text-text-main/50">
                     Taller
                   </th>
-                  <th className="text-left p-4 font-medium text-text-main/50">
-                    Slug
-                  </th>
                   <th className="text-right p-4 font-medium text-text-main/50">
                     Precio base
                   </th>
                   <th className="text-center p-4 font-medium text-text-main/50">
-                    Estado
+                    Links activos
                   </th>
-                  <th className="text-left p-4 font-medium text-text-main/50">
-                    Actualizado
+                  <th className="text-center p-4 font-medium text-text-main/50">
+                    Inscripciones
+                  </th>
+                  <th className="text-center p-4 font-medium text-text-main/50">
+                    Estado
                   </th>
                   <th className="text-right p-4 font-medium text-text-main/50">
                     Acciones
@@ -127,8 +166,10 @@ export default function TalleresSection() {
                   <TallerRow
                     key={t.id}
                     taller={t}
+                    linksCount={counts.links.get(t.id) ?? 0}
+                    enrollmentsCount={counts.enrollments.get(t.id) ?? 0}
                     onEdit={() => setEditing(t)}
-                    onChange={fetchTalleres}
+                    onChange={fetchAll}
                   />
                 ))}
               </tbody>
@@ -143,7 +184,7 @@ export default function TalleresSection() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);
-            fetchTalleres();
+            fetchAll();
           }}
         />
       )}
@@ -153,10 +194,14 @@ export default function TalleresSection() {
 
 function TallerRow({
   taller,
+  linksCount,
+  enrollmentsCount,
   onEdit,
   onChange,
 }: {
   taller: Taller;
+  linksCount: number;
+  enrollmentsCount: number;
   onEdit: () => void;
   onChange: () => void;
 }) {
@@ -213,17 +258,23 @@ function TallerRow({
     >
       <td className="p-4 min-w-64">
         <div className="font-medium text-text-main">{taller.name}</div>
-        <div className="text-xs text-text-main/50 mt-0.5 line-clamp-1">
-          {taller.shortDescription}
+        <div className="flex items-center gap-2 mt-1">
+          <code className="text-[11px] text-text-main/60 bg-surface-elevated px-1.5 py-0.5 rounded">
+            {taller.slug}
+          </code>
+          <span className="text-[11px] text-text-main/40">
+            actualizado {formatDateTime(taller.updatedAt)}
+          </span>
         </div>
-      </td>
-      <td className="p-4">
-        <code className="text-xs text-text-main/70 bg-surface-elevated px-2 py-1 rounded">
-          {taller.slug}
-        </code>
       </td>
       <td className="p-4 text-right font-semibold text-text-main whitespace-nowrap">
         ${taller.basePrice.toFixed(2)}
+      </td>
+      <td className="p-4 text-center font-medium text-text-main">
+        {linksCount}
+      </td>
+      <td className="p-4 text-center font-medium text-text-main">
+        {enrollmentsCount}
       </td>
       <td className="p-4 text-center">
         {taller.active ? (
@@ -235,9 +286,6 @@ function TallerRow({
             Inactivo
           </span>
         )}
-      </td>
-      <td className="p-4 text-text-main/60 text-xs whitespace-nowrap">
-        {formatDateTime(taller.updatedAt)}
       </td>
       <td className="p-4 text-right">
         <div className="inline-flex items-center gap-1.5">

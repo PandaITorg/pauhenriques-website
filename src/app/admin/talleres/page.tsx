@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { FaGraduationCap, FaClipboardList, FaLink } from "react-icons/fa";
+import { FaGraduationCap, FaClipboardList } from "react-icons/fa";
 import EnrollmentsSection from "@/components/admin/talleres/EnrollmentsSection";
-import PaymentLinksSection from "@/components/admin/talleres/PaymentLinksSection";
 import TalleresSection from "@/components/admin/talleres/TalleresSection";
 
-type TopTab = "talleres" | "inscripciones" | "links";
+type TopTab = "talleres" | "inscripciones";
 
 const TOP_TABS: Array<{ key: TopTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { key: "talleres", label: "Talleres", icon: FaGraduationCap },
   { key: "inscripciones", label: "Inscripciones", icon: FaClipboardList },
-  { key: "links", label: "Links de pago", icon: FaLink },
 ];
 
 export default function AdminTalleresPage() {
@@ -60,7 +58,6 @@ export default function AdminTalleresPage() {
       <div className="px-5 lg:px-8 py-6">
         {topTab === "talleres" && <TalleresSection />}
         {topTab === "inscripciones" && <EnrollmentsSection />}
-        {topTab === "links" && <PaymentLinksSection />}
       </div>
     </div>
   );
