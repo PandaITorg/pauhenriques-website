@@ -5,6 +5,7 @@ import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getPriceDisplay } from "@/lib/pricing";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { ensureEnrollmentForPaidOrder } from "@/lib/talleres/enrollment";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -439,36 +440,13 @@ export async function POST(request: NextRequest) {
 
         await batch.commit();
 
-        // If the order is a course enrollment (has guestInfo + courseId),
-        // create a courseEnrollments doc so admin can track access delivery.
-        // Best-effort write: if it fails we don't roll back the paid order.
-        const courseIdFromOrder: string | undefined = orderInfo?.courseId;
-        const guestInfo = orderInfo?.guestInfo;
-        if (courseIdFromOrder && guestInfo) {
-          try {
-            await dbAdmin.collection("courseEnrollments").add({
-              orderId,
-              courseId: courseIdFromOrder,
-              customerEmail: guestInfo.email,
-              customerFirstName: guestInfo.firstName,
-              customerLastName: guestInfo.lastName,
-              customerIdNumber: guestInfo.idNumber,
-              customerPhone: guestInfo.phone,
-              paidAt: new Date(),
-              amountPaid: amount,
-              accessStatus: "pending_access",
-              accessLink: null,
-              accessSentAt: null,
-              notes: "",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              ...(orderInfo?.paymentLinkId
-                ? { paymentLinkId: orderInfo.paymentLinkId }
-                : {}),
-            });
-          } catch (err) {
-            console.error(`[charge] Failed to create enrollment for order ${orderId}:`, err);
-          }
+        // Crea el courseEnrollment si la orden es de un taller (tiene
+        // courseId + guestInfo). Idempotente y best-effort — si falla no
+        // tumba la orden pagada.
+        try {
+          await ensureEnrollmentForPaidOrder(dbAdmin, orderId);
+        } catch (err) {
+          console.error(`[charge] Failed to create enrollment for order ${orderId}:`, err);
         }
 
         // Si el pago vino desde un paymentLink, incrementar timesPaid y
