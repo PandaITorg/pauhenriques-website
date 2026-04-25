@@ -1,11 +1,15 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { FaCheckCircle, FaEnvelope, FaWhatsapp } from "react-icons/fa";
 
-// Ruta legacy mantenida para órdenes en vuelo creadas antes de la migración
-// a /pago/t/[token]/exito. Solo muestra un mensaje genérico — toda compra
-// nueva aterriza en la ruta dinámica que sí conoce el taller específico.
+import { getTallerBootstrapBySlug } from "@/lib/talleres/bootstrap";
+
+// Número general del sitio (Maria Paula Henriques) — fallback cuando el
+// taller no define whatsappContact propio.
+const DEFAULT_WHATSAPP = "593991712532";
 
 interface ExitoPageProps {
+  params: Promise<{ slug: string }>;
   searchParams: Promise<{ orderId?: string; review?: string }>;
 }
 
@@ -14,17 +18,22 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-const TALLER_NAME = "Tóxica sin Tóxicos";
-// WhatsApp del organizador del taller (ver CLAUDE.md, regla organizador externo).
-const WHATSAPP = "593982839650";
-const WHATSAPP_TEXT = encodeURIComponent(
-  `Acabo de realizar el pago con tarjeta del taller De Tóxica a Sin Tóxicos`,
-);
+export default async function ExitoPage({ params, searchParams }: ExitoPageProps) {
+  const { slug } = await params;
+  const sp = await searchParams;
+  const orderId = sp.orderId;
+  const isReview = sp.review === "1";
 
-export default async function ExitoPage({ searchParams }: ExitoPageProps) {
-  const params = await searchParams;
-  const orderId = params.orderId;
-  const isReview = params.review === "1";
+  const bootstrap = await getTallerBootstrapBySlug(slug);
+  if (!bootstrap.ok) {
+    notFound();
+  }
+
+  const taller = bootstrap.taller;
+  const whatsapp = taller.whatsappContact || DEFAULT_WHATSAPP;
+  const whatsappText = encodeURIComponent(
+    `Acabo de realizar el pago con tarjeta del taller ${taller.name}`,
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,7 +46,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
           <p className="text-text-main/60 text-sm sm:text-base leading-relaxed">
             {isReview
               ? "Tu pago está siendo revisado por el banco. Te avisaremos por correo en las próximas horas cuando quede confirmado."
-              : `Gracias por tu compra del taller "${TALLER_NAME}".`}
+              : `Gracias por tu compra del taller "${taller.name}".`}
           </p>
 
           {orderId && (
@@ -57,9 +66,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
                   Revisa tu correo
                 </p>
                 <p className="text-xs text-text-main/60 mt-1 leading-relaxed">
-                  Te acabamos de enviar el comprobante de pago. El acceso al
-                  taller te llegará en un máximo de 24 horas. Si no lo
-                  recibís, revisá spam o escríbenos.
+                  {taller.postPurchaseNote}
                 </p>
               </div>
             </div>
@@ -73,7 +80,7 @@ export default async function ExitoPage({ searchParams }: ExitoPageProps) {
               Volver al inicio
             </Link>
             <a
-              href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_TEXT}`}
+              href={`https://wa.me/${whatsapp}?text=${whatsappText}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-5 rounded-xl transition-colors text-sm"

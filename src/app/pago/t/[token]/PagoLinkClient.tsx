@@ -30,17 +30,25 @@ import type {
 type Step = "guest-info" | "payment";
 
 interface PagoLinkClientProps {
-  token: string;
-  linkId: string;
   taller: TallerSummary;
   pricing: SerializablePriceDisplay;
+  /** PaymentLink fijo (privado). Si está presente, la orden lo guarda. */
+  paymentLinkId?: string;
+  /**
+   * URL de éxito tras pago aprobado. Recibe el orderId.
+   * Default: /pago/t/[token]/exito (legacy paymentLink flow).
+   */
+  successHref: (orderId: string) => string;
+  /** Descripción enviada al backend de pago (ej. "Taller X"). */
+  paymentDescription: string;
 }
 
 export default function PagoLinkClient({
-  token,
-  linkId,
   taller,
   pricing,
+  paymentLinkId,
+  successHref,
+  paymentDescription,
 }: PagoLinkClientProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -60,7 +68,7 @@ export default function PagoLinkClient({
     onSuccess: ({ orderId }) => {
       setPaymentSuccess(true);
       setTimeout(() => {
-        router.push(`/pago/t/${token}/exito?orderId=${orderId}`);
+        router.push(successHref(orderId));
       }, 1200);
     },
     onFailed: (error) => setPaymentFailed(error),
@@ -165,7 +173,8 @@ export default function PagoLinkClient({
         guestInfo,
         postPurchaseNote: taller.postPurchaseNote,
         courseId: taller.id,
-        paymentLinkId: linkId,
+        tallerId: taller.id,
+        ...(paymentLinkId ? { paymentLinkId } : {}),
       });
 
       const browserInfo = {
@@ -188,7 +197,7 @@ export default function PagoLinkClient({
           orderId,
           amount: pricing.finalPrice,
           vat: pricing.finalVat,
-          description: `Taller ${taller.name}`,
+          description: paymentDescription,
           userId: user.uid,
           userEmail: guestInfo.email,
           browserInfo,
@@ -202,13 +211,13 @@ export default function PagoLinkClient({
         setProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
-          router.push(`/pago/t/${token}/exito?orderId=${orderId}`);
+          router.push(successHref(orderId!));
         }, 1200);
       } else if (data.review) {
         setProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
-          router.push(`/pago/t/${token}/exito?orderId=${orderId}&review=1`);
+          router.push(`${successHref(orderId!)}&review=1`);
         }, 1200);
       } else if (data.otpRequired) {
         setProcessing(false);

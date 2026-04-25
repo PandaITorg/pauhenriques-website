@@ -36,10 +36,13 @@ export default async function PagoLinkPage({ params }: PagoLinkPageProps) {
 
   return (
     <PagoLinkClient
-      token={token}
-      linkId={bootstrap.linkId}
       taller={bootstrap.taller}
       pricing={bootstrap.pricing}
+      paymentLinkId={bootstrap.linkId}
+      paymentDescription={`Taller ${bootstrap.taller.name}`}
+      successHref={(orderId) =>
+        `/pago/t/${token}/exito?orderId=${orderId}`
+      }
     />
   );
 }

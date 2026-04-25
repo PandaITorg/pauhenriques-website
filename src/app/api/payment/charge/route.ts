@@ -6,6 +6,8 @@ import { checkRateLimit } from "@/lib/rateLimit";
 import { getPriceDisplay } from "@/lib/pricing";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { ensureEnrollmentForPaidOrder } from "@/lib/talleres/enrollment";
+import { docToTaller } from "@/lib/talleres/firestore";
+import { getTallerPriceDisplay } from "@/lib/talleres/pricing";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -238,6 +240,39 @@ export async function POST(request: NextRequest) {
         }
         // Skip products + promotions validation entirely.
         // Continue to the Nuvei debit call below.
+      } else if (typeof orderData?.tallerId === "string" && orderData.tallerId) {
+        // Branch: orden del link OFICIAL del taller (/pago/[slug]). El precio
+        // viene de los discountTiers del taller (tier activo o basePrice).
+        // No depende de products ni de paymentLinks. Recalculamos el tier
+        // activo AHORA y comparamos contra el monto enviado.
+        const tallerSnap = await dbAdmin
+          .collection("talleres")
+          .doc(orderData.tallerId)
+          .get();
+        if (!tallerSnap.exists) {
+          return NextResponse.json(
+            { error: "El taller ya no existe" },
+            { status: 409 },
+          );
+        }
+        const taller = docToTaller(tallerSnap);
+        if (!taller.active) {
+          return NextResponse.json(
+            { error: "Este taller no está disponible" },
+            { status: 409 },
+          );
+        }
+        const display = getTallerPriceDisplay(taller);
+        if (Math.abs(display.finalPrice - amount) > 0.02) {
+          return NextResponse.json(
+            {
+              error:
+                "El precio del taller cambió. Recargá la página para ver el precio actualizado.",
+            },
+            { status: 409 },
+          );
+        }
+        // Skip products + promotions validation.
       } else {
 
       // Validate stock and prices for each item before charging
