@@ -2,14 +2,29 @@
 
 import { Timestamp } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
-import { ensureCourseProduct, type SerializablePriceDisplay } from "@/app/pago/toxica-sin-toxicos/actions";
+import { docToTaller } from "@/lib/talleres/firestore";
+import type { Taller } from "@/lib/talleres/types";
+
+// Subset del Taller que el cliente necesita para renderizar /pago/t/[token].
+// Excluye campos solo de admin (active, timestamps, discountTiers — los
+// tiers no aplican a un paymentLink fijo).
+export interface TallerSummary {
+  id: string;
+  slug: string;
+  name: string;
+  brand: string;
+  shortDescription: string;
+  longDescription: string;
+  coverImage: string;
+  postPurchaseNote: string;
+  whatsappContact: string | null;
+}
 
 export interface PaymentLinkBootstrapOk {
   ok: true;
   linkId: string;
   token: string;
-  productId: string;
+  taller: TallerSummary;
   label: string | null;
   pricing: SerializablePriceDisplay;
 }
@@ -20,7 +35,25 @@ export interface PaymentLinkBootstrapError {
   code: "not-found" | "inactive" | "expired" | "db-error";
 }
 
+// Mismo shape que el SerializablePriceDisplay del flujo legacy de
+// toxica-sin-toxicos, para mantener compat con NuveiPaymentForm consumers.
+export interface SerializablePriceDisplay {
+  basePrice: number;
+  baseSubtotal: number;
+  finalPrice: number;
+  finalSubtotal: number;
+  finalVat: number;
+  percentOff: number;
+  amountOff: number;
+  label: string | null;
+  hasActiveDiscount: boolean;
+  validUntilIso: string | null;
+}
+
 const IVA_RATE = 0.15;
+// Slug del taller migrado desde products/curso-toxica-sin-toxicos. Se usa
+// como fallback cuando el paymentLink legacy no tiene tallerId aún.
+const LEGACY_FALLBACK_SLUG = "toxica-sin-toxicos";
 
 function priceFromTotal(totalWithVat: number) {
   const subtotal = Math.round((totalWithVat / (1 + IVA_RATE)) * 100) / 100;
@@ -28,9 +61,42 @@ function priceFromTotal(totalWithVat: number) {
   return { subtotal, vat, total: totalWithVat };
 }
 
+function tallerSummary(t: Taller): TallerSummary {
+  return {
+    id: t.id,
+    slug: t.slug,
+    name: t.name,
+    brand: t.brand,
+    shortDescription: t.shortDescription,
+    longDescription: t.longDescription,
+    coverImage: t.coverImage,
+    postPurchaseNote: t.postPurchaseNote,
+    whatsappContact: t.whatsappContact,
+  };
+}
+
+async function resolveTaller(data: FirebaseFirestore.DocumentData): Promise<Taller | null> {
+  if (!dbAdmin) return null;
+  // Preferred: nuevo campo tallerId apuntando a un doc en talleres/.
+  if (typeof data.tallerId === "string" && data.tallerId.length > 0) {
+    const snap = await dbAdmin.collection("talleres").doc(data.tallerId).get();
+    if (snap.exists) return docToTaller(snap);
+  }
+  // Compat 1: paymentLink viejo con productId — buscar el taller migrado por slug.
+  // Compat 2: paymentLink sin tallerId (sin productId tampoco) — usar el fallback.
+  const slugQuery = await dbAdmin
+    .collection("talleres")
+    .where("slug", "==", LEGACY_FALLBACK_SLUG)
+    .limit(1)
+    .get();
+  if (!slugQuery.empty) return docToTaller(slugQuery.docs[0]);
+  return null;
+}
+
 /**
- * Server action: given a token, resolve the paymentLink and compute pricing.
- * Pricing is FIXED at the link's price (ignores autoDiscounts).
+ * Server action: dado un token, resuelve el paymentLink + taller asociado
+ * y calcula pricing. El precio es FIJO (el del link) — ignora discountTiers
+ * del taller.
  */
 export async function getPaymentLinkBootstrap(
   token: string,
@@ -69,18 +135,17 @@ export async function getPaymentLinkBootstrap(
     return { ok: false, error: "Este link expiró", code: "expired" };
   }
 
-  const productId =
-    typeof data.productId === "string"
-      ? data.productId
-      : CURSO_TOXICA_SIN_TOXICOS.productId;
   const price = typeof data.price === "number" ? data.price : 0;
   if (price <= 0) {
     return { ok: false, error: "Precio invalido", code: "db-error" };
   }
 
-  const ensure = await ensureCourseProduct();
-  if (!ensure.ok) {
-    return { ok: false, error: ensure.error || "Bootstrap falló", code: "db-error" };
+  const taller = await resolveTaller(data);
+  if (!taller) {
+    return { ok: false, error: "Taller asociado no encontrado", code: "db-error" };
+  }
+  if (!taller.active) {
+    return { ok: false, error: "El taller está inactivo", code: "inactive" };
   }
 
   const p = priceFromTotal(price);
@@ -89,7 +154,7 @@ export async function getPaymentLinkBootstrap(
     ok: true,
     linkId: doc.id,
     token,
-    productId,
+    taller: tallerSummary(taller),
     label: typeof data.label === "string" ? data.label : null,
     pricing: {
       basePrice: p.total,
