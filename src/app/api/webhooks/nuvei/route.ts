@@ -3,6 +3,7 @@ import { dbAdmin } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { sendPaymentConfirmation, sendPaymentPending } from "@/lib/email";
 import { verifyThreeDS } from "@/lib/nuvei";
+import { ensureEnrollmentForPaidOrder } from "@/lib/talleres/enrollment";
 
 export const dynamic = "force-dynamic";
 
@@ -198,6 +199,14 @@ export async function POST(request: NextRequest) {
             }).catch(() => {});
             await orderRef.update({ emailSentAt: new Date() });
           }
+
+          // Asegurar enrollment si la orden es de un taller (idempotente).
+          try {
+            await ensureEnrollmentForPaidOrder(dbAdmin, orderId);
+          } catch (err) {
+            console.error(`[webhook] Failed to ensure enrollment for ${orderId}:`, err);
+          }
+
           return NextResponse.json({ received: true, verifiedFromWebhook: true });
         }
       } catch (err) {
@@ -313,6 +322,15 @@ export async function POST(request: NextRequest) {
     console.log(
       `Webhook: Order ${orderId} → ${newStatus} (status_detail: ${transaction.status_detail})`,
     );
+
+    // Si la orden quedó pagada (recién o ya estaba), asegurar enrollment.
+    if (newStatus === "paid" && dbAdmin) {
+      try {
+        await ensureEnrollmentForPaidOrder(dbAdmin, orderId);
+      } catch (err) {
+        console.error(`[webhook] Failed to ensure enrollment for ${orderId}:`, err);
+      }
+    }
 
     return NextResponse.json({ received: true });
   } catch (error) {

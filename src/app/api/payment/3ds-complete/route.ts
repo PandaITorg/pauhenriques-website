@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { verifyThreeDS, deleteCard } from "@/lib/nuvei";
 import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
+import { ensureEnrollmentForPaidOrder } from "@/lib/talleres/enrollment";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -259,6 +260,13 @@ export async function POST(request: NextRequest) {
       }
 
       await batch.commit();
+
+      // Asegurar enrollment si la orden es de un taller (idempotente).
+      try {
+        await ensureEnrollmentForPaidOrder(dbAdmin, orderId);
+      } catch (err) {
+        console.error(`[3ds-complete] Failed to ensure enrollment for ${orderId}:`, err);
+      }
 
       // Send confirmation email ONLY if we have auth_code.
       // Otherwise webhook will send it later (or timeout handler).
