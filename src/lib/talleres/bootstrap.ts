@@ -1,6 +1,6 @@
-"use server";
-
 // Bootstrap del link oficial del taller (/pago/[slug]).
+// Server-only utility (no "use server" — se invoca desde server components y
+// generateMetadata, no es una mutation triggered from client).
 // Diferente al bootstrap de paymentLinks (linkBootstrap.ts):
 //   - No depende de un token random; el slug del taller es la clave.
 //   - El precio sale de los discountTiers programados por fecha (tier activo
