@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -15,248 +15,106 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
 import TurnstileWidget from "@/components/pricing/TurnstileWidget";
-import CourseCard from "@/components/pago-link/CourseCard";
+import TallerCard from "@/components/pago-link/TallerCard";
 import GuestInfoForm, {
   type GuestInfoValues,
 } from "@/components/pago-link/GuestInfoForm";
-import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
 import { ensureAnonymousSession } from "@/lib/pago-link/anonymousAuth";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
-import { getCourseBootstrap, type SerializablePriceDisplay } from "./actions";
+import { useNuveiChallenges } from "@/hooks/useNuveiChallenges";
+import type {
+  SerializablePriceDisplay,
+  TallerSummary,
+} from "@/lib/pago-link/linkBootstrap";
 
-type Step = "guest-info" | "payment" | "processing";
+type Step = "guest-info" | "payment";
 
-interface ThreeDSChallenge {
-  html: string;
-  orderId: string;
-  isDeviceFingerprint: boolean;
-  nuveiTransactionId: string;
-  statusDetail: number;
+interface PagoLinkClientProps {
+  taller: TallerSummary;
+  pricing: SerializablePriceDisplay;
+  /** PaymentLink fijo (privado). Si está presente, la orden lo guarda. */
+  paymentLinkId?: string;
+  /**
+   * URL de éxito tras pago aprobado. Debe contener el placeholder literal
+   * "{ORDER_ID}" que será reemplazado por el orderId real.
+   * Funciones NO son serializables a través del boundary RSC, por eso
+   * pasamos un string con placeholder en vez de un callback.
+   */
+  successUrlPattern: string;
+  /** Descripción enviada al backend de pago (ej. "Taller X"). */
+  paymentDescription: string;
 }
 
-const COURSE = CURSO_TOXICA_SIN_TOXICOS;
+const ORDER_ID_PLACEHOLDER = "{ORDER_ID}";
 
-export default function PagoToxicaSinToxicosPage() {
+function buildSuccessUrl(pattern: string, orderId: string): string {
+  return pattern.replace(ORDER_ID_PLACEHOLDER, encodeURIComponent(orderId));
+}
+
+export default function PagoLinkClient({
+  taller,
+  pricing,
+  paymentLinkId,
+  successUrlPattern,
+  paymentDescription,
+}: PagoLinkClientProps) {
   const router = useRouter();
   const { user } = useAuth();
 
-  const [bootError, setBootError] = useState<string | null>(null);
-  const [booting, setBooting] = useState(true);
-  const [pricing, setPricing] = useState<SerializablePriceDisplay | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [step, setStep] = useState<Step>("guest-info");
   const [guestInfo, setGuestInfo] = useState<GuestInfoValues | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const [processing, setProcessing] = useState(false);
-  const paymentLockRef = useRef(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
-  const [threeDSChallenge, setThreeDSChallenge] =
-    useState<ThreeDSChallenge | null>(null);
-  const threeDSCompleteCalledRef = useRef(false);
-  const [challengeVerifying, setChallengeVerifying] = useState(false);
 
-  // OTP challenge state (Nuvei status_detail 31)
-  const [otpChallenge, setOtpChallenge] = useState<{
-    orderId: string;
-    nuveiTransactionId: string;
-  } | null>(null);
-  const [otpCode, setOtpCode] = useState("");
-  const [otpSubmitting, setOtpSubmitting] = useState(false);
-  const [otpError, setOtpError] = useState<string | null>(null);
-
-  // Shared handler for verify API responses (status 35 timer + status 36 postMessage/polling)
-  const handleVerifyResponse = useRef((_data: Record<string, unknown>) => {});
-  handleVerifyResponse.current = (data: Record<string, unknown>) => {
-    if (data.success) {
-      setThreeDSChallenge(null);
-      setChallengeVerifying(false);
-      setProcessing(false);
+  const challenges = useNuveiChallenges({
+    user,
+    onSuccess: ({ orderId }) => {
       setPaymentSuccess(true);
       setTimeout(() => {
-        router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
+        router.push(buildSuccessUrl(successUrlPattern, orderId));
       }, 1200);
-    } else if (data.challenge) {
-      threeDSCompleteCalledRef.current = false;
-      setProcessing(false);
-      setChallengeVerifying(false);
-      setThreeDSChallenge({
-        html: data.challengeHtml as string,
-        orderId: data.orderId as string,
-        isDeviceFingerprint: false,
-        nuveiTransactionId: (data.nuveiTransactionId as string) || "",
-        statusDetail: (data.statusDetail as number) ?? 36,
-      });
-    } else {
-      paymentLockRef.current = false;
-      setProcessing(false);
-      setChallengeVerifying(false);
-      setPaymentFailed((data.error as string) || "Error al completar el pago 3DS.");
-      setThreeDSChallenge(null);
-    }
-  };
+    },
+    onFailed: (error) => setPaymentFailed(error),
+    onProcessingChange: setProcessing,
+  });
 
-  // Bootstrap: ensure course product exists + seed default discounts +
-  // compute current pricing + anonymous session.
+  const {
+    threeDSChallenge,
+    setThreeDSChallenge,
+    otpChallenge,
+    setOtpChallenge,
+    otpCode,
+    setOtpCode,
+    otpSubmitting,
+    otpError,
+    setOtpError,
+    challengeVerifying,
+    paymentLockRef,
+    threeDSCompleteCalledRef,
+    submitOtp,
+  } = challenges;
+
+  // Anonymous auth — required by createOrder so the request has a uid even
+  // for guest checkouts via paymentLink.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const bootstrap = await getCourseBootstrap();
-        if (!bootstrap.ok) throw new Error(bootstrap.error || "No se pudo cargar el curso");
         await ensureAnonymousSession(user);
-        if (!cancelled) {
-          setPricing(bootstrap.pricing);
-          setBooting(false);
-        }
+        if (!cancelled) setAuthReady(true);
       } catch (err) {
-        if (cancelled) return;
-        console.error("[pago-link] bootstrap error:", err);
-        setBootError(err instanceof Error ? err.message : "Error al preparar la página");
-        setBooting(false);
+        console.error("[pago-link] anon auth error:", err);
       }
     })();
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Timer for status_detail 35 (device fingerprint): wait 5s, then verify.
-  useEffect(() => {
-    if (!threeDSChallenge || threeDSChallenge.statusDetail !== 35 || !user) return;
-
-    const timer = setTimeout(async () => {
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      setProcessing(true);
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: threeDSChallenge.orderId,
-            userId: user.uid,
-            type: "AUTHENTICATION_CONTINUE",
-            nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-          }),
-        });
-        const data = await response.json();
-        handleVerifyResponse.current(data);
-      } catch {
-        paymentLockRef.current = false;
-        setProcessing(false);
-        setPaymentFailed("Error de conexión al verificar 3DS.");
-        setThreeDSChallenge(null);
-      }
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [threeDSChallenge, user]);
-
-  // 3DS Challenge (status 36) — postMessage from Cloud Function + polling fallback.
-  // Nuvei tracks CRES internally and reports "pending" until ACS notifies them.
-  useEffect(() => {
-    if (!threeDSChallenge || threeDSChallenge.statusDetail === 35 || !user) return;
-
-    async function handle3DSMessage(event: MessageEvent) {
-      if (event.data?.type !== "3DS_COMPLETE") return;
-      const { orderId } = event.data;
-      if (!orderId || !user) return;
-
-      setThreeDSChallenge(null);
-      if (threeDSCompleteCalledRef.current) return;
-      threeDSCompleteCalledRef.current = true;
-      setProcessing(true);
-
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, userId: user.uid, type: "BY_CRES" }),
-        });
-        handleVerifyResponse.current(await response.json());
-      } catch {
-        paymentLockRef.current = false;
-        setProcessing(false);
-        setPaymentFailed("Error de conexión al completar la autenticación 3DS.");
-      }
-    }
-
-    window.addEventListener("message", handle3DSMessage);
-
-    // Polling fallback: wait 10s before first poll (user takes time to complete),
-    // then poll every 3s for up to 3 minutes. Nuvei returns "still pending" until
-    // the ACS notifies them of the result.
-    const POLL_DELAY_MS = 10_000;
-    const POLL_INTERVAL_MS = 3_000;
-    const MAX_POLLS = 60;
-    let pollCount = 0;
-    let pollIntervalId: ReturnType<typeof setInterval> | null = null;
-
-    const pollStartTimeout = setTimeout(() => {
-      pollIntervalId = setInterval(async () => {
-        if (threeDSCompleteCalledRef.current) {
-          if (pollIntervalId) clearInterval(pollIntervalId);
-          return;
-        }
-        pollCount++;
-        if (pollCount > MAX_POLLS) {
-          if (pollIntervalId) clearInterval(pollIntervalId);
-          if (threeDSCompleteCalledRef.current) return;
-          threeDSCompleteCalledRef.current = true;
-          paymentLockRef.current = false;
-          setProcessing(false);
-          setPaymentFailed("Tiempo de espera agotado para la verificación 3DS. Intentá de nuevo.");
-          setThreeDSChallenge(null);
-          try {
-            await fetch("/api/payment/3ds-timeout", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: threeDSChallenge.orderId }),
-            });
-          } catch {
-            /* best effort */
-          }
-          return;
-        }
-
-        try {
-          const response = await fetch("/api/payment/3ds-complete", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: threeDSChallenge.orderId,
-              userId: user!.uid,
-              type: "AUTHENTICATION_CONTINUE",
-              nuveiTransactionId: threeDSChallenge.nuveiTransactionId,
-            }),
-          });
-          const data = await response.json();
-
-          if (data.pending || data.stillPending) return;
-
-          if (data.success || data.error || data.challenge) {
-            if (threeDSCompleteCalledRef.current) return;
-            threeDSCompleteCalledRef.current = true;
-            if (pollIntervalId) clearInterval(pollIntervalId);
-            setChallengeVerifying(true);
-            setThreeDSChallenge(null);
-            handleVerifyResponse.current(data);
-          }
-        } catch {
-          // Network error — keep polling
-        }
-      }, POLL_INTERVAL_MS);
-    }, POLL_DELAY_MS);
-
-    return () => {
-      window.removeEventListener("message", handle3DSMessage);
-      clearTimeout(pollStartTimeout);
-      if (pollIntervalId) clearInterval(pollIntervalId);
-    };
-  }, [threeDSChallenge, user]);
+  }, [user]);
 
   function handleGuestSubmit(values: GuestInfoValues) {
     setGuestInfo(values);
@@ -265,7 +123,6 @@ export default function PagoToxicaSinToxicosPage() {
 
   function handleTokenSuccess(token: string) {
     setPaymentError(null);
-    // One-click: tokenize + charge immediately. No intermediate button.
     void handleConfirmPayment(token);
   }
 
@@ -273,8 +130,8 @@ export default function PagoToxicaSinToxicosPage() {
     setPaymentError(error);
   }
 
-  async function handleConfirmPayment(token: string) {
-    if (!user || !guestInfo || !token || !pricing) {
+  async function handleConfirmPayment(cardToken: string) {
+    if (!user || !guestInfo || !cardToken) {
       setPaymentError("Faltan datos para procesar el pago. Recargá la página.");
       return;
     }
@@ -300,9 +157,9 @@ export default function PagoToxicaSinToxicosPage() {
         userId: user.uid,
         items: [
           {
-            productId: COURSE.productId,
-            name: COURSE.name,
-            brand: COURSE.brand,
+            productId: taller.id,
+            name: taller.name,
+            brand: taller.brand,
             price: pricing.finalSubtotal,
             quantity: 1,
           },
@@ -320,10 +177,12 @@ export default function PagoToxicaSinToxicosPage() {
           postalCode: "-",
           country: "EC",
         },
-        paymentToken: token,
+        paymentToken: cardToken,
         guestInfo,
-        postPurchaseNote: COURSE.postPurchaseNote,
-        courseId: COURSE.productId,
+        postPurchaseNote: taller.postPurchaseNote,
+        courseId: taller.id,
+        tallerId: taller.id,
+        ...(paymentLinkId ? { paymentLinkId } : {}),
       });
 
       const browserInfo = {
@@ -342,11 +201,11 @@ export default function PagoToxicaSinToxicosPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          token,
+          token: cardToken,
           orderId,
           amount: pricing.finalPrice,
           vat: pricing.finalVat,
-          description: `Curso ${COURSE.name}`,
+          description: paymentDescription,
           userId: user.uid,
           userEmail: guestInfo.email,
           browserInfo,
@@ -360,16 +219,17 @@ export default function PagoToxicaSinToxicosPage() {
         setProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
-          router.push(`/pago/toxica-sin-toxicos/exito?orderId=${orderId}`);
+          router.push(buildSuccessUrl(successUrlPattern, orderId!));
         }, 1200);
       } else if (data.review) {
         setProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
-          router.push(`/pago/toxica-sin-toxicos/exito?orderId=${orderId}&review=1`);
+          router.push(
+            `${buildSuccessUrl(successUrlPattern, orderId!)}&review=1`,
+          );
         }, 1200);
       } else if (data.otpRequired) {
-        // Bank sent OTP via SMS — show input so user can enter it.
         setProcessing(false);
         paymentLockRef.current = false;
         setOtpChallenge({
@@ -391,7 +251,7 @@ export default function PagoToxicaSinToxicosPage() {
         if (orderId) {
           try {
             await markOrderFailed(orderId);
-          } catch { /* best effort */ }
+          } catch {}
         }
         paymentLockRef.current = false;
         setProcessing(false);
@@ -412,30 +272,10 @@ export default function PagoToxicaSinToxicosPage() {
     }
   }
 
-  // ── UI states ────────────────────────────────────────────────────────────
-
-  if (booting) {
+  if (!authReady) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="simple-spinner" />
-      </div>
-    );
-  }
-
-  if (bootError) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
-        <FaTimesCircle className="w-12 h-12 text-error mb-4" />
-        <h1 className="font-cormorant text-2xl font-semibold text-text-main mb-2">
-          No se pudo cargar la página
-        </h1>
-        <p className="text-text-main/60 text-sm max-w-xs mb-6">{bootError}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-xl transition-all"
-        >
-          Reintentar
-        </button>
       </div>
     );
   }
@@ -492,39 +332,6 @@ export default function PagoToxicaSinToxicosPage() {
   }
 
   if (otpChallenge) {
-    const handleOtpSubmit = async () => {
-      if (!otpCode.trim() || !user) return;
-      setOtpSubmitting(true);
-      setOtpError(null);
-      try {
-        const response = await fetch("/api/payment/3ds-complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            orderId: otpChallenge.orderId,
-            userId: user.uid,
-            type: "BY_OTP",
-            nuveiTransactionId: otpChallenge.nuveiTransactionId,
-            otpCode: otpCode.trim(),
-          }),
-        });
-        const data = await response.json();
-        if (data.success) {
-          setOtpChallenge(null);
-          setPaymentSuccess(true);
-          setTimeout(() => {
-            router.push(`/pago/toxica-sin-toxicos/exito?orderId=${data.orderId}`);
-          }, 1200);
-        } else {
-          setOtpError(data.error || "Código incorrecto. Intentá de nuevo.");
-        }
-      } catch {
-        setOtpError("Error de conexión. Intentá de nuevo.");
-      } finally {
-        setOtpSubmitting(false);
-      }
-    };
-
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
         <div className="w-full max-w-sm">
@@ -555,14 +362,14 @@ export default function PagoToxicaSinToxicosPage() {
                 className="w-full text-center text-2xl tracking-[0.3em] font-mono border border-border-default rounded-lg py-3 px-4 bg-background text-text-main placeholder:text-text-main/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleOtpSubmit();
+                  if (e.key === "Enter") submitOtp();
                 }}
               />
               {otpError && (
                 <p className="text-error text-xs text-center">{otpError}</p>
               )}
               <button
-                onClick={handleOtpSubmit}
+                onClick={submitOtp}
                 disabled={otpSubmitting || !otpCode.trim()}
                 className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
@@ -600,7 +407,6 @@ export default function PagoToxicaSinToxicosPage() {
   }
 
   if (threeDSChallenge) {
-    // Challenge was completed (via postMessage or polling) and verify is in flight.
     if (challengeVerifying) {
       return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center px-5">
@@ -664,11 +470,8 @@ export default function PagoToxicaSinToxicosPage() {
     );
   }
 
-  // ── Main layout ─────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-linear-to-b from-warm-950/60 via-background to-background" />
         <div className="relative max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 pt-10 pb-4 md:pt-16 md:pb-6 text-center">
@@ -689,18 +492,17 @@ export default function PagoToxicaSinToxicosPage() {
 
       <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8 py-6 md:py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-          {/* Main column */}
           <div className="lg:col-span-2 space-y-6">
-            <CourseCard course={COURSE} />
+            <TallerCard taller={taller} />
 
-            {/* Step 1: Guest info */}
             {step === "guest-info" && (
               <div className="bg-surface-card border border-border-subtle p-5 sm:p-6 rounded-xl">
                 <h2 className="text-lg font-semibold text-text-main mb-1">
                   Tus datos
                 </h2>
                 <p className="text-sm text-text-main/50 mb-5">
-                  Necesitamos esta información para emitir el comprobante y enviarte el acceso al curso.
+                  Necesitamos esta información para emitir el comprobante y
+                  enviarte el acceso al taller.
                 </p>
                 <GuestInfoForm
                   initial={guestInfo ?? undefined}
@@ -709,10 +511,8 @@ export default function PagoToxicaSinToxicosPage() {
               </div>
             )}
 
-            {/* Step 2: Payment */}
             {step === "payment" && guestInfo && (
               <div className="space-y-6">
-                {/* Guest info summary */}
                 <div className="bg-surface-card border border-border-subtle rounded-xl p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
@@ -732,14 +532,16 @@ export default function PagoToxicaSinToxicosPage() {
                     </button>
                   </div>
                   <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                    <SummaryRow label="Nombre" value={`${guestInfo.firstName} ${guestInfo.lastName}`} />
+                    <SummaryRow
+                      label="Nombre"
+                      value={`${guestInfo.firstName} ${guestInfo.lastName}`}
+                    />
                     <SummaryRow label="Cédula / Pasaporte" value={guestInfo.idNumber} />
                     <SummaryRow label="Correo" value={guestInfo.email} />
                     <SummaryRow label="Teléfono" value={guestInfo.phone} />
                   </dl>
                 </div>
 
-                {/* Card form */}
                 <div className="bg-surface-card border border-border-subtle rounded-xl p-5 sm:p-6">
                   <h3 className="text-lg font-semibold text-text-main mb-1">
                     Método de pago
@@ -760,7 +562,7 @@ export default function PagoToxicaSinToxicosPage() {
                     onTokenSuccess={handleTokenSuccess}
                     onTokenError={handleTokenError}
                     disabled={processing || !turnstileToken}
-                    buttonLabel={`Pagar $${(pricing?.finalPrice ?? 0).toFixed(2)}`}
+                    buttonLabel={`Pagar $${pricing.finalPrice.toFixed(2)}`}
                     processingLabel="Procesando pago…"
                     showSaveCardCheckbox={false}
                   />
@@ -782,12 +584,11 @@ export default function PagoToxicaSinToxicosPage() {
             )}
           </div>
 
-          {/* Summary sidebar */}
           <aside className="lg:col-span-1">
             <div className="bg-surface-card border border-border-subtle p-5 sm:p-6 rounded-xl lg:sticky lg:top-24">
               <h2 className="text-lg font-semibold text-text-main mb-4">Resumen</h2>
 
-              {pricing?.hasActiveDiscount && pricing.label && (
+              {pricing.label && (
                 <div className="mb-4 inline-flex items-center gap-1.5 bg-primary/15 text-primary text-[11px] font-semibold tracking-wider uppercase px-2.5 py-1 rounded-full">
                   🔥 {pricing.label}
                 </div>
@@ -796,20 +597,20 @@ export default function PagoToxicaSinToxicosPage() {
               <div className="flex items-start justify-between gap-3 text-sm pb-4 border-b border-border-subtle">
                 <div>
                   <p className="font-medium text-text-main leading-snug">
-                    {COURSE.name}
+                    {taller.name}
                   </p>
                   <p className="text-xs text-text-main/50 mt-0.5">Taller en vivo</p>
                 </div>
                 <div className="text-right">
-                  {pricing?.hasActiveDiscount && (
+                  {pricing.hasActiveDiscount && (
                     <p className="text-xs text-text-main/40 line-through">
                       ${pricing.basePrice.toFixed(2)}
                     </p>
                   )}
                   <p className="font-medium text-text-main whitespace-nowrap">
-                    ${(pricing?.finalPrice ?? 0).toFixed(2)}
+                    ${pricing.finalPrice.toFixed(2)}
                   </p>
-                  {pricing?.hasActiveDiscount && (
+                  {pricing.hasActiveDiscount && pricing.percentOff > 0 && (
                     <p className="text-[11px] font-bold text-success mt-0.5">
                       -{pricing.percentOff}% OFF
                     </p>
@@ -820,20 +621,13 @@ export default function PagoToxicaSinToxicosPage() {
               <div className="mt-4 space-y-1.5">
                 <div className="flex justify-between text-xs text-text-main/45">
                   <span>Incluye IVA (15%)</span>
-                  <span>${(pricing?.finalVat ?? 0).toFixed(2)}</span>
+                  <span>${pricing.finalVat.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg text-primary pt-3 mt-3 border-t border-border-subtle">
                   <span>Total</span>
-                  <span>${(pricing?.finalPrice ?? 0).toFixed(2)}</span>
+                  <span>${pricing.finalPrice.toFixed(2)}</span>
                 </div>
               </div>
-
-              {pricing?.hasActiveDiscount && pricing.validUntilIso && (
-                <DiscountCountdown
-                  validUntilIso={pricing.validUntilIso}
-                  amountOff={pricing.amountOff}
-                />
-              )}
 
               <div className="mt-5 pt-5 border-t border-border-subtle space-y-2.5">
                 <TrustRow icon={<FaLock className="w-3 h-3" />} text="Pago 100% seguro" />
@@ -884,65 +678,6 @@ function TrustRow({ icon, text }: { icon: React.ReactNode; text: string }) {
     <div className="flex items-center gap-2 text-xs text-text-main/50">
       <span className="text-text-main/40">{icon}</span>
       <span>{text}</span>
-    </div>
-  );
-}
-
-interface DiscountCountdownProps {
-  validUntilIso: string;
-  amountOff: number;
-}
-
-function DiscountCountdown({ validUntilIso, amountOff }: DiscountCountdownProps) {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const target = new Date(validUntilIso).getTime();
-  const diffMs = target - now;
-
-  if (diffMs <= 0) return null;
-
-  const days = Math.floor(diffMs / 86_400_000);
-  const hours = Math.floor((diffMs % 86_400_000) / 3_600_000);
-  const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
-
-  let parts: string;
-  if (days > 0) {
-    parts = `${days} día${days === 1 ? "" : "s"} y ${hours} hora${hours === 1 ? "" : "s"}`;
-  } else if (hours > 0) {
-    parts = `${hours} hora${hours === 1 ? "" : "s"} y ${minutes} minuto${minutes === 1 ? "" : "s"}`;
-  } else {
-    parts = `${minutes} minuto${minutes === 1 ? "" : "s"}`;
-  }
-
-  // "sábado 25 de abril, 23:59"
-  const dateLabel = new Intl.DateTimeFormat("es-EC", {
-    timeZone: "America/Guayaquil",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(validUntilIso));
-
-  return (
-    <div className="mt-4 pt-4 border-t border-border-subtle">
-      <div className="rounded-lg bg-primary/5 border border-primary/20 px-3 py-2.5">
-        <p className="text-[11px] uppercase tracking-wider text-primary/80 font-semibold">
-          Ahorrás ${amountOff.toFixed(2)}
-        </p>
-        <p className="text-xs text-text-main/70 mt-1 leading-relaxed">
-          Faltan <strong className="text-text-main">{parts}</strong> para que suba el precio.
-        </p>
-        <p className="text-[10px] text-text-main/40 mt-1">
-          Hasta el {dateLabel} (hora Ecuador)
-        </p>
-      </div>
     </div>
   );
 }

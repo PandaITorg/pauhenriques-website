@@ -75,11 +75,29 @@ function SignInContent() {
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
 
-  // Si ya está autenticado, redirigir
+  // Si Firebase client ya tiene un user pero no hay session cookie server-side,
+  // sincronizar la cookie ANTES de redirigir. Evita loop /sign-in ↔ /admin.
   useEffect(() => {
-    if (!authLoading && user) {
-      router.replace(redirectUri);
-    }
+    if (authLoading || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch("/api/auth/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+        if (!cancelled && res.ok) {
+          router.replace(redirectUri);
+        }
+      } catch {
+        // Si falla la sincronizacion, no hacemos nada; el user puede re-submit
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user, authLoading, router, redirectUri]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

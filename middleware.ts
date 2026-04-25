@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { auth } from "./src/lib/firebase-admin";
+import { getRoleFromClaims } from "./src/lib/auth/roles";
 
 const ADMIN_HOSTNAME = "admin.pauhenriques.com";
 
@@ -31,6 +32,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // Block /admin/* on public domain — panel solo accesible vía admin.pauhenriques.com.
+  // Excepción: localhost/127.0.0.1 en desarrollo (sin subdominio real).
+  const isLocalhost = host.startsWith("localhost") || host.startsWith("127.0.0.1");
+  if (!isAdminHost && !isLocalhost && pathname.startsWith("/admin")) {
+    return new NextResponse("Not Found", { status: 404 });
+  }
+
   // Protect /admin/* routes — require authenticated admin
   if (pathname.startsWith("/admin")) {
     const decoded = await verifySession(request);
@@ -41,8 +49,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Check admin custom claim
-    if (!decoded.admin) {
+    // Check role claim (admin | staff | cursos). Legacy { admin: true } → role='admin'.
+    const role = getRoleFromClaims(decoded as unknown as Record<string, unknown>);
+    if (!role) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -67,5 +76,13 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/checkout/:path*", "/admin/:path*", "/mi-cuenta", "/mis-pedidos", "/plan-novios/registrar", "/plan-novios/mi-plan"],
+  matcher: [
+    "/checkout/:path*",
+    "/admin",
+    "/admin/:path*",
+    "/mi-cuenta",
+    "/mis-pedidos",
+    "/plan-novios/registrar",
+    "/plan-novios/mi-plan",
+  ],
 };

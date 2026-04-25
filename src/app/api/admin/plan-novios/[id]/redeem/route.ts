@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dbAdmin, auth } from "@/lib/firebase-admin";
+import { dbAdmin } from "@/lib/firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
+import { requireSection } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
@@ -10,23 +11,11 @@ const RedeemSchema = z.object({
   description: z.string().min(1).max(500),
 });
 
-async function verifyAdmin(request: NextRequest) {
-  const sessionCookie = request.cookies.get("__session")?.value;
-  if (!sessionCookie || !auth) return null;
-  try {
-    const decoded = await auth.verifySessionCookie(sessionCookie, true);
-    if (!decoded.admin) return null;
-    return decoded;
-  } catch {
-    return null;
-  }
-}
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const admin = await verifyAdmin(request);
+  const admin = await requireSection(request, "planNovios");
   if (!admin) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }

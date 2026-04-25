@@ -5,6 +5,9 @@ import { sendPaymentConfirmation, sendPaymentFailed } from "@/lib/email";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { getPriceDisplay } from "@/lib/pricing";
 import { verifyTurnstile } from "@/lib/turnstile";
+import { ensureEnrollmentForPaidOrder } from "@/lib/talleres/enrollment";
+import { docToTaller } from "@/lib/talleres/firestore";
+import { getTallerPriceDisplay } from "@/lib/talleres/pricing";
 import { FieldValue } from "firebase-admin/firestore";
 
 export const dynamic = "force-dynamic";
@@ -191,6 +194,87 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Branch: orden de paymentLink (taller). El precio es FIJO al precio
+      // del link al momento de crearlo — no depende de products ni de
+      // descuentos automáticos. Validamos contra el doc del paymentLink y
+      // saltamos toda la validación de products/promociones.
+      const paymentLinkId =
+        typeof orderData?.paymentLinkId === "string"
+          ? orderData.paymentLinkId
+          : null;
+      if (paymentLinkId) {
+        const linkSnap = await dbAdmin
+          .collection("paymentLinks")
+          .doc(paymentLinkId)
+          .get();
+        if (!linkSnap.exists) {
+          return NextResponse.json(
+            { error: "El link de pago ya no existe" },
+            { status: 409 },
+          );
+        }
+        const linkData = linkSnap.data() ?? {};
+        if (linkData.active === false) {
+          return NextResponse.json(
+            { error: "Este link de pago fue desactivado" },
+            { status: 409 },
+          );
+        }
+        const expiresAtRaw = linkData.expiresAt;
+        const expiresAt: Date | null =
+          expiresAtRaw?.toDate?.() ??
+          (expiresAtRaw instanceof Date ? expiresAtRaw : null);
+        if (expiresAt && expiresAt.getTime() < Date.now()) {
+          return NextResponse.json(
+            { error: "Este link de pago expiró" },
+            { status: 409 },
+          );
+        }
+        const linkPrice =
+          typeof linkData.price === "number" ? linkData.price : 0;
+        if (linkPrice <= 0 || Math.abs(linkPrice - amount) > 0.02) {
+          return NextResponse.json(
+            { error: "El monto no coincide con el precio del link." },
+            { status: 409 },
+          );
+        }
+        // Skip products + promotions validation entirely.
+        // Continue to the Nuvei debit call below.
+      } else if (typeof orderData?.tallerId === "string" && orderData.tallerId) {
+        // Branch: orden del link OFICIAL del taller (/pago/[slug]). El precio
+        // viene de los discountTiers del taller (tier activo o basePrice).
+        // No depende de products ni de paymentLinks. Recalculamos el tier
+        // activo AHORA y comparamos contra el monto enviado.
+        const tallerSnap = await dbAdmin
+          .collection("talleres")
+          .doc(orderData.tallerId)
+          .get();
+        if (!tallerSnap.exists) {
+          return NextResponse.json(
+            { error: "El taller ya no existe" },
+            { status: 409 },
+          );
+        }
+        const taller = docToTaller(tallerSnap);
+        if (!taller.active) {
+          return NextResponse.json(
+            { error: "Este taller no está disponible" },
+            { status: 409 },
+          );
+        }
+        const display = getTallerPriceDisplay(taller);
+        if (Math.abs(display.finalPrice - amount) > 0.02) {
+          return NextResponse.json(
+            {
+              error:
+                "El precio del taller cambió. Recargá la página para ver el precio actualizado.",
+            },
+            { status: 409 },
+          );
+        }
+        // Skip products + promotions validation.
+      } else {
+
       // Validate stock and prices for each item before charging
       const orderItems: Array<{ productId: string; name: string; price: number; quantity: number }> =
         orderData?.items || [];
@@ -287,6 +371,7 @@ export async function POST(request: NextRequest) {
           { status: 409 },
         );
       }
+      } // end of else (non-paymentLink branch)
     }
 
     // Build term_url for 3DS challenge callback — Cloud Function receives the
@@ -390,32 +475,33 @@ export async function POST(request: NextRequest) {
 
         await batch.commit();
 
-        // If the order is a course enrollment (has guestInfo + courseId),
-        // create a courseEnrollments doc so admin can track access delivery.
-        // Best-effort write: if it fails we don't roll back the paid order.
-        const courseIdFromOrder: string | undefined = orderInfo?.courseId;
-        const guestInfo = orderInfo?.guestInfo;
-        if (courseIdFromOrder && guestInfo) {
+        // Crea el courseEnrollment si la orden es de un taller (tiene
+        // courseId + guestInfo). Idempotente y best-effort — si falla no
+        // tumba la orden pagada.
+        try {
+          await ensureEnrollmentForPaidOrder(dbAdmin, orderId);
+        } catch (err) {
+          console.error(`[charge] Failed to create enrollment for order ${orderId}:`, err);
+        }
+
+        // Si el pago vino desde un paymentLink, incrementar timesPaid y
+        // registrar lastPaidAt para que el admin vea cuantas veces se uso.
+        const paymentLinkId: string | undefined = orderInfo?.paymentLinkId;
+        if (paymentLinkId) {
           try {
-            await dbAdmin.collection("courseEnrollments").add({
-              orderId,
-              courseId: courseIdFromOrder,
-              customerEmail: guestInfo.email,
-              customerFirstName: guestInfo.firstName,
-              customerLastName: guestInfo.lastName,
-              customerIdNumber: guestInfo.idNumber,
-              customerPhone: guestInfo.phone,
-              paidAt: new Date(),
-              amountPaid: amount,
-              accessStatus: "pending_access",
-              accessLink: null,
-              accessSentAt: null,
-              notes: "",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            });
+            await dbAdmin
+              .collection("paymentLinks")
+              .doc(paymentLinkId)
+              .update({
+                timesPaid: FieldValue.increment(1),
+                lastPaidAt: new Date(),
+                updatedAt: new Date(),
+              });
           } catch (err) {
-            console.error(`[charge] Failed to create enrollment for order ${orderId}:`, err);
+            console.error(
+              `[charge] Failed to increment paymentLink ${paymentLinkId}:`,
+              err,
+            );
           }
         }
 

@@ -1,30 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, dbAdmin } from "@/lib/firebase-admin";
+import { dbAdmin } from "@/lib/firebase-admin";
 import { sendCourseAccessEmail } from "@/lib/email";
-import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
+import { requireSection } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
-async function verifyAdmin(request: NextRequest) {
-  const sessionCookie = request.cookies.get("__session")?.value;
-  if (!sessionCookie || !auth) return false;
-  try {
-    const decoded = await auth.verifySessionCookie(sessionCookie, true);
-    return decoded.admin === true;
-  } catch {
-    return false;
-  }
-}
+// Slug del taller migrado desde el legacy productId "curso-toxica-sin-toxicos".
+// Inscripciones viejas guardan el productId; las nuevas guardan el id del
+// doc en talleres/. Mapeamos ambas a un nombre humano.
+const LEGACY_PRODUCT_ID = "curso-toxica-sin-toxicos";
+const LEGACY_FALLBACK_SLUG = "toxica-sin-toxicos";
 
-const COURSE_NAME_BY_ID: Record<string, string> = {
-  [CURSO_TOXICA_SIN_TOXICOS.productId]: CURSO_TOXICA_SIN_TOXICOS.name,
-};
+async function resolveCourseName(
+  db: FirebaseFirestore.Firestore,
+  courseId: string,
+): Promise<string> {
+  if (!courseId) return courseId;
+
+  // Caso 1: id directo en talleres/.
+  const direct = await db.collection("talleres").doc(courseId).get();
+  if (direct.exists) {
+    const name = direct.data()?.name;
+    if (typeof name === "string" && name.trim().length > 0) return name;
+  }
+
+  // Caso 2: legacy productId — buscar por slug del taller migrado.
+  if (courseId === LEGACY_PRODUCT_ID) {
+    const slugMatch = await db
+      .collection("talleres")
+      .where("slug", "==", LEGACY_FALLBACK_SLUG)
+      .limit(1)
+      .get();
+    if (!slugMatch.empty) {
+      const name = slugMatch.docs[0].data()?.name;
+      if (typeof name === "string" && name.trim().length > 0) return name;
+    }
+  }
+
+  return courseId;
+}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await verifyAdmin(request))) {
+  if (!(await requireSection(request, "cursos"))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   if (!dbAdmin) {
@@ -59,7 +79,7 @@ export async function POST(
 
   const data = snap.data()!;
   const customerName = `${data.customerFirstName ?? ""} ${data.customerLastName ?? ""}`.trim();
-  const courseName = COURSE_NAME_BY_ID[data.courseId] ?? data.courseId;
+  const courseName = await resolveCourseName(dbAdmin, String(data.courseId ?? ""));
 
   let emailSent = false;
   if (!markOnly && accessLink) {

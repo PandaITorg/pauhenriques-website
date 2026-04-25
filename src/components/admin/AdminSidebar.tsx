@@ -14,37 +14,65 @@ import {
   FaHome,
   FaExclamationTriangle,
   FaGraduationCap,
+  FaUsers,
 } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { AdminSection, hasAccess } from "@/lib/auth/roles";
 
-const navItems = [
-  { href: "/admin", label: "Dashboard", icon: FaTachometerAlt },
-  { href: "/admin/homepage", label: "Homepage", icon: FaHome },
-  { href: "/admin/productos", label: "Productos", icon: FaBox },
-  { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList },
-  { href: "/admin/cursos", label: "Cursos", icon: FaGraduationCap },
-  { href: "/admin/promociones", label: "Promociones", icon: FaTag },
-  { href: "/admin/plan-novios", label: "Plan Novios", icon: FaGift },
-  { href: "/admin/auditoria", label: "Auditoría", icon: FaExclamationTriangle },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  section: AdminSection;
+}
+
+const ALL_NAV_ITEMS: NavItem[] = [
+  { href: "/admin", label: "Dashboard", icon: FaTachometerAlt, section: "dashboard" },
+  { href: "/admin/homepage", label: "Homepage", icon: FaHome, section: "homepage" },
+  { href: "/admin/productos", label: "Productos", icon: FaBox, section: "productos" },
+  { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList, section: "pedidos" },
+  { href: "/admin/talleres", label: "Talleres", icon: FaGraduationCap, section: "cursos" },
+  { href: "/admin/promociones", label: "Promociones", icon: FaTag, section: "promociones" },
+  { href: "/admin/plan-novios", label: "Plan Novios", icon: FaGift, section: "planNovios" },
+  { href: "/admin/auditoria", label: "Auditoría", icon: FaExclamationTriangle, section: "auditoria" },
+  { href: "/admin/usuarios", label: "Usuarios", icon: FaUsers, section: "usuarios" },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const { role } = useAuth();
   const [open, setOpen] = useState(false);
   const [auditCount, setAuditCount] = useState<number>(0);
   const [cursosPendingCount, setCursosPendingCount] = useState<number>(0);
 
-  useEffect(() => {
-    fetch("/api/admin/auditoria")
-      .then((r) => (r.ok ? r.json() : { orders: [] }))
-      .then((d) => setAuditCount((d.orders || []).length))
-      .catch(() => {});
+  const navItems = useMemo(
+    () => ALL_NAV_ITEMS.filter((item) => hasAccess(role, item.section)),
+    [role],
+  );
 
-    fetch("/api/admin/cursos/enrollments?accessStatus=pending_access")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((list) => setCursosPendingCount(Array.isArray(list) ? list.length : 0))
-      .catch(() => {});
-  }, [pathname]);
+  const canSeeAudit = hasAccess(role, "auditoria");
+  const canSeeCursos = hasAccess(role, "cursos");
+
+  useEffect(() => {
+    if (canSeeAudit) {
+      fetch("/api/admin/auditoria")
+        .then((r) => (r.ok ? r.json() : { orders: [] }))
+        .then((d) => setAuditCount((d.orders || []).length))
+        .catch(() => {});
+    } else {
+      setAuditCount(0);
+    }
+
+    if (canSeeCursos) {
+      fetch("/api/admin/cursos/enrollments?accessStatus=pending_access")
+        .then((r) => (r.ok ? r.json() : []))
+        .then((list) => setCursosPendingCount(Array.isArray(list) ? list.length : 0))
+        .catch(() => {});
+    } else {
+      setCursosPendingCount(0);
+    }
+  }, [pathname, canSeeAudit, canSeeCursos]);
 
   const isActive = (href: string) => {
     if (href === "/admin") return pathname === "/admin";
@@ -53,7 +81,6 @@ export default function AdminSidebar() {
 
   const nav = (
     <nav className="flex flex-col h-full p-4">
-      {/* Branding */}
       <div className="px-3 mb-6">
         <p className="font-cormorant text-lg font-semibold text-text-main">
           Pau Henriques
@@ -63,12 +90,11 @@ export default function AdminSidebar() {
         </p>
       </div>
 
-      {/* Nav items */}
       <div className="flex flex-col gap-1">
         {navItems.map((item) => {
           let badgeCount = 0;
           if (item.href === "/admin/auditoria") badgeCount = auditCount;
-          if (item.href === "/admin/cursos") badgeCount = cursosPendingCount;
+          if (item.href === "/admin/talleres") badgeCount = cursosPendingCount;
           const showBadge = badgeCount > 0;
           return (
             <Link
@@ -93,7 +119,6 @@ export default function AdminSidebar() {
         })}
       </div>
 
-      {/* Divider + Ver sitio */}
       <div className="mt-auto pt-4 border-t border-border-subtle">
         <Link
           href="/"
@@ -109,7 +134,6 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile toggle — larger touch target (44x44) */}
       <button
         onClick={() => setOpen(!open)}
         className="lg:hidden fixed top-3 left-3 z-50 w-11 h-11 bg-surface-card border border-border-subtle rounded-xl flex items-center justify-center text-text-main/60 hover:text-text-main transition-colors cursor-pointer"
@@ -122,7 +146,6 @@ export default function AdminSidebar() {
         )}
       </button>
 
-      {/* Mobile overlay */}
       {open && (
         <div
           className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
@@ -130,7 +153,6 @@ export default function AdminSidebar() {
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed lg:static top-0 left-0 h-full w-64 bg-surface-card border-r border-border-subtle z-40 transition-transform duration-200 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"

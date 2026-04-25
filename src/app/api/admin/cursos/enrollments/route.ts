@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, dbAdmin } from "@/lib/firebase-admin";
+import { dbAdmin } from "@/lib/firebase-admin";
+import { requireSection } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
-async function verifyAdmin(request: NextRequest) {
-  const sessionCookie = request.cookies.get("__session")?.value;
-  if (!sessionCookie || !auth) return false;
-  try {
-    const decoded = await auth.verifySessionCookie(sessionCookie, true);
-    return decoded.admin === true;
-  } catch {
-    return false;
-  }
-}
-
 export async function GET(request: NextRequest) {
-  if (!(await verifyAdmin(request))) {
+  if (!(await requireSection(request, "cursos"))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
   if (!dbAdmin) {
@@ -24,19 +14,17 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const accessStatus = searchParams.get("accessStatus");
+  const courseId = searchParams.get("courseId");
 
-  let query = dbAdmin
-    .collection("courseEnrollments")
-    .orderBy("paidAt", "desc")
-    .limit(200);
-
-  if (accessStatus) {
-    query = dbAdmin
-      .collection("courseEnrollments")
-      .where("accessStatus", "==", accessStatus)
-      .orderBy("paidAt", "desc")
-      .limit(200);
-  }
+  // Cuando hay algún filter, ordenamos en memoria para evitar exigir
+  // composite indexes (accessStatus + paidAt, courseId + paidAt, ambos +
+  // paidAt). Volumen por taller / por estado es pequeño.
+  const hasFilter = !!accessStatus || !!courseId;
+  let query: FirebaseFirestore.Query = dbAdmin.collection("courseEnrollments");
+  if (accessStatus) query = query.where("accessStatus", "==", accessStatus);
+  if (courseId) query = query.where("courseId", "==", courseId);
+  if (!hasFilter) query = query.orderBy("paidAt", "desc");
+  query = query.limit(200);
 
   const snapshot = await query.get();
   const enrollments = snapshot.docs.map((doc) => {
@@ -50,6 +38,14 @@ export async function GET(request: NextRequest) {
       updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
     };
   });
+
+  if (hasFilter) {
+    enrollments.sort((a, b) => {
+      const aT = a.paidAt ? new Date(a.paidAt).getTime() : 0;
+      const bT = b.paidAt ? new Date(b.paidAt).getTime() : 0;
+      return bT - aT;
+    });
+  }
 
   return NextResponse.json(enrollments);
 }

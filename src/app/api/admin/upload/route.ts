@@ -1,23 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/firebase-admin";
 import { uploadFile, deleteFile, urlToFilePath } from "@/lib/storage";
+import { requireSection } from "@/lib/auth/server";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
-async function verifyAdmin(request: NextRequest) {
-  const sessionCookie = request.cookies.get("__session")?.value;
-  if (!sessionCookie || !auth) return false;
-  try {
-    const decoded = await auth.verifySessionCookie(sessionCookie, true);
-    return decoded.admin === true;
-  } catch {
-    return false;
-  }
-}
-
 export async function POST(request: NextRequest) {
-  if (!(await verifyAdmin(request))) {
+  if (!(await requireSection(request, "dashboard"))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -58,7 +47,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!(await verifyAdmin(request))) {
+  if (!(await requireSection(request, "dashboard"))) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

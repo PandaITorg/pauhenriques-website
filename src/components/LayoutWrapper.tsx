@@ -22,6 +22,19 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const isHomePage = pathname === "/";
   const isLinksPage = pathname === "/links";
+  const isAdmin = pathname.startsWith("/admin");
+
+  if (isAdmin) {
+    return (
+      <Wrapper>
+        <Suspense>
+          <NavigationProgress />
+        </Suspense>
+        <ToastContainer />
+        <main>{children}</main>
+      </Wrapper>
+    );
+  }
 
   if (isLinksPage) {
     return (

@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, dbAdmin } from "@/lib/firebase-admin";
+import { dbAdmin } from "@/lib/firebase-admin";
+import { requireSection } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get("__session")?.value;
-    if (!sessionCookie || !auth) {
+    if (!(await requireSection(request, "dashboard"))) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
-
-    const decoded = await auth.verifySessionCookie(sessionCookie, true);
-    if (!decoded.admin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (!dbAdmin) {

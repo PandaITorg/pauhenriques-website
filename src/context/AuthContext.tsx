@@ -9,12 +9,14 @@ import {
   ReactNode,
 } from "react";
 import type { User } from "firebase/auth";
+import { getRoleFromClaims, type Role } from "@/lib/auth/roles";
 
 // ===== TYPES =====
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  role: Role | null;
   signOut: () => Promise<void>;
 }
 
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   isAdmin: false,
+  role: null,
   signOut: async () => {},
 });
 
@@ -30,7 +33,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<Role | null>(null);
 
   useEffect(() => {
     // Importar Firebase Auth dinámicamente solo en el cliente
@@ -48,9 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(firebaseUser);
             if (firebaseUser) {
               const tokenResult = await firebaseUser.getIdTokenResult();
-              setIsAdmin(tokenResult.claims.admin === true);
+              setRole(
+                getRoleFromClaims(
+                  tokenResult.claims as unknown as Record<string, unknown>,
+                ),
+              );
             } else {
-              setIsAdmin(false);
+              setRole(null);
             }
             setLoading(false);
           },
@@ -83,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, loading, isAdmin: role !== null, role, signOut }}>
       {children}
     </AuthContext.Provider>
   );

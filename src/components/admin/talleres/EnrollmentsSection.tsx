@@ -8,6 +8,7 @@ import {
   FaCheck,
   FaTimes,
   FaExternalLinkAlt,
+  FaFileCsv,
 } from "react-icons/fa";
 
 type AccessStatus = "pending_access" | "access_sent";
@@ -39,17 +40,32 @@ const STATUS_TABS: Array<{ key: "pending_access" | "access_sent" | ""; label: st
 const inputClass =
   "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
 
-export default function AdminCursosPage() {
+interface EnrollmentsSectionProps {
+  /**
+   * Si está, filtra inscripciones a este courseId (= taller.id en el
+   * nuevo modelo). Si no, muestra el cross-taller pipeline global.
+   */
+  courseId?: string;
+}
+
+export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps = {}) {
   const [tab, setTab] = useState<"pending_access" | "access_sent" | "">("pending_access");
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [modalEnrollment, setModalEnrollment] = useState<Enrollment | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const fetchEnrollments = useCallback(async () => {
     setLoading(true);
     try {
-      const url = tab ? `/api/admin/cursos/enrollments?accessStatus=${tab}` : "/api/admin/cursos/enrollments";
+      const params = new URLSearchParams();
+      if (tab) params.set("accessStatus", tab);
+      if (courseId) params.set("courseId", courseId);
+      const qs = params.toString();
+      const url = qs
+        ? `/api/admin/cursos/enrollments?${qs}`
+        : "/api/admin/cursos/enrollments";
       const res = await fetch(url);
       if (res.ok) setEnrollments(await res.json());
     } catch (err) {
@@ -57,7 +73,7 @@ export default function AdminCursosPage() {
     } finally {
       setLoading(false);
     }
-  }, [tab]);
+  }, [tab, courseId]);
 
   useEffect(() => {
     fetchEnrollments();
@@ -94,28 +110,39 @@ export default function AdminCursosPage() {
     });
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const exportUrl = courseId
+        ? `/api/admin/cursos/enrollments/export?courseId=${encodeURIComponent(courseId)}`
+        : "/api/admin/cursos/enrollments/export";
+      const res = await fetch(exportUrl);
+      if (!res.ok) {
+        alert("Error al descargar el CSV");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const today = new Date().toISOString().slice(0, 10);
+      a.download = `inscripciones-taller-${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("[admin-cursos] export error:", err);
+      alert("Error al descargar el CSV");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
-    <div>
-      {/* Header */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-linear-to-b from-warm-950/40 to-background" />
-        <div className="relative px-5 lg:px-8 pt-6 pb-4 md:pt-8 md:pb-6">
-          <span className="inline-block text-[11px] font-medium tracking-[0.15em] uppercase text-primary/70 mb-1">
-            Gestión
-          </span>
-          <h1 className="text-2xl font-semibold text-text-main">Cursos</h1>
-          <p className="text-sm text-text-main/50 mt-1">
-            Inscripciones al curso Tóxica sin Tóxicos. Enviá el acceso manualmente cuando esté listo.
-          </p>
-        </div>
-      </div>
-
-      <div className="h-px bg-linear-to-r from-transparent via-border-default to-transparent" />
-
-      {/* Content */}
-      <div className="px-5 lg:px-8 py-6">
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 mb-5">
+    <>
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="flex flex-wrap gap-2 flex-1">
           {STATUS_TABS.map((t) => {
             const active = tab === t.key;
             const badge =
@@ -146,111 +173,117 @@ export default function AdminCursosPage() {
             );
           })}
         </div>
-
-        {/* Search */}
-        <div className="relative mb-5">
-          <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, email, cédula o orden…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`${inputClass} w-full pl-9 pr-3 py-2.5`}
-          />
-        </div>
-
-        {/* Table */}
-        <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
-          {loading ? (
-            <div className="p-8 text-center">
-              <div className="simple-spinner mx-auto" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="p-8 text-center text-text-main/50">
-              {tab === "pending_access"
-                ? "No hay inscripciones pendientes de acceso."
-                : tab === "access_sent"
-                  ? "Todavía no enviaste acceso a nadie."
-                  : "No hay inscripciones."}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border-subtle bg-surface-elevated">
-                    <th className="text-left p-4 font-medium text-text-main/50">Fecha pago</th>
-                    <th className="text-left p-4 font-medium text-text-main/50">Cliente</th>
-                    <th className="text-left p-4 font-medium text-text-main/50">Contacto</th>
-                    <th className="text-left p-4 font-medium text-text-main/50">Cédula</th>
-                    <th className="text-right p-4 font-medium text-text-main/50">Pagó</th>
-                    <th className="text-center p-4 font-medium text-text-main/50">Estado</th>
-                    <th className="text-right p-4 font-medium text-text-main/50">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((e) => (
-                    <tr
-                      key={e.id}
-                      className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0"
-                    >
-                      <td className="p-4 text-text-main/60 text-xs whitespace-nowrap">
-                        {formatDate(e.paidAt)}
-                      </td>
-                      <td className="p-4">
-                        <div className="font-medium text-text-main">
-                          {e.customerFirstName} {e.customerLastName}
-                        </div>
-                        <div className="text-xs text-text-main/40 font-mono">
-                          Orden: {e.orderId?.slice(0, 8)}…
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <EmailCell email={e.customerEmail} />
-                        <div className="text-xs text-text-main/40 mt-0.5">{e.customerPhone}</div>
-                      </td>
-                      <td className="p-4 text-text-main/60 font-mono text-xs">
-                        {e.customerIdNumber}
-                      </td>
-                      <td className="p-4 text-right font-medium text-text-main">
-                        ${e.amountPaid?.toFixed(2) ?? "0.00"}
-                      </td>
-                      <td className="p-4 text-center">
-                        <StatusBadge status={e.accessStatus} />
-                        {e.accessStatus === "access_sent" && e.accessSentAt && (
-                          <div className="text-[10px] text-text-main/40 mt-1">
-                            {formatDate(e.accessSentAt)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-4 text-right">
-                        {e.accessStatus === "pending_access" ? (
-                          <button
-                            onClick={() => setModalEnrollment(e)}
-                            className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <FaPaperPlane className="w-3 h-3" />
-                            Enviar acceso
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setModalEnrollment(e)}
-                            className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <FaExternalLinkAlt className="w-3 h-3" />
-                            Reenviar
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        <button
+          onClick={handleExport}
+          disabled={exporting || loading || enrollments.length === 0}
+          className="inline-flex items-center gap-2 border border-border-default text-text-main/70 hover:text-text-main hover:bg-surface-elevated text-sm font-medium px-4 py-2 rounded-xl transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Exportar a CSV"
+        >
+          <FaFileCsv className="w-3.5 h-3.5" />
+          {exporting ? "Descargando…" : "Exportar CSV"}
+        </button>
       </div>
 
-      {/* Modal */}
+      <div className="relative mb-5">
+        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
+        <input
+          type="text"
+          placeholder="Buscar por nombre, email, cédula o orden…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={`${inputClass} w-full pl-9 pr-3 py-2.5`}
+        />
+      </div>
+
+      <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="simple-spinner mx-auto" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="p-8 text-center text-text-main/50">
+            {tab === "pending_access"
+              ? "No hay inscripciones pendientes de acceso."
+              : tab === "access_sent"
+                ? "Todavía no enviaste acceso a nadie."
+                : "No hay inscripciones."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border-subtle bg-surface-elevated">
+                  <th className="text-left p-4 font-medium text-text-main/50">Fecha pago</th>
+                  <th className="text-left p-4 font-medium text-text-main/50">Cliente</th>
+                  <th className="text-left p-4 font-medium text-text-main/50">Contacto</th>
+                  <th className="text-left p-4 font-medium text-text-main/50">Cédula</th>
+                  <th className="text-right p-4 font-medium text-text-main/50">Pagó</th>
+                  <th className="text-center p-4 font-medium text-text-main/50">Estado</th>
+                  <th className="text-right p-4 font-medium text-text-main/50">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((e) => (
+                  <tr
+                    key={e.id}
+                    className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0"
+                  >
+                    <td className="p-4 text-text-main/60 text-xs whitespace-nowrap">
+                      {formatDate(e.paidAt)}
+                    </td>
+                    <td className="p-4">
+                      <div className="font-medium text-text-main">
+                        {e.customerFirstName} {e.customerLastName}
+                      </div>
+                      <div className="text-xs text-text-main/40 font-mono">
+                        Orden: {e.orderId?.slice(0, 8)}…
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <EmailCell email={e.customerEmail} />
+                      <div className="text-xs text-text-main/40 mt-0.5">{e.customerPhone}</div>
+                    </td>
+                    <td className="p-4 text-text-main/60 font-mono text-xs">
+                      {e.customerIdNumber}
+                    </td>
+                    <td className="p-4 text-right font-medium text-text-main">
+                      ${e.amountPaid?.toFixed(2) ?? "0.00"}
+                    </td>
+                    <td className="p-4 text-center">
+                      <StatusBadge status={e.accessStatus} />
+                      {e.accessStatus === "access_sent" && e.accessSentAt && (
+                        <div className="text-[10px] text-text-main/40 mt-1">
+                          {formatDate(e.accessSentAt)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      {e.accessStatus === "pending_access" ? (
+                        <button
+                          onClick={() => setModalEnrollment(e)}
+                          className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <FaPaperPlane className="w-3 h-3" />
+                          Enviar acceso
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setModalEnrollment(e)}
+                          className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <FaExternalLinkAlt className="w-3 h-3" />
+                          Reenviar
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       {modalEnrollment && (
         <SendAccessModal
           enrollment={modalEnrollment}
@@ -261,7 +294,7 @@ export default function AdminCursosPage() {
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 

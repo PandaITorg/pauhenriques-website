@@ -1,8 +1,12 @@
 /**
- * Script to set admin custom claim on a Firebase user.
- * Usage: npx tsx scripts/set-admin.ts <user-email>
+ * Script para asignar o revocar el rol de un usuario en Firebase Auth.
  *
- * Requires .env.local with FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
+ * Uso:
+ *   npx tsx scripts/set-admin.ts <email>              → asigna rol "admin" (default)
+ *   npx tsx scripts/set-admin.ts <email> <role>       → asigna rol: admin | staff | cursos
+ *   npx tsx scripts/set-admin.ts <email> none         → revoca todos los roles
+ *
+ * Requiere .env.local con FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.
  */
 
 import { config } from "dotenv";
@@ -11,10 +15,22 @@ import { getAuth } from "firebase-admin/auth";
 
 config({ path: ".env.local" });
 
+const VALID_ROLES = ["admin", "staff", "cursos"] as const;
+type Role = (typeof VALID_ROLES)[number];
+
 const email = process.argv[2];
+const roleArg = process.argv[3] ?? "admin";
 
 if (!email) {
-  console.error("Usage: npx tsx scripts/set-admin.ts <user-email>");
+  console.error("Uso: npx tsx scripts/set-admin.ts <email> [admin|staff|cursos|none]");
+  process.exit(1);
+}
+
+const isRevoke = roleArg === "none" || roleArg === "clear";
+if (!isRevoke && !VALID_ROLES.includes(roleArg as Role)) {
+  console.error(
+    `Rol invalido: "${roleArg}". Validos: ${VALID_ROLES.join(", ")} | none`,
+  );
   process.exit(1);
 }
 
@@ -30,18 +46,29 @@ if (!getApps().length) {
 
 const auth = getAuth();
 
-async function setAdmin() {
+async function run() {
   try {
     const user = await auth.getUserByEmail(email);
-    await auth.setCustomUserClaims(user.uid, { admin: true });
-    console.log(`Admin claim set for ${email} (uid: ${user.uid})`);
+
+    if (isRevoke) {
+      await auth.setCustomUserClaims(user.uid, null);
+      await auth.revokeRefreshTokens(user.uid);
+      console.log(`Roles revocados para ${email} (uid: ${user.uid})`);
+    } else {
+      await auth.setCustomUserClaims(user.uid, { role: roleArg });
+      await auth.revokeRefreshTokens(user.uid);
+      console.log(
+        `Rol "${roleArg}" asignado a ${email} (uid: ${user.uid})`,
+      );
+    }
+
     console.log(
-      "The user must sign out and sign back in for the claim to take effect.",
+      "Sus tokens fueron revocados — debera volver a iniciar sesion para que el cambio tenga efecto.",
     );
   } catch (error) {
-    console.error("Error setting admin claim:", error);
+    console.error("Error:", error);
     process.exit(1);
   }
 }
 
-setAdmin();
+run();
