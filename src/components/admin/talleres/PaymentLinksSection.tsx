@@ -50,7 +50,16 @@ function isExpiredIso(iso: string): boolean {
   return new Date(iso).getTime() < Date.now();
 }
 
-export default function PaymentLinksSection() {
+interface PaymentLinksSectionProps {
+  /**
+   * Si está presente, filtra links a este taller y pre-selecciona el
+   * taller en el modal de creación (sin dropdown). Si no, muestra todos
+   * los links cross-taller (vista global del listado /admin/talleres).
+   */
+  tallerId?: string;
+}
+
+export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionProps = {}) {
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -60,7 +69,10 @@ export default function PaymentLinksSection() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/payment-links");
+      const url = tallerId
+        ? `/api/admin/payment-links?tallerId=${encodeURIComponent(tallerId)}`
+        : "/api/admin/payment-links";
+      const res = await fetch(url);
       if (!res.ok) {
         setError("No se pudo cargar la lista");
         return;
@@ -72,7 +84,7 @@ export default function PaymentLinksSection() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tallerId]);
 
   useEffect(() => {
     fetchLinks();
@@ -131,6 +143,7 @@ export default function PaymentLinksSection() {
 
       {createOpen && (
         <CreateLinkModal
+          fixedTallerId={tallerId}
           onClose={() => setCreateOpen(false)}
           onCreated={() => {
             setCreateOpen(false);
@@ -287,15 +300,18 @@ function StatusBadge({ status }: { status: "active" | "inactive" | "expired" }) 
 }
 
 function CreateLinkModal({
+  fixedTallerId,
   onClose,
   onCreated,
 }: {
+  /** Si está, se pre-llena tallerId y se esconde el dropdown selector. */
+  fixedTallerId?: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
   const [talleres, setTalleres] = useState<Taller[]>([]);
-  const [tallerId, setTallerId] = useState<string>("");
-  const [loadingTalleres, setLoadingTalleres] = useState(true);
+  const [tallerId, setTallerId] = useState<string>(fixedTallerId ?? "");
+  const [loadingTalleres, setLoadingTalleres] = useState(!fixedTallerId);
   const [price, setPrice] = useState<string>("");
   const [label, setLabel] = useState("");
   const [publicLabel, setPublicLabel] = useState("");
@@ -310,8 +326,10 @@ function CreateLinkModal({
   const [confirmHighPrice, setConfirmHighPrice] = useState(false);
 
   // Cargar talleres activos para el selector. Si solo hay uno, lo
-  // pre-selecciona automáticamente.
+  // pre-selecciona. Si fixedTallerId está set, no se necesita el fetch
+  // — el modal vive dentro del detalle del taller.
   useEffect(() => {
+    if (fixedTallerId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -329,7 +347,7 @@ function CreateLinkModal({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fixedTallerId]);
 
   const priceNum = Number(price);
   const validPrice =
@@ -410,35 +428,37 @@ function CreateLinkModal({
         </div>
 
         <div className="p-5 space-y-4 overflow-y-auto">
-          <div>
-            <label className="block text-xs font-medium text-text-main/60 mb-1.5">
-              Taller <span className="text-error">*</span>
-            </label>
-            {loadingTalleres ? (
-              <div className="h-10.5 flex items-center text-xs text-text-main/40">
-                Cargando talleres…
-              </div>
-            ) : talleres.length === 0 ? (
-              <div className="bg-warning/10 border border-warning/30 text-warning text-xs p-3 rounded-lg">
-                No hay talleres activos. Creá un taller primero en la tab
-                "Talleres".
-              </div>
-            ) : (
-              <select
-                value={tallerId}
-                onChange={(e) => setTallerId(e.target.value)}
-                disabled={submitting}
-                className={`${inputClass} w-full px-3 py-2.5 cursor-pointer`}
-              >
-                <option value="">Seleccioná un taller…</option>
-                {talleres.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.slug})
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+          {!fixedTallerId && (
+            <div>
+              <label className="block text-xs font-medium text-text-main/60 mb-1.5">
+                Taller <span className="text-error">*</span>
+              </label>
+              {loadingTalleres ? (
+                <div className="h-10.5 flex items-center text-xs text-text-main/40">
+                  Cargando talleres…
+                </div>
+              ) : talleres.length === 0 ? (
+                <div className="bg-warning/10 border border-warning/30 text-warning text-xs p-3 rounded-lg">
+                  No hay talleres activos. Creá un taller primero en la tab
+                  "Talleres".
+                </div>
+              ) : (
+                <select
+                  value={tallerId}
+                  onChange={(e) => setTallerId(e.target.value)}
+                  disabled={submitting}
+                  className={`${inputClass} w-full px-3 py-2.5 cursor-pointer`}
+                >
+                  <option value="">Seleccioná un taller…</option>
+                  {talleres.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} ({t.slug})
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-text-main/60 mb-1.5">

@@ -12,6 +12,8 @@ import {
   FaExternalLinkAlt,
 } from "react-icons/fa";
 import type { Taller } from "@/lib/talleres/types";
+import TallerInfoForm from "@/components/admin/talleres/TallerInfoForm";
+import PaymentLinksSection from "@/components/admin/talleres/PaymentLinksSection";
 
 type SubTab = "info" | "links" | "inscripciones";
 
@@ -139,8 +141,8 @@ export default function TallerDetailClient({ taller }: TallerDetailClientProps) 
       </div>
 
       <div className="px-5 lg:px-8 py-6">
-        {tab === "info" && <Placeholder text="Información del taller (próximo commit)" />}
-        {tab === "links" && <Placeholder text="Links de pago de este taller (próximo commit)" />}
+        {tab === "info" && <TallerInfoForm taller={taller} />}
+        {tab === "links" && <PaymentLinksSection tallerId={taller.id} />}
         {tab === "inscripciones" && (
           <Placeholder text="Inscripciones de este taller (próximo commit)" />
         )}
