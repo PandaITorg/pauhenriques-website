@@ -13,10 +13,35 @@ import {
 } from "firebase/auth";
 import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
+import type { User } from "firebase/auth";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import PasswordStrengthIndicator from "@/components/auth/PasswordStrengthIndicator";
 import { createUserProfile } from "@/app/actions/auth";
 import { useAuth } from "@/context/AuthContext";
+import { getRoleFromClaims } from "@/lib/auth/roles";
+import { computePostLoginRedirect } from "@/lib/auth/postLoginRedirect";
+
+async function performPostSignupRedirect(
+  user: User,
+  requestedRedirect: string | null,
+  router: ReturnType<typeof useRouter>,
+): Promise<void> {
+  const tokenResult = await user.getIdTokenResult();
+  const role = getRoleFromClaims(
+    tokenResult.claims as unknown as Record<string, unknown>,
+  );
+  const action = computePostLoginRedirect({
+    role,
+    requestedRedirect,
+    currentHostname:
+      typeof window !== "undefined" ? window.location.hostname : "",
+  });
+  if (action.externalUrl) {
+    window.location.href = action.externalUrl;
+  } else {
+    router.push(action.path);
+  }
+}
 import {
   FaEye,
   FaEyeSlash,
@@ -96,7 +121,10 @@ function SignUpContent() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
-  const redirectUri = searchParams.get("redirect_uri") || "/tienda";
+  const requestedRedirect = searchParams.get("redirect_uri");
+  // Para los <Link href> que mantienen el redirect_uri al cambiar de
+  // sign-up ↔ sign-in. La decisión real la toma performPostSignupRedirect.
+  const redirectUri = requestedRedirect || "/tienda";
 
   const [formData, setFormData] = useState<SignUpFormData>({
     nombre: "",
@@ -113,12 +141,11 @@ function SignUpContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Si ya está autenticado, redirigir
+  // Si ya está autenticado, redirigir según rol + host.
   useEffect(() => {
-    if (!authLoading && user) {
-      router.replace(redirectUri);
-    }
-  }, [user, authLoading, router, redirectUri]);
+    if (authLoading || !user) return;
+    void performPostSignupRedirect(user, requestedRedirect, router);
+  }, [user, authLoading, router, requestedRedirect]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -190,8 +217,8 @@ function SignUpContent() {
         provider: "email",
       });
 
-      // 6. Redirigir
-      router.push(redirectUri);
+      // 6. Redirigir según rol + host
+      await performPostSignupRedirect(user, requestedRedirect, router);
     } catch (error: unknown) {
       if (error && typeof error === "object" && "code" in error) {
         setGlobalError(getFirebaseErrorMessage((error as AuthError).code));
@@ -248,7 +275,7 @@ function SignUpContent() {
         {/* Google Sign Up */}
         <GoogleSignInButton
           mode="signup"
-          redirectUri={redirectUri}
+          redirectUri={requestedRedirect ?? undefined}
           onError={setGlobalError}
         />
 

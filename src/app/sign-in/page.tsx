@@ -7,11 +7,39 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signInWithEmailAndPassword, sendPasswordResetEmail, AuthError } from "firebase/auth";
+import type { User } from "firebase/auth";
 import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { useAuth } from "@/context/AuthContext";
+import { getRoleFromClaims } from "@/lib/auth/roles";
+import { computePostLoginRedirect } from "@/lib/auth/postLoginRedirect";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
+
+// Resuelve el destino post-login leyendo el role del idToken claims y
+// el host actual. Maneja same-origin (router.push) y cross-domain
+// (window.location.href) según corresponda.
+async function performPostLoginRedirect(
+  user: User,
+  requestedRedirect: string | null,
+  router: ReturnType<typeof useRouter>,
+): Promise<void> {
+  const tokenResult = await user.getIdTokenResult();
+  const role = getRoleFromClaims(
+    tokenResult.claims as unknown as Record<string, unknown>,
+  );
+  const action = computePostLoginRedirect({
+    role,
+    requestedRedirect,
+    currentHostname:
+      typeof window !== "undefined" ? window.location.hostname : "",
+  });
+  if (action.externalUrl) {
+    window.location.href = action.externalUrl;
+  } else {
+    router.push(action.path);
+  }
+}
 
 // ===== ZOD SCHEMA =====
 const SignInSchema = z.object({
@@ -63,7 +91,11 @@ function SignInContent() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
 
-  const redirectUri = searchParams.get("redirect_uri") || "/tienda";
+  const requestedRedirect = searchParams.get("redirect_uri");
+  // Para usar como href en links del <Link href> y para mantener el query
+  // si el user va a sign-up. La decisión real del redirect post-login se
+  // calcula en performPostLoginRedirect según el rol y el host.
+  const redirectUri = requestedRedirect || "/tienda";
 
   const [formData, setFormData] = useState<SignInFormData>({
     email: "",
@@ -89,7 +121,7 @@ function SignInContent() {
           body: JSON.stringify({ idToken }),
         });
         if (!cancelled && res.ok) {
-          router.replace(redirectUri);
+          await performPostLoginRedirect(user, requestedRedirect, router);
         }
       } catch {
         // Si falla la sincronizacion, no hacemos nada; el user puede re-submit
@@ -98,7 +130,7 @@ function SignInContent() {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading, router, redirectUri]);
+  }, [user, authLoading, router, requestedRedirect]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -150,8 +182,8 @@ function SignInContent() {
         throw new Error("Error al crear la sesión");
       }
 
-      // 4. Redirigir
-      router.push(redirectUri);
+      // 4. Redirigir según rol + host (admin → /admin, corriente → sitio público)
+      await performPostLoginRedirect(userCredential.user, requestedRedirect, router);
     } catch (error: unknown) {
       if (error && typeof error === "object" && "code" in error) {
         setGlobalError(getFirebaseErrorMessage((error as AuthError).code));
@@ -205,7 +237,7 @@ function SignInContent() {
         {/* Google Sign In */}
         <GoogleSignInButton
           mode="signin"
-          redirectUri={redirectUri}
+          redirectUri={requestedRedirect ?? undefined}
           onError={setGlobalError}
         />
 

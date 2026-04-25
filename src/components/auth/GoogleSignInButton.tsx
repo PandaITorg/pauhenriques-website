@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithGoogle } from "@/lib/firebase-auth";
 import { createUserProfile } from "@/app/actions/auth";
+import { getRoleFromClaims } from "@/lib/auth/roles";
+import { computePostLoginRedirect } from "@/lib/auth/postLoginRedirect";
 
 interface GoogleSignInButtonProps {
   mode: "signin" | "signup";
+  /** Query ?redirect_uri= si vino de un guard. Pasar tal cual. */
   redirectUri?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
@@ -59,10 +62,23 @@ export default function GoogleSignInButton({
         provider: "google",
       });
 
-      // 5. Redirigir
+      // 5. Redirigir según rol + host
       onSuccess?.();
-      const destination = redirectUri || "/tienda";
-      router.push(destination);
+      const tokenResult = await user.getIdTokenResult();
+      const role = getRoleFromClaims(
+        tokenResult.claims as unknown as Record<string, unknown>,
+      );
+      const action = computePostLoginRedirect({
+        role,
+        requestedRedirect: redirectUri ?? null,
+        currentHostname:
+          typeof window !== "undefined" ? window.location.hostname : "",
+      });
+      if (action.externalUrl) {
+        window.location.href = action.externalUrl;
+      } else {
+        router.push(action.path);
+      }
     } catch (error: unknown) {
       // Manejar errores específicos de Firebase
       let errorMessage =
