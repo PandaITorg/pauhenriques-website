@@ -592,9 +592,19 @@ export default function PagoLinkClient({
                   <p className="text-xs text-text-main/50 mt-0.5">Taller en vivo</p>
                 </div>
                 <div className="text-right">
+                  {pricing.hasActiveDiscount && (
+                    <p className="text-xs text-text-main/40 line-through">
+                      ${pricing.basePrice.toFixed(2)}
+                    </p>
+                  )}
                   <p className="font-medium text-text-main whitespace-nowrap">
                     ${pricing.finalPrice.toFixed(2)}
                   </p>
+                  {pricing.hasActiveDiscount && pricing.percentOff > 0 && (
+                    <p className="text-[11px] font-bold text-success mt-0.5">
+                      -{pricing.percentOff}% OFF
+                    </p>
+                  )}
                 </div>
               </div>
 

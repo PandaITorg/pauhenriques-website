@@ -157,6 +157,18 @@ export async function getPaymentLinkBootstrap(
       ? data.publicLabel
       : null;
 
+  // Si el precio del link es menor al basePrice del taller, calcular el
+  // descuento para mostrar al cliente (precio tachado + % off). Si el link
+  // cuesta igual o más, no se muestra descuento.
+  const tallerBase = taller.basePrice;
+  const hasDiscountVsBase = tallerBase > 0 && p.total < tallerBase;
+  const amountOff = hasDiscountVsBase
+    ? Math.round((tallerBase - p.total) * 100) / 100
+    : 0;
+  const percentOff = hasDiscountVsBase
+    ? Math.round((amountOff / tallerBase) * 100)
+    : 0;
+
   return {
     ok: true,
     linkId: doc.id,
@@ -164,15 +176,17 @@ export async function getPaymentLinkBootstrap(
     taller: tallerSummary(taller),
     promoLabel,
     pricing: {
-      basePrice: p.total,
-      baseSubtotal: p.subtotal,
+      basePrice: hasDiscountVsBase ? tallerBase : p.total,
+      baseSubtotal: hasDiscountVsBase
+        ? Math.round((tallerBase / (1 + IVA_RATE)) * 100) / 100
+        : p.subtotal,
       finalPrice: p.total,
       finalSubtotal: p.subtotal,
       finalVat: p.vat,
-      percentOff: 0,
-      amountOff: 0,
+      percentOff,
+      amountOff,
       label: promoLabel,
-      hasActiveDiscount: false,
+      hasActiveDiscount: hasDiscountVsBase,
       validUntilIso: null,
     },
   };
