@@ -35,19 +35,27 @@ interface PagoLinkClientProps {
   /** PaymentLink fijo (privado). Si está presente, la orden lo guarda. */
   paymentLinkId?: string;
   /**
-   * URL de éxito tras pago aprobado. Recibe el orderId.
-   * Default: /pago/t/[token]/exito (legacy paymentLink flow).
+   * URL de éxito tras pago aprobado. Debe contener el placeholder literal
+   * "{ORDER_ID}" que será reemplazado por el orderId real.
+   * Funciones NO son serializables a través del boundary RSC, por eso
+   * pasamos un string con placeholder en vez de un callback.
    */
-  successHref: (orderId: string) => string;
+  successUrlPattern: string;
   /** Descripción enviada al backend de pago (ej. "Taller X"). */
   paymentDescription: string;
+}
+
+const ORDER_ID_PLACEHOLDER = "{ORDER_ID}";
+
+function buildSuccessUrl(pattern: string, orderId: string): string {
+  return pattern.replace(ORDER_ID_PLACEHOLDER, encodeURIComponent(orderId));
 }
 
 export default function PagoLinkClient({
   taller,
   pricing,
   paymentLinkId,
-  successHref,
+  successUrlPattern,
   paymentDescription,
 }: PagoLinkClientProps) {
   const router = useRouter();
@@ -68,7 +76,7 @@ export default function PagoLinkClient({
     onSuccess: ({ orderId }) => {
       setPaymentSuccess(true);
       setTimeout(() => {
-        router.push(successHref(orderId));
+        router.push(buildSuccessUrl(successUrlPattern, orderId));
       }, 1200);
     },
     onFailed: (error) => setPaymentFailed(error),
@@ -211,13 +219,15 @@ export default function PagoLinkClient({
         setProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
-          router.push(successHref(orderId!));
+          router.push(buildSuccessUrl(successUrlPattern, orderId!));
         }, 1200);
       } else if (data.review) {
         setProcessing(false);
         setPaymentSuccess(true);
         setTimeout(() => {
-          router.push(`${successHref(orderId!)}&review=1`);
+          router.push(
+            `${buildSuccessUrl(successUrlPattern, orderId!)}&review=1`,
+          );
         }, 1200);
       } else if (data.otpRequired) {
         setProcessing(false);

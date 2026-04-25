@@ -67,7 +67,7 @@ export default async function PagoTallerPage({ params }: PagoTallerPageProps) {
       taller={bootstrap.taller}
       pricing={bootstrap.pricing}
       paymentDescription={`Taller ${bootstrap.taller.name}`}
-      successHref={(orderId) => `/pago/${slug}/exito?orderId=${orderId}`}
+      successUrlPattern={`/pago/${slug}/exito?orderId={ORDER_ID}`}
     />
   );
 }
