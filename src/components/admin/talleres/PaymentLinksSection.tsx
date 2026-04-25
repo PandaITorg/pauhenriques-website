@@ -9,6 +9,7 @@ import {
   FaBan,
   FaPowerOff,
   FaTrash,
+  FaPencilAlt,
 } from "react-icons/fa";
 import type { PaymentLink } from "@/lib/pago-link/paymentLink";
 import {
@@ -62,7 +63,7 @@ interface PaymentLinksSectionProps {
 export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionProps = {}) {
   const [links, setLinks] = useState<PaymentLink[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [editing, setEditing] = useState<PaymentLink | "new" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLinks = useCallback(async () => {
@@ -97,7 +98,7 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
           Links de pago activos: <strong className="text-text-main">{links.filter((l) => l.active && !isExpiredIso(l.expiresAt)).length}</strong>
         </p>
         <button
-          onClick={() => setCreateOpen(true)}
+          onClick={() => setEditing("new")}
           className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
         >
           <FaPlus className="w-3.5 h-3.5" />
@@ -133,7 +134,12 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
               </thead>
               <tbody>
                 {links.map((l) => (
-                  <LinkRow key={l.id} link={l} onChange={fetchLinks} />
+                  <LinkRow
+                    key={l.id}
+                    link={l}
+                    onEdit={() => setEditing(l)}
+                    onChange={fetchLinks}
+                  />
                 ))}
               </tbody>
             </table>
@@ -141,12 +147,13 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
         )}
       </div>
 
-      {createOpen && (
-        <CreateLinkModal
+      {editing && (
+        <LinkFormModal
+          link={editing === "new" ? null : editing}
           fixedTallerId={tallerId}
-          onClose={() => setCreateOpen(false)}
-          onCreated={() => {
-            setCreateOpen(false);
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
             fetchLinks();
           }}
         />
@@ -155,7 +162,15 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
   );
 }
 
-function LinkRow({ link, onChange }: { link: PaymentLink; onChange: () => void }) {
+function LinkRow({
+  link,
+  onEdit,
+  onChange,
+}: {
+  link: PaymentLink;
+  onEdit: () => void;
+  onChange: () => void;
+}) {
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -255,6 +270,14 @@ function LinkRow({ link, onChange }: { link: PaymentLink; onChange: () => void }
       <td className="p-4 text-right">
         <div className="inline-flex items-center gap-1.5">
           <button
+            onClick={onEdit}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40"
+            title="Editar"
+          >
+            <FaPencilAlt className="w-3 h-3" />
+          </button>
+          <button
             onClick={toggleActive}
             disabled={busy}
             className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-40"
@@ -299,37 +322,57 @@ function StatusBadge({ status }: { status: "active" | "inactive" | "expired" }) 
   );
 }
 
-function CreateLinkModal({
+function isoToDateInput(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function defaultExpiryDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().slice(0, 10);
+}
+
+function LinkFormModal({
+  link,
   fixedTallerId,
   onClose,
-  onCreated,
+  onSaved,
 }: {
-  /** Si está, se pre-llena tallerId y se esconde el dropdown selector. */
+  /** Si está, modo EDIT del link existente. Si es null, modo CREATE. */
+  link: PaymentLink | null;
+  /** Si está, en modo CREATE pre-llena tallerId y esconde el dropdown. */
   fixedTallerId?: string;
   onClose: () => void;
-  onCreated: () => void;
+  onSaved: () => void;
 }) {
+  const isEdit = link !== null;
+  // En modo edit el tallerId del link es inmutable (el cliente ya lo recibió).
+  // En modo create se elige (o viene fijo).
   const [talleres, setTalleres] = useState<Taller[]>([]);
-  const [tallerId, setTallerId] = useState<string>(fixedTallerId ?? "");
-  const [loadingTalleres, setLoadingTalleres] = useState(!fixedTallerId);
-  const [price, setPrice] = useState<string>("");
-  const [label, setLabel] = useState("");
-  const [publicLabel, setPublicLabel] = useState("");
-  const [notes, setNotes] = useState("");
-  const [expiresDate, setExpiresDate] = useState<string>(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d.toISOString().slice(0, 10);
-  });
+  const [tallerId, setTallerId] = useState<string>(
+    link?.tallerId ?? fixedTallerId ?? "",
+  );
+  const [loadingTalleres, setLoadingTalleres] = useState(
+    !isEdit && !fixedTallerId,
+  );
+  const [price, setPrice] = useState<string>(
+    link ? String(link.price) : "",
+  );
+  const [label, setLabel] = useState(link?.label ?? "");
+  const [publicLabel, setPublicLabel] = useState(link?.publicLabel ?? "");
+  const [notes, setNotes] = useState(link?.notes ?? "");
+  const [expiresDate, setExpiresDate] = useState<string>(
+    link ? isoToDateInput(link.expiresAt) : defaultExpiryDate(),
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmHighPrice, setConfirmHighPrice] = useState(false);
 
-  // Cargar talleres activos para el selector. Si solo hay uno, lo
-  // pre-selecciona. Si fixedTallerId está set, no se necesita el fetch
-  // — el modal vive dentro del detalle del taller.
+  // Cargar talleres activos solo en modo CREATE sin fixedTallerId.
   useEffect(() => {
-    if (fixedTallerId) return;
+    if (isEdit || fixedTallerId) return;
     let cancelled = false;
     (async () => {
       try {
@@ -347,14 +390,21 @@ function CreateLinkModal({
     return () => {
       cancelled = true;
     };
-  }, [fixedTallerId]);
+  }, [isEdit, fixedTallerId]);
 
   const priceNum = Number(price);
   const validPrice =
     Number.isFinite(priceNum) &&
     priceNum >= PAYMENT_LINK_PRICE_MIN &&
     priceNum <= PAYMENT_LINK_PRICE_MAX;
-  const requiresConfirm = validPrice && priceNum >= PAYMENT_LINK_PRICE_CONFIRM_THRESHOLD;
+  // En edit, solo pedir confirmación si el precio CAMBIÓ a un valor alto.
+  const priceChangedHigh =
+    !isEdit ||
+    (link !== null && Math.abs(priceNum - link.price) > 0.01);
+  const requiresConfirm =
+    validPrice &&
+    priceNum >= PAYMENT_LINK_PRICE_CONFIRM_THRESHOLD &&
+    priceChangedHigh;
   const canSubmit =
     !!tallerId &&
     validPrice &&
@@ -377,7 +427,6 @@ function CreateLinkModal({
       setError(`Precio invalido. Rango: $${PAYMENT_LINK_PRICE_MIN} – $${PAYMENT_LINK_PRICE_MAX}.`);
       return;
     }
-    // Build expiry at end of day local time, convert to ISO.
     const [y, m, d] = expiresDate.split("-").map((n) => Number(n));
     const expiresAtDate = new Date(y, (m ?? 1) - 1, d ?? 1, 23, 59, 59, 999);
     if (expiresAtDate.getTime() <= Date.now()) {
@@ -387,24 +436,32 @@ function CreateLinkModal({
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/payment-links", {
-        method: "POST",
+      // En edit, el tallerId NO se envía (es inmutable). En create, sí.
+      const body: Record<string, unknown> = {
+        price: priceNum,
+        label: label.trim(),
+        publicLabel: publicLabel.trim() || undefined,
+        notes: notes.trim() || undefined,
+        expiresAt: expiresAtDate.toISOString(),
+      };
+      if (!isEdit) body.tallerId = tallerId;
+
+      const url = isEdit
+        ? `/api/admin/payment-links/${link!.id}`
+        : "/api/admin/payment-links";
+      const method = isEdit ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tallerId,
-          price: priceNum,
-          label: label.trim() || undefined,
-          publicLabel: publicLabel.trim() || undefined,
-          notes: notes.trim() || undefined,
-          expiresAt: expiresAtDate.toISOString(),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Error creando link");
+        setError(data.error || `Error ${isEdit ? "actualizando" : "creando"} link`);
         return;
       }
-      onCreated();
+      onSaved();
     } catch {
       setError("Error de conexion");
     } finally {
@@ -416,7 +473,9 @@ function CreateLinkModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-surface-card border border-border-subtle rounded-xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
         <div className="flex items-start justify-between p-5 border-b border-border-subtle">
-          <h2 className="font-cormorant text-xl font-semibold text-text-main">Nuevo link de pago</h2>
+          <h2 className="font-cormorant text-xl font-semibold text-text-main">
+            {isEdit ? "Editar link de pago" : "Nuevo link de pago"}
+          </h2>
           <button
             onClick={onClose}
             disabled={submitting}
@@ -428,7 +487,7 @@ function CreateLinkModal({
         </div>
 
         <div className="p-5 space-y-4 overflow-y-auto">
-          {!fixedTallerId && (
+          {!isEdit && !fixedTallerId && (
             <div>
               <label className="block text-xs font-medium text-text-main/60 mb-1.5">
                 Taller <span className="text-error">*</span>
@@ -592,6 +651,8 @@ function CreateLinkModal({
           >
             {submitting ? (
               <div className="simple-spinner w-4! h-4! border-2! border-white! border-b-transparent!" />
+            ) : isEdit ? (
+              "Guardar cambios"
             ) : (
               "Crear link"
             )}
