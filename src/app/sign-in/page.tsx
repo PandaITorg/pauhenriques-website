@@ -17,13 +17,13 @@ import { computePostLoginRedirect } from "@/lib/auth/postLoginRedirect";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 
 // Resuelve el destino post-login leyendo el role del idToken claims y
-// el host actual. Maneja same-origin (router.push) y cross-domain
-// (window.location.href) según corresponda.
+// el host actual. Devuelve true si redirigió, false si bloqueó (caller
+// debe mostrar UI de "esta cuenta no tiene acceso al panel").
 async function performPostLoginRedirect(
   user: User,
   requestedRedirect: string | null,
   router: ReturnType<typeof useRouter>,
-): Promise<void> {
+): Promise<{ redirected: boolean; blockedNoRole: boolean }> {
   const tokenResult = await user.getIdTokenResult();
   const role = getRoleFromClaims(
     tokenResult.claims as unknown as Record<string, unknown>,
@@ -34,11 +34,11 @@ async function performPostLoginRedirect(
     currentHostname:
       typeof window !== "undefined" ? window.location.hostname : "",
   });
-  if (action.externalUrl) {
-    window.location.href = action.externalUrl;
-  } else {
+  if (action.path) {
     router.push(action.path);
+    return { redirected: true, blockedNoRole: false };
   }
+  return { redirected: false, blockedNoRole: !!action.blockedNoRole };
 }
 
 // ===== ZOD SCHEMA =====
@@ -89,7 +89,7 @@ export default function SignInPage() {
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
 
   const requestedRedirect = searchParams.get("redirect_uri");
   // Para usar como href en links del <Link href> y para mantener el query
@@ -106,6 +106,10 @@ function SignInContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  // True si el user actual está logueado en admin host SIN role válido.
+  // En ese caso no auto-redirigimos — mostramos UI con botón de cerrar
+  // sesión para que pueda salir del estado "stuck".
+  const [blockedNoRole, setBlockedNoRole] = useState(false);
 
   // Si Firebase client ya tiene un user pero no hay session cookie server-side,
   // sincronizar la cookie ANTES de redirigir. Evita loop /sign-in ↔ /admin.
@@ -121,7 +125,14 @@ function SignInContent() {
           body: JSON.stringify({ idToken }),
         });
         if (!cancelled && res.ok) {
-          await performPostLoginRedirect(user, requestedRedirect, router);
+          const result = await performPostLoginRedirect(
+            user,
+            requestedRedirect,
+            router,
+          );
+          if (!cancelled && !result.redirected && result.blockedNoRole) {
+            setBlockedNoRole(true);
+          }
         }
       } catch {
         // Si falla la sincronizacion, no hacemos nada; el user puede re-submit
@@ -183,7 +194,14 @@ function SignInContent() {
       }
 
       // 4. Redirigir según rol + host (admin → /admin, corriente → sitio público)
-      await performPostLoginRedirect(userCredential.user, requestedRedirect, router);
+      const result = await performPostLoginRedirect(
+        userCredential.user,
+        requestedRedirect,
+        router,
+      );
+      if (!result.redirected && result.blockedNoRole) {
+        setBlockedNoRole(true);
+      }
     } catch (error: unknown) {
       if (error && typeof error === "object" && "code" in error) {
         setGlobalError(getFirebaseErrorMessage((error as AuthError).code));
@@ -203,6 +221,42 @@ function SignInContent() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="simple-spinner" />
       </div>
+    );
+  }
+
+  // Caso: el user está logueado en admin.pauhenriques.com pero su cuenta
+  // no tiene rol válido (cliente corriente). Mostramos UI con signOut
+  // para que pueda salir del estado "stuck" (sin esto el useEffect
+  // dispararía en cada render y entraría en loop).
+  if (blockedNoRole && user) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 py-16 bg-background">
+        <div className="w-full max-w-md rounded-2xl bg-surface-card border border-border-subtle p-8 sm:p-10 text-center">
+          <h1 className="text-xl font-semibold text-text-main mb-3">
+            Sin acceso al panel admin
+          </h1>
+          <p className="text-sm text-text-main/60 mb-6 leading-relaxed">
+            La cuenta <strong className="text-text-main">{user.email}</strong>{" "}
+            no tiene permisos para acceder al panel. Si querés navegar el
+            sitio público, andá a pauhenriques.com.
+          </p>
+          <button
+            onClick={async () => {
+              await signOut();
+              setBlockedNoRole(false);
+            }}
+            className="w-full bg-primary hover:bg-primary-hover text-white font-semibold py-3 rounded-xl transition-colors cursor-pointer"
+          >
+            Cerrar sesión
+          </button>
+          <a
+            href="https://pauhenriques.com"
+            className="block mt-3 text-sm text-text-main/60 hover:text-text-main transition-colors"
+          >
+            Ir a pauhenriques.com
+          </a>
+        </div>
+      </main>
     );
   }
 
@@ -239,6 +293,7 @@ function SignInContent() {
           mode="signin"
           redirectUri={requestedRedirect ?? undefined}
           onError={setGlobalError}
+          onBlockedNoRole={() => setBlockedNoRole(true)}
         />
 
         {/* Divider */}

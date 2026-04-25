@@ -1,11 +1,10 @@
 import type { Role } from "./roles";
 
-// Hostnames duros para post-login routing. Si un día se agrega otro
-// subdominio, este es el lugar centralizar la lógica.
-const ADMIN_HOST = "admin.pauhenriques.com";
-const PUBLIC_ORIGIN = "https://pauhenriques.com";
-const ADMIN_ORIGIN = `https://${ADMIN_HOST}`;
+// Sesiones HOST-ONLY: cada subdominio tiene su propia sesión. NO hay
+// redirects cross-domain — el cookie no se comparte y mandar al user
+// a otro subdomain lo dejaría sin sesión.
 
+const ADMIN_HOST = "admin.pauhenriques.com";
 const DEFAULT_PUBLIC_REDIRECT = "/tienda";
 const ADMIN_HOME = "/admin";
 
@@ -20,17 +19,21 @@ export interface PostLoginRedirectInput {
 
 export interface PostLoginRedirectAction {
   /**
-   * Si está set → cambio de origin requerido. Usar window.location.href.
-   * Si null → mismo origin, usar router.push(path).
+   * Path destino. Si es null → NO auto-redirect (caller debe mostrar
+   * UI especial: el user no tiene permiso para estar en este host).
    */
-  externalUrl: string | null;
-  /** Path interno (siempre disponible para el caso same-origin). */
-  path: string;
+  path: string | null;
+  /**
+   * Si true → el user logueó en admin host pero no tiene rol válido.
+   * El caller debe mostrar UI con botón de signOut + mensaje "esta
+   * cuenta no tiene acceso al panel".
+   */
+  blockedNoRole?: boolean;
 }
 
 /**
  * Decide a dónde mandar al usuario después de un login exitoso.
- * Implementa los 4 casos según el host actual y el rol del usuario.
+ * Sesiones separadas por subdomain — no hay cross-domain.
  */
 export function computePostLoginRedirect(
   input: PostLoginRedirectInput,
@@ -38,45 +41,29 @@ export function computePostLoginRedirect(
   const { role, requestedRedirect, currentHostname } = input;
   const isOnAdminHost = currentHostname === ADMIN_HOST;
   const isAdmin = role !== null;
-  const reqStartsWithAdmin = requestedRedirect?.startsWith("/admin") === true;
   const safeRequested =
     requestedRedirect && requestedRedirect.startsWith("/")
       ? requestedRedirect
       : null;
 
-  // Caso 1: Admin en admin host → al admin panel (respetar redirect_uri si es de admin)
+  // Caso 1: Admin (cualquier rol) en admin host → al panel
   if (isOnAdminHost && isAdmin) {
-    return {
-      externalUrl: null,
-      path: safeRequested || ADMIN_HOME,
-    };
+    return { path: safeRequested || ADMIN_HOME };
   }
 
-  // Caso 2: User corriente en admin host → redirigir cross-domain al sitio público.
-  // Ignoramos cualquier redirect_uri /admin (no tiene sentido).
+  // Caso 2: Cliente corriente en admin host → BLOQUEAR.
+  // No tiene sentido tener cliente con sesión en este subdomain. El
+  // caller debe mostrar UI con signOut.
   if (isOnAdminHost && !isAdmin) {
-    const target =
-      safeRequested && !reqStartsWithAdmin
-        ? safeRequested
-        : DEFAULT_PUBLIC_REDIRECT;
-    return {
-      externalUrl: `${PUBLIC_ORIGIN}${target}`,
-      path: target,
-    };
+    return { path: null, blockedNoRole: true };
   }
 
-  // Caso 3: Admin en host público pidiendo explícitamente /admin →
-  // redirigir cross-domain al subdominio admin.
-  if (!isOnAdminHost && isAdmin && reqStartsWithAdmin) {
-    return {
-      externalUrl: `${ADMIN_ORIGIN}${safeRequested}`,
-      path: safeRequested!,
-    };
+  // Caso 3: Cualquier user en host público.
+  // Si pidió /admin (vino de un link viejo), ignorar y mandar a tienda
+  // — la cookie no se comparte cross-domain, no podemos llevarlo allá.
+  const reqStartsWithAdmin = safeRequested?.startsWith("/admin") === true;
+  if (reqStartsWithAdmin) {
+    return { path: DEFAULT_PUBLIC_REDIRECT };
   }
-
-  // Caso 4: Cualquier user en host público → respetar redirect_uri o default.
-  return {
-    externalUrl: null,
-    path: safeRequested || DEFAULT_PUBLIC_REDIRECT,
-  };
+  return { path: safeRequested || DEFAULT_PUBLIC_REDIRECT };
 }

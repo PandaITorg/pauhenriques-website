@@ -25,7 +25,7 @@ async function performPostSignupRedirect(
   user: User,
   requestedRedirect: string | null,
   router: ReturnType<typeof useRouter>,
-): Promise<void> {
+): Promise<{ redirected: boolean; blockedNoRole: boolean }> {
   const tokenResult = await user.getIdTokenResult();
   const role = getRoleFromClaims(
     tokenResult.claims as unknown as Record<string, unknown>,
@@ -36,11 +36,11 @@ async function performPostSignupRedirect(
     currentHostname:
       typeof window !== "undefined" ? window.location.hostname : "",
   });
-  if (action.externalUrl) {
-    window.location.href = action.externalUrl;
-  } else {
+  if (action.path) {
     router.push(action.path);
+    return { redirected: true, blockedNoRole: false };
   }
+  return { redirected: false, blockedNoRole: !!action.blockedNoRole };
 }
 import {
   FaEye,

@@ -40,12 +40,11 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
-      // Compartir cookie entre subdominios (admin.pauhenriques.com,
-      // staging.pauhenriques.com, etc.). En desarrollo (localhost) no se
-      // setea domain — el browser lo ignoraría igual.
-      ...(process.env.NODE_ENV === "production"
-        ? { domain: ".pauhenriques.com" }
-        : {}),
+      // Cookie host-only (sin domain): scoped al subdominio donde se creó.
+      // admin.pauhenriques.com y pauhenriques.com tienen sesiones SEPARADAS.
+      // Decisión deliberada: evita desfase entre cookie server (compartida)
+      // y Firebase Auth client (storage por origin) que causaba navbar
+      // "fantasma" + loops en redirect post-login.
     });
 
     return response;
