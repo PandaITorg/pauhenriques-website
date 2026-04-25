@@ -31,6 +31,16 @@ export async function middleware(request: NextRequest) {
     "";
   const isAdminHost = host.startsWith(ADMIN_HOSTNAME);
 
+  // DEBUG TEMPORAL: headers visibles para diagnosticar admin.pauhenriques.com.
+  // Quitar después de confirmar que el subdominio admin funciona.
+  const debugHeaders = {
+    "x-mw-pathname": pathname,
+    "x-mw-host": host || "(empty)",
+    "x-mw-is-admin-host": String(isAdminHost),
+    "x-mw-x-forwarded-host": request.headers.get("x-forwarded-host") || "(none)",
+    "x-mw-raw-host": request.headers.get("host") || "(none)",
+  };
+
   // If accessing via admin subdomain, rewrite to /admin routes (excepto
   // paths de auth que viven en la app pública).
   const isNonRewritable = NON_REWRITABLE_PATHS.some((p) =>
@@ -39,7 +49,10 @@ export async function middleware(request: NextRequest) {
   if (isAdminHost && !pathname.startsWith("/admin") && !isNonRewritable) {
     const url = request.nextUrl.clone();
     url.pathname = `/admin${pathname === "/" ? "" : pathname}`;
-    return NextResponse.rewrite(url);
+    const res = NextResponse.rewrite(url);
+    Object.entries(debugHeaders).forEach(([k, v]) => res.headers.set(k, v));
+    res.headers.set("x-mw-action", "rewrite-to-admin");
+    return res;
   }
 
   // Block /admin/* on public domain — panel solo accesible vía admin.pauhenriques.com.
@@ -89,13 +102,10 @@ export const config = {
   matcher: [
     // Corre en TODAS las páginas — necesario para que el rewrite del
     // subdominio admin (admin.pauhenriques.com → /admin/*) funcione
-    // incluso en path "/", que no estaba en la lista anterior.
+    // incluso en path "/".
     //
-    // Excluye API routes (no necesitan middleware), assets estáticos de
-    // Next y archivos del root público (favicon, robots, sitemap).
-    //
-    // El middleware tiene early returns: para hosts no-admin y paths no
-    // protegidos, retorna NextResponse.next() sin trabajo extra.
-    "/((?!api/|_next/|favicon.ico|robots.txt|sitemap.xml|jarrito-favicon.png).*)",
+    // Patrón estándar de Next.js: excluye /api y /_next. El middleware
+    // tiene early returns para hosts no-admin y paths no protegidos.
+    "/((?!api|_next).*)",
   ],
 };
