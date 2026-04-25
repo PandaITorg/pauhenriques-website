@@ -15,6 +15,7 @@ import {
   FaExclamationTriangle,
   FaGraduationCap,
   FaUsers,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -41,10 +42,23 @@ const ALL_NAV_ITEMS: NavItem[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const { role } = useAuth();
+  const { user, role, signOut } = useAuth();
   const [open, setOpen] = useState(false);
   const [auditCount, setAuditCount] = useState<number>(0);
   const [cursosPendingCount, setCursosPendingCount] = useState<number>(0);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      // Hard navigate al sign-in para limpiar todo el state del cliente.
+      window.location.href = "/sign-in";
+    } catch {
+      setSigningOut(false);
+    }
+  };
 
   const navItems = useMemo(
     () => ALL_NAV_ITEMS.filter((item) => hasAccess(role, item.section)),
@@ -119,15 +133,40 @@ export default function AdminSidebar() {
         })}
       </div>
 
-      <div className="mt-auto pt-4 border-t border-border-subtle">
-        <Link
-          href="/"
+      <div className="mt-auto pt-4 border-t border-border-subtle space-y-1">
+        {user && (
+          <div className="px-3 py-2 mb-1">
+            <p className="text-[10px] uppercase tracking-wider text-text-main/40 font-medium">
+              Sesión
+            </p>
+            <p className="text-xs text-text-main/70 mt-0.5 truncate">
+              {user.email}
+            </p>
+            {role && (
+              <p className="text-[10px] text-primary/70 mt-0.5 uppercase tracking-wider font-semibold">
+                {role}
+              </p>
+            )}
+          </div>
+        )}
+        <a
+          href="https://pauhenriques.com"
+          target="_blank"
+          rel="noopener noreferrer"
           onClick={() => setOpen(false)}
-          className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm text-text-main/40 hover:text-text-main/60 hover:bg-surface-elevated transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-text-main/40 hover:text-text-main/60 hover:bg-surface-elevated transition-colors"
         >
           <FaExternalLinkAlt className="w-3.5 h-3.5" />
           Ver sitio
-        </Link>
+        </a>
+        <button
+          onClick={handleSignOut}
+          disabled={signingOut}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-error/80 hover:text-error hover:bg-error/10 transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <FaSignOutAlt className="w-3.5 h-3.5" />
+          {signingOut ? "Cerrando…" : "Cerrar sesión"}
+        </button>
       </div>
     </nav>
   );
