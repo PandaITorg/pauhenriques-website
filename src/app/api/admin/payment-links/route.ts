@@ -9,7 +9,6 @@ import {
   generatePaymentLinkToken,
   type PaymentLink,
 } from "@/lib/pago-link/paymentLink";
-import { CURSO_TOXICA_SIN_TOXICOS } from "@/lib/pago-link/course";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +26,7 @@ const CreateSchema = z.object({
     .refine((v) => new Date(v).getTime() > Date.now(), {
       message: "La fecha de expiracion debe ser en el futuro",
     }),
-  productId: z.string().optional(),
+  tallerId: z.string().min(1, "tallerId requerido"),
 });
 
 function docToPaymentLink(doc: FirebaseFirestore.DocumentSnapshot): PaymentLink {
@@ -38,10 +37,19 @@ function docToPaymentLink(doc: FirebaseFirestore.DocumentSnapshot): PaymentLink 
     if (typeof v === "string") return v;
     return null;
   };
+  // Compat: docs antiguos tienen `productId`, los nuevos `tallerId`. La
+  // migración (commit 5) renombra todos a `tallerId`, pero el dual-read
+  // queda como red de seguridad por si quedó algún residuo.
+  const tallerId =
+    typeof d.tallerId === "string"
+      ? d.tallerId
+      : typeof d.productId === "string"
+        ? d.productId
+        : "";
   return {
     id: doc.id,
     token: typeof d.token === "string" ? d.token : "",
-    productId: typeof d.productId === "string" ? d.productId : "",
+    tallerId,
     price: typeof d.price === "number" ? d.price : 0,
     label: typeof d.label === "string" ? d.label : null,
     notes: typeof d.notes === "string" ? d.notes : null,
@@ -93,14 +101,26 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  const { price, label, notes, expiresAt, productId } = parsed.data;
+  const { price, label, notes, expiresAt, tallerId } = parsed.data;
+
+  // Verificar que el taller existe y está activo antes de crear el link.
+  const tallerSnap = await dbAdmin.collection("talleres").doc(tallerId).get();
+  if (!tallerSnap.exists) {
+    return NextResponse.json({ error: "Taller no encontrado" }, { status: 404 });
+  }
+  if (tallerSnap.data()?.active === false) {
+    return NextResponse.json(
+      { error: "El taller está inactivo" },
+      { status: 409 },
+    );
+  }
 
   const token = generatePaymentLinkToken();
 
   try {
     const ref = await dbAdmin.collection("paymentLinks").add({
       token,
-      productId: productId ?? CURSO_TOXICA_SIN_TOXICOS.productId,
+      tallerId,
       price: Math.round(price * 100) / 100,
       label: label ?? null,
       notes: notes ?? null,

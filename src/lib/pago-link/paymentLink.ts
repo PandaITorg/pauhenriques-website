@@ -4,14 +4,14 @@ export interface PaymentLinkInput {
   price: number;
   label?: string;
   expiresAt: Date;
-  productId: string;
+  tallerId: string;
   notes?: string;
 }
 
 export interface PaymentLink {
   id: string;
   token: string;
-  productId: string;
+  tallerId: string;
   price: number;
   label: string | null;
   notes: string | null;
