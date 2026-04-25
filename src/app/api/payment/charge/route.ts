@@ -191,6 +191,54 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Branch: orden de paymentLink (taller). El precio es FIJO al precio
+      // del link al momento de crearlo — no depende de products ni de
+      // descuentos automáticos. Validamos contra el doc del paymentLink y
+      // saltamos toda la validación de products/promociones.
+      const paymentLinkId =
+        typeof orderData?.paymentLinkId === "string"
+          ? orderData.paymentLinkId
+          : null;
+      if (paymentLinkId) {
+        const linkSnap = await dbAdmin
+          .collection("paymentLinks")
+          .doc(paymentLinkId)
+          .get();
+        if (!linkSnap.exists) {
+          return NextResponse.json(
+            { error: "El link de pago ya no existe" },
+            { status: 409 },
+          );
+        }
+        const linkData = linkSnap.data() ?? {};
+        if (linkData.active === false) {
+          return NextResponse.json(
+            { error: "Este link de pago fue desactivado" },
+            { status: 409 },
+          );
+        }
+        const expiresAtRaw = linkData.expiresAt;
+        const expiresAt: Date | null =
+          expiresAtRaw?.toDate?.() ??
+          (expiresAtRaw instanceof Date ? expiresAtRaw : null);
+        if (expiresAt && expiresAt.getTime() < Date.now()) {
+          return NextResponse.json(
+            { error: "Este link de pago expiró" },
+            { status: 409 },
+          );
+        }
+        const linkPrice =
+          typeof linkData.price === "number" ? linkData.price : 0;
+        if (linkPrice <= 0 || Math.abs(linkPrice - amount) > 0.02) {
+          return NextResponse.json(
+            { error: "El monto no coincide con el precio del link." },
+            { status: 409 },
+          );
+        }
+        // Skip products + promotions validation entirely.
+        // Continue to the Nuvei debit call below.
+      } else {
+
       // Validate stock and prices for each item before charging
       const orderItems: Array<{ productId: string; name: string; price: number; quantity: number }> =
         orderData?.items || [];
@@ -287,6 +335,7 @@ export async function POST(request: NextRequest) {
           { status: 409 },
         );
       }
+      } // end of else (non-paymentLink branch)
     }
 
     // Build term_url for 3DS challenge callback — Cloud Function receives the
