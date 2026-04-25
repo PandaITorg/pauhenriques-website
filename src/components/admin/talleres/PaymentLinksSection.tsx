@@ -16,6 +16,7 @@ import {
   PAYMENT_LINK_PRICE_MAX,
   PAYMENT_LINK_PRICE_MIN,
 } from "@/lib/pago-link/paymentLink";
+import type { Taller } from "@/lib/talleres/types";
 
 const inputClass =
   "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
@@ -292,6 +293,9 @@ function CreateLinkModal({
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const [talleres, setTalleres] = useState<Taller[]>([]);
+  const [tallerId, setTallerId] = useState<string>("");
+  const [loadingTalleres, setLoadingTalleres] = useState(true);
   const [price, setPrice] = useState<string>("");
   const [label, setLabel] = useState("");
   const [notes, setNotes] = useState("");
@@ -304,16 +308,47 @@ function CreateLinkModal({
   const [error, setError] = useState<string | null>(null);
   const [confirmHighPrice, setConfirmHighPrice] = useState(false);
 
+  // Cargar talleres activos para el selector. Si solo hay uno, lo
+  // pre-selecciona automáticamente.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/talleres");
+        if (!res.ok) return;
+        const data = (await res.json()) as { talleres: Taller[] };
+        if (cancelled) return;
+        const active = (data.talleres ?? []).filter((t) => t.active);
+        setTalleres(active);
+        if (active.length === 1) setTallerId(active[0].id);
+      } finally {
+        if (!cancelled) setLoadingTalleres(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const priceNum = Number(price);
   const validPrice =
     Number.isFinite(priceNum) &&
     priceNum >= PAYMENT_LINK_PRICE_MIN &&
     priceNum <= PAYMENT_LINK_PRICE_MAX;
   const requiresConfirm = validPrice && priceNum >= PAYMENT_LINK_PRICE_CONFIRM_THRESHOLD;
-  const canSubmit = validPrice && expiresDate.length > 0 && !submitting && (!requiresConfirm || confirmHighPrice);
+  const canSubmit =
+    !!tallerId &&
+    validPrice &&
+    expiresDate.length > 0 &&
+    !submitting &&
+    (!requiresConfirm || confirmHighPrice);
 
   const handleSubmit = async () => {
     setError(null);
+    if (!tallerId) {
+      setError("Seleccioná un taller.");
+      return;
+    }
     if (!validPrice) {
       setError(`Precio invalido. Rango: $${PAYMENT_LINK_PRICE_MIN} – $${PAYMENT_LINK_PRICE_MAX}.`);
       return;
@@ -332,6 +367,7 @@ function CreateLinkModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          tallerId,
           price: priceNum,
           label: label.trim() || undefined,
           notes: notes.trim() || undefined,
@@ -367,6 +403,36 @@ function CreateLinkModal({
         </div>
 
         <div className="p-5 space-y-4 overflow-y-auto">
+          <div>
+            <label className="block text-xs font-medium text-text-main/60 mb-1.5">
+              Taller <span className="text-error">*</span>
+            </label>
+            {loadingTalleres ? (
+              <div className="h-10.5 flex items-center text-xs text-text-main/40">
+                Cargando talleres…
+              </div>
+            ) : talleres.length === 0 ? (
+              <div className="bg-warning/10 border border-warning/30 text-warning text-xs p-3 rounded-lg">
+                No hay talleres activos. Creá un taller primero en la tab
+                "Talleres".
+              </div>
+            ) : (
+              <select
+                value={tallerId}
+                onChange={(e) => setTallerId(e.target.value)}
+                disabled={submitting}
+                className={`${inputClass} w-full px-3 py-2.5 cursor-pointer`}
+              >
+                <option value="">Seleccioná un taller…</option>
+                {talleres.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.slug})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-text-main/60 mb-1.5">
               Precio USD <span className="text-error">*</span>
