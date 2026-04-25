@@ -19,16 +19,6 @@ const nextConfig = {
       },
     ],
   },
-  // /pago/t/<token> es la URL publica "bonita" del link de pago custom.
-  // Internamente reutiliza /pago/toxica-sin-toxicos leyendo ?lt=<token>.
-  async rewrites() {
-    return [
-      {
-        source: "/pago/t/:token",
-        destination: "/pago/toxica-sin-toxicos?lt=:token",
-      },
-    ];
-  },
   // Allow cross-origin POST from bank ACS to 3DS callback
   async headers() {
     return [
