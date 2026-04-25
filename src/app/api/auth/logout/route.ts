@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      // Mismo domain que en /api/auth/session — sin esto el browser no
+      // borra el cookie cross-subdomain y queda "fantasma".
+      ...(process.env.NODE_ENV === "production"
+        ? { domain: ".pauhenriques.com" }
+        : {}),
     });
 
     return response;

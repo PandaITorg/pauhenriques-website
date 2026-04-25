@@ -40,6 +40,12 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
+      // Compartir cookie entre subdominios (admin.pauhenriques.com,
+      // staging.pauhenriques.com, etc.). En desarrollo (localhost) no se
+      // setea domain — el browser lo ignoraría igual.
+      ...(process.env.NODE_ENV === "production"
+        ? { domain: ".pauhenriques.com" }
+        : {}),
     });
 
     return response;
