@@ -16,13 +16,15 @@ export async function GET(request: NextRequest) {
   const accessStatus = searchParams.get("accessStatus");
   const courseId = searchParams.get("courseId");
 
-  // Encadenamos filtros opcionales. Firestore exige composite indexes para
-  // queries con varios `where` + `orderBy`; los del console se crean
-  // automáticamente al primer error de query si llegan a faltar.
+  // Cuando hay algún filter, ordenamos en memoria para evitar exigir
+  // composite indexes (accessStatus + paidAt, courseId + paidAt, ambos +
+  // paidAt). Volumen por taller / por estado es pequeño.
+  const hasFilter = !!accessStatus || !!courseId;
   let query: FirebaseFirestore.Query = dbAdmin.collection("courseEnrollments");
   if (accessStatus) query = query.where("accessStatus", "==", accessStatus);
   if (courseId) query = query.where("courseId", "==", courseId);
-  query = query.orderBy("paidAt", "desc").limit(200);
+  if (!hasFilter) query = query.orderBy("paidAt", "desc");
+  query = query.limit(200);
 
   const snapshot = await query.get();
   const enrollments = snapshot.docs.map((doc) => {
@@ -36,6 +38,14 @@ export async function GET(request: NextRequest) {
       updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null,
     };
   });
+
+  if (hasFilter) {
+    enrollments.sort((a, b) => {
+      const aT = a.paidAt ? new Date(a.paidAt).getTime() : 0;
+      const bT = b.paidAt ? new Date(b.paidAt).getTime() : 0;
+      return bT - aT;
+    });
+  }
 
   return NextResponse.json(enrollments);
 }

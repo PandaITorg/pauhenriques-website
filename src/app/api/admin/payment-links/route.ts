@@ -79,12 +79,28 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const tallerId = searchParams.get("tallerId");
 
-  let query: FirebaseFirestore.Query = dbAdmin.collection("paymentLinks");
-  if (tallerId) query = query.where("tallerId", "==", tallerId);
-  query = query.orderBy("createdAt", "desc").limit(500);
+  // Cuando hay filter por tallerId, ordenamos en memoria. Evita necesitar
+  // un composite index (tallerId + createdAt). El volumen por taller es
+  // pequeño (decenas/cientos), así que el sort en cliente es trivial.
+  let snap: FirebaseFirestore.QuerySnapshot;
+  if (tallerId) {
+    snap = await dbAdmin
+      .collection("paymentLinks")
+      .where("tallerId", "==", tallerId)
+      .limit(500)
+      .get();
+  } else {
+    snap = await dbAdmin
+      .collection("paymentLinks")
+      .orderBy("createdAt", "desc")
+      .limit(500)
+      .get();
+  }
 
-  const snap = await query.get();
   const links = snap.docs.map(docToPaymentLink);
+  if (tallerId) {
+    links.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  }
   return NextResponse.json({ links });
 }
 

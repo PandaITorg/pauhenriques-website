@@ -46,16 +46,41 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const courseId = searchParams.get("courseId");
 
-  let query: FirebaseFirestore.Query = dbAdmin.collection("courseEnrollments");
-  if (courseId) query = query.where("courseId", "==", courseId);
-  query = query.orderBy("paidAt", "desc").limit(5000);
+  // Cuando hay filter por courseId, ordenamos en memoria (evita composite
+  // index courseId + paidAt). Volumen por taller es chico.
+  let snap: FirebaseFirestore.QuerySnapshot;
+  if (courseId) {
+    snap = await dbAdmin
+      .collection("courseEnrollments")
+      .where("courseId", "==", courseId)
+      .limit(5000)
+      .get();
+  } else {
+    snap = await dbAdmin
+      .collection("courseEnrollments")
+      .orderBy("paidAt", "desc")
+      .limit(5000)
+      .get();
+  }
 
-  const snap = await query.get();
+  const docs = courseId
+    ? [...snap.docs].sort((a, b) => {
+        const aT =
+          a.data().paidAt?.toDate?.()?.getTime?.() ??
+          a.data().paidAt?.getTime?.() ??
+          0;
+        const bT =
+          b.data().paidAt?.toDate?.()?.getTime?.() ??
+          b.data().paidAt?.getTime?.() ??
+          0;
+        return bT - aT;
+      })
+    : snap.docs;
 
   const rows: string[] = [];
   rows.push(CSV_HEADERS.join(","));
 
-  for (const doc of snap.docs) {
+  for (const doc of docs) {
     const d = doc.data();
     rows.push(
       [
