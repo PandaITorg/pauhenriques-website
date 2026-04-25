@@ -5,6 +5,12 @@ import { getRoleFromClaims } from "./src/lib/auth/roles";
 
 const ADMIN_HOSTNAME = "admin.pauhenriques.com";
 
+// Paths que NO se reescriben aunque el host sea admin.pauhenriques.com.
+// Necesario para que el flow de auth funcione en el subdominio admin —
+// el middleware redirige a /sign-in cuando no hay sesión, y esa página
+// solo existe en la app pública (no hay /admin/sign-in).
+const NON_REWRITABLE_PATHS = ["/sign-in", "/sign-up"];
+
 async function verifySession(request: NextRequest) {
   const sessionCookie = request.cookies.get("__session")?.value || "";
   if (!sessionCookie || !auth) return null;
@@ -25,8 +31,12 @@ export async function middleware(request: NextRequest) {
     "";
   const isAdminHost = host.startsWith(ADMIN_HOSTNAME);
 
-  // If accessing via admin subdomain, rewrite to /admin routes
-  if (isAdminHost && !pathname.startsWith("/admin")) {
+  // If accessing via admin subdomain, rewrite to /admin routes (excepto
+  // paths de auth que viven en la app pública).
+  const isNonRewritable = NON_REWRITABLE_PATHS.some((p) =>
+    pathname.startsWith(p),
+  );
+  if (isAdminHost && !pathname.startsWith("/admin") && !isNonRewritable) {
     const url = request.nextUrl.clone();
     url.pathname = `/admin${pathname === "/" ? "" : pathname}`;
     return NextResponse.rewrite(url);
@@ -77,12 +87,15 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/checkout/:path*",
-    "/admin",
-    "/admin/:path*",
-    "/mi-cuenta",
-    "/mis-pedidos",
-    "/plan-novios/registrar",
-    "/plan-novios/mi-plan",
+    // Corre en TODAS las páginas — necesario para que el rewrite del
+    // subdominio admin (admin.pauhenriques.com → /admin/*) funcione
+    // incluso en path "/", que no estaba en la lista anterior.
+    //
+    // Excluye API routes (no necesitan middleware), assets estáticos de
+    // Next y archivos del root público (favicon, robots, sitemap).
+    //
+    // El middleware tiene early returns: para hosts no-admin y paths no
+    // protegidos, retorna NextResponse.next() sin trabajo extra.
+    "/((?!api/|_next/|favicon.ico|robots.txt|sitemap.xml|jarrito-favicon.png).*)",
   ],
 };
