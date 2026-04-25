@@ -1,9 +1,13 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { FaCog } from "react-icons/fa";
 
+// Banner que se muestra cuando un user con rol admin/staff/cursos está
+// logueado en el sitio público. El link va al subdomain admin
+// (pauhenriques.com/admin no existe — el panel solo vive en
+// admin.pauhenriques.com). Es <a> normal en lugar de <Link> porque es
+// cross-origin.
 export default function AdminBanner() {
   const { user, isAdmin } = useAuth();
 
@@ -19,13 +23,13 @@ export default function AdminBanner() {
           {user.displayName || user.email}
         </span>
       </div>
-      <Link
-        href="/admin"
+      <a
+        href="https://admin.pauhenriques.com/admin"
         className="flex items-center gap-1.5 text-text-main/50 hover:text-primary transition-colors"
       >
         <FaCog className="w-3 h-3" />
         Panel de Admin
-      </Link>
+      </a>
     </div>
   );
 }

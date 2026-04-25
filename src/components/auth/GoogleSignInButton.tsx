@@ -13,6 +13,8 @@ interface GoogleSignInButtonProps {
   redirectUri?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
+  /** Llamado si el user logueó en admin host sin rol válido. */
+  onBlockedNoRole?: () => void;
 }
 
 export default function GoogleSignInButton({
@@ -20,6 +22,7 @@ export default function GoogleSignInButton({
   redirectUri,
   onSuccess,
   onError,
+  onBlockedNoRole,
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -74,10 +77,10 @@ export default function GoogleSignInButton({
         currentHostname:
           typeof window !== "undefined" ? window.location.hostname : "",
       });
-      if (action.externalUrl) {
-        window.location.href = action.externalUrl;
-      } else {
+      if (action.path) {
         router.push(action.path);
+      } else if (action.blockedNoRole) {
+        onBlockedNoRole?.();
       }
     } catch (error: unknown) {
       // Manejar errores específicos de Firebase
