@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "./src/lib/firebase-admin";
-import { getRoleFromClaims } from "./src/lib/auth/roles";
+import { auth } from "@/lib/firebase-admin";
+import { getRoleFromClaims } from "@/lib/auth/roles";
 
 const ADMIN_HOSTNAME = "admin.pauhenriques.com";
 
