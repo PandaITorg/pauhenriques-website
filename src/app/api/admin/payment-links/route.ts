@@ -18,7 +18,8 @@ const CreateSchema = z.object({
     .finite()
     .min(PAYMENT_LINK_PRICE_MIN, `Minimo $${PAYMENT_LINK_PRICE_MIN}`)
     .max(PAYMENT_LINK_PRICE_MAX, `Maximo $${PAYMENT_LINK_PRICE_MAX}`),
-  label: z.string().trim().max(80).optional(),
+  label: z.string().trim().min(1, "Nombre interno requerido").max(80),
+  publicLabel: z.string().trim().max(60).optional(),
   notes: z.string().trim().max(500).optional(),
   expiresAt: z
     .string()
@@ -52,6 +53,7 @@ function docToPaymentLink(doc: FirebaseFirestore.DocumentSnapshot): PaymentLink 
     tallerId,
     price: typeof d.price === "number" ? d.price : 0,
     label: typeof d.label === "string" ? d.label : null,
+    publicLabel: typeof d.publicLabel === "string" ? d.publicLabel : null,
     notes: typeof d.notes === "string" ? d.notes : null,
     active: d.active !== false,
     expiresAt: toIso(d.expiresAt) ?? new Date(0).toISOString(),
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  const { price, label, notes, expiresAt, tallerId } = parsed.data;
+  const { price, label, publicLabel, notes, expiresAt, tallerId } = parsed.data;
 
   // Verificar que el taller existe y está activo antes de crear el link.
   const tallerSnap = await dbAdmin.collection("talleres").doc(tallerId).get();
@@ -122,7 +124,8 @@ export async function POST(request: NextRequest) {
       token,
       tallerId,
       price: Math.round(price * 100) / 100,
-      label: label ?? null,
+      label,
+      publicLabel: publicLabel ?? null,
       notes: notes ?? null,
       active: true,
       expiresAt: Timestamp.fromDate(new Date(expiresAt)),

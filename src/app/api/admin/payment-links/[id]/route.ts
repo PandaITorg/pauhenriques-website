@@ -19,6 +19,7 @@ const UpdateSchema = z
       .max(PAYMENT_LINK_PRICE_MAX)
       .optional(),
     label: z.string().trim().max(80).optional(),
+    publicLabel: z.string().trim().max(60).optional(),
     notes: z.string().trim().max(500).optional(),
     active: z.boolean().optional(),
     expiresAt: z.string().datetime({ offset: true }).optional(),
@@ -27,6 +28,7 @@ const UpdateSchema = z
     (d) =>
       d.price !== undefined ||
       d.label !== undefined ||
+      d.publicLabel !== undefined ||
       d.notes !== undefined ||
       d.active !== undefined ||
       d.expiresAt !== undefined,
@@ -55,12 +57,13 @@ export async function PATCH(
     );
   }
 
-  const { price, label, notes, active, expiresAt } = parsed.data;
+  const { price, label, publicLabel, notes, active, expiresAt } = parsed.data;
   const update: Record<string, unknown> = {
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (price !== undefined) update.price = Math.round(price * 100) / 100;
   if (label !== undefined) update.label = label;
+  if (publicLabel !== undefined) update.publicLabel = publicLabel;
   if (notes !== undefined) update.notes = notes;
   if (active !== undefined) update.active = active;
   if (expiresAt !== undefined) {

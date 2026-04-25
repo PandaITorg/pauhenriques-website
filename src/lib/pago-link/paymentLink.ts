@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 export interface PaymentLinkInput {
   price: number;
   label?: string;
+  publicLabel?: string;
   expiresAt: Date;
   tallerId: string;
   notes?: string;
@@ -13,7 +14,12 @@ export interface PaymentLink {
   token: string;
   tallerId: string;
   price: number;
+  // Nombre interno (solo admin) — referencia para identificar el link en la
+  // tabla y en el dashboard. NUNCA se muestra al cliente.
   label: string | null;
+  // Etiqueta promocional visible al cliente en /pago/t/[token] junto al
+  // emoji 🔥 (ej. "Promo amigas", "Última semana"). Opcional.
+  publicLabel: string | null;
   notes: string | null;
   active: boolean;
   expiresAt: string;

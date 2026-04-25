@@ -298,6 +298,7 @@ function CreateLinkModal({
   const [loadingTalleres, setLoadingTalleres] = useState(true);
   const [price, setPrice] = useState<string>("");
   const [label, setLabel] = useState("");
+  const [publicLabel, setPublicLabel] = useState("");
   const [notes, setNotes] = useState("");
   const [expiresDate, setExpiresDate] = useState<string>(() => {
     const d = new Date();
@@ -339,6 +340,7 @@ function CreateLinkModal({
   const canSubmit =
     !!tallerId &&
     validPrice &&
+    label.trim().length > 0 &&
     expiresDate.length > 0 &&
     !submitting &&
     (!requiresConfirm || confirmHighPrice);
@@ -347,6 +349,10 @@ function CreateLinkModal({
     setError(null);
     if (!tallerId) {
       setError("Seleccioná un taller.");
+      return;
+    }
+    if (!label.trim()) {
+      setError("El nombre interno es requerido.");
       return;
     }
     if (!validPrice) {
@@ -370,6 +376,7 @@ function CreateLinkModal({
           tallerId,
           price: priceNum,
           label: label.trim() || undefined,
+          publicLabel: publicLabel.trim() || undefined,
           notes: notes.trim() || undefined,
           expiresAt: expiresAtDate.toISOString(),
         }),
@@ -479,7 +486,7 @@ function CreateLinkModal({
 
           <div>
             <label className="block text-xs font-medium text-text-main/60 mb-1.5">
-              Etiqueta (opcional)
+              Nombre (interno) <span className="text-error">*</span>
             </label>
             <input
               type="text"
@@ -491,7 +498,27 @@ function CreateLinkModal({
               placeholder="Ej: Promo amigas abril"
             />
             <p className="text-[11px] text-text-main/40 mt-1">
-              Para identificar el link en la lista. No visible al cliente.
+              Solo para vos. Te ayuda a identificar el link en la tabla del
+              admin. <strong>No lo ve el cliente.</strong>
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-text-main/60 mb-1.5">
+              Etiqueta promo (opcional)
+            </label>
+            <input
+              type="text"
+              value={publicLabel}
+              onChange={(e) => setPublicLabel(e.target.value)}
+              disabled={submitting}
+              maxLength={60}
+              className={`${inputClass} w-full px-3 py-2.5`}
+              placeholder="Ej: Última oportunidad"
+            />
+            <p className="text-[11px] text-text-main/40 mt-1">
+              Texto promocional que <strong>verá el cliente</strong> con un 🔥
+              en la página de pago. Dejá vacío para no mostrar nada.
             </p>
           </div>
 

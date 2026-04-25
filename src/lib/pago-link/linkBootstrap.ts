@@ -25,7 +25,9 @@ export interface PaymentLinkBootstrapOk {
   linkId: string;
   token: string;
   taller: TallerSummary;
-  label: string | null;
+  // Etiqueta promocional pública (publicLabel del paymentLink). Renderizada
+  // con 🔥 al cliente. El label interno (admin reference) NO se expone aquí.
+  promoLabel: string | null;
   pricing: SerializablePriceDisplay;
 }
 
@@ -150,12 +152,17 @@ export async function getPaymentLinkBootstrap(
 
   const p = priceFromTotal(price);
 
+  const promoLabel =
+    typeof data.publicLabel === "string" && data.publicLabel.trim().length > 0
+      ? data.publicLabel
+      : null;
+
   return {
     ok: true,
     linkId: doc.id,
     token,
     taller: tallerSummary(taller),
-    label: typeof data.label === "string" ? data.label : null,
+    promoLabel,
     pricing: {
       basePrice: p.total,
       baseSubtotal: p.subtotal,
@@ -164,7 +171,7 @@ export async function getPaymentLinkBootstrap(
       finalVat: p.vat,
       percentOff: 0,
       amountOff: 0,
-      label: typeof data.label === "string" ? data.label : null,
+      label: promoLabel,
       hasActiveDiscount: false,
       validUntilIso: null,
     },
