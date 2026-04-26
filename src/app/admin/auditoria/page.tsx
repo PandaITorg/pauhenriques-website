@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { FaExclamationTriangle, FaExternalLinkAlt, FaCheck } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 interface AuditOrder {
   id: string;
@@ -23,6 +25,8 @@ export default function AdminAuditoriaPage() {
   const [orders, setOrders] = useState<AuditOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
 
   async function fetchOrders() {
     setLoading(true);
@@ -44,7 +48,12 @@ export default function AdminAuditoriaPage() {
   }, []);
 
   async function handleResolve(orderId: string) {
-    if (!confirm(`¿Marcar orden ${orderId.slice(0, 8)} como revisada?`)) return;
+    const ok = await confirm({
+      title: "¿Marcar orden como revisada?",
+      description: `Orden ${orderId.slice(0, 8)} se sacará de la cola de auditoría. Hacé esto solo después de verificar el estado real con el banco/Nuvei.`,
+      confirmLabel: "Marcar revisada",
+    });
+    if (!ok) return;
     setResolving(orderId);
     try {
       const res = await fetch("/api/admin/auditoria", {
@@ -54,9 +63,13 @@ export default function AdminAuditoriaPage() {
       });
       if (res.ok) {
         setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        addToast({ type: "success", message: "Orden marcada como revisada" });
+      } else {
+        addToast({ type: "error", message: "No se pudo marcar" });
       }
     } catch (err) {
       console.error("Error resolving audit:", err);
+      addToast({ type: "error", message: "Error de conexión" });
     } finally {
       setResolving(null);
     }

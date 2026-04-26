@@ -10,6 +10,8 @@ import {
   FaBan,
   FaTimes,
 } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 import DiscountTiersEditor, {
   emptyTierDraft,
   fromEcuadorLocalInput,
@@ -207,6 +209,8 @@ function TallerRow({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
   const goToDetail = () => router.push(`/admin/talleres/${taller.id}`);
   const stop = (handler: () => void) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -217,12 +221,20 @@ function TallerRow({
     if (busy) return;
     setBusy(true);
     try {
-      await fetch(`/api/admin/talleres/${taller.id}`, {
+      const res = await fetch(`/api/admin/talleres/${taller.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !taller.active }),
       });
-      onChange();
+      if (res.ok) {
+        addToast({
+          type: "success",
+          message: taller.active ? "Taller desactivado" : "Taller reactivado",
+        });
+        onChange();
+      } else {
+        addToast({ type: "error", message: "No se pudo cambiar el estado" });
+      }
     } finally {
       setBusy(false);
     }
@@ -230,11 +242,20 @@ function TallerRow({
 
   const remove = async () => {
     if (taller.active) {
-      alert("Desactivá el taller antes de eliminarlo.");
+      addToast({
+        type: "warning",
+        message: "Desactivá el taller antes de eliminarlo.",
+      });
       return;
     }
-    if (!confirm(`¿Eliminar el taller "${taller.name}"? No se puede deshacer.`))
-      return;
+    const ok = await confirm({
+      title: `¿Eliminar "${taller.name}"?`,
+      description:
+        "El taller se borra de Firestore. Las inscripciones existentes quedan intactas pero perderán la referencia al taller. No se puede deshacer.",
+      confirmLabel: "Eliminar taller",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/talleres/${taller.id}`, {
@@ -242,9 +263,10 @@ function TallerRow({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        alert(data?.error || "Error al eliminar");
+        addToast({ type: "error", message: data?.error || "Error al eliminar" });
         return;
       }
+      addToast({ type: "success", message: "Taller eliminado" });
       onChange();
     } finally {
       setBusy(false);

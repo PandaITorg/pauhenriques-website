@@ -12,6 +12,8 @@ import {
   FaTimes,
   FaMagic,
 } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 interface CategoryRow {
   id: string;
@@ -77,6 +79,8 @@ export default function AdminCaricoPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CategoryRow | null>(null);
   const [form, setForm] = useState<Omit<CategoryRow, "id">>(EMPTY);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -150,16 +154,26 @@ export default function AdminCaricoPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Eliminar esta categoría?")) return;
+    const ok = await confirm({
+      title: "¿Eliminar esta categoría?",
+      description: "Se quita del bento de Carico en el homepage.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setDeleting(id);
     try {
       const res = await fetch(`/api/admin/carico-categories/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(`${res.status}`);
+      addToast({ type: "success", message: "Categoría eliminada" });
       fetchCategories();
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error al eliminar");
+      addToast({
+        type: "error",
+        message: e instanceof Error ? e.message : "Error al eliminar",
+      });
     } finally {
       setDeleting(null);
     }
@@ -200,7 +214,12 @@ export default function AdminCaricoPage() {
   };
 
   const handleSeed = async () => {
-    if (!confirm("Sembrar las 3 categorías Carico (Cocina, Hogar y Salud, Dormitorio)?")) return;
+    const ok = await confirm({
+      title: "¿Sembrar las 3 categorías Carico?",
+      description: "Crea Cocina, Hogar y Salud, y Dormitorio con datos de ejemplo. Útil para arrancar de cero.",
+      confirmLabel: "Sembrar",
+    });
+    if (!ok) return;
     setSeeding(true);
     try {
       await Promise.all(
@@ -212,6 +231,7 @@ export default function AdminCaricoPage() {
           }),
         ),
       );
+      addToast({ type: "success", message: "3 categorías sembradas" });
       fetchCategories();
     } finally {
       setSeeding(false);
@@ -228,7 +248,10 @@ export default function AdminCaricoPage() {
       const { url } = await res.json();
       setForm((prev) => ({ ...prev, imageUrl: url }));
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Error al subir");
+      addToast({
+        type: "error",
+        message: e instanceof Error ? e.message : "Error al subir",
+      });
     } finally {
       setUploading(false);
     }

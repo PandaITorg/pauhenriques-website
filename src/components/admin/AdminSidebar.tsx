@@ -79,9 +79,12 @@ export default function AdminSidebar() {
     }
 
     if (canSeeCursos) {
-      fetch("/api/admin/cursos/enrollments?accessStatus=pending_access")
-        .then((r) => (r.ok ? r.json() : []))
-        .then((list) => setCursosPendingCount(Array.isArray(list) ? list.length : 0))
+      // "Inscripciones nuevas desde la última visita" — el badge se va a 0
+      // apenas el user entra a /admin/talleres → tab Inscripciones (que
+      // dispara POST /mark-seen).
+      fetch("/api/admin/talleres/inbox/unread-count")
+        .then((r) => (r.ok ? r.json() : { count: 0 }))
+        .then((d) => setCursosPendingCount(typeof d.count === "number" ? d.count : 0))
         .catch(() => {});
     } else {
       setCursosPendingCount(0);

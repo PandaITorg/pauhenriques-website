@@ -3,13 +3,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   FaPlus,
-  FaCopy,
-  FaCheck,
   FaTimes,
   FaBan,
   FaPowerOff,
   FaTrash,
   FaPencilAlt,
+  FaSearch,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
+  FaCheck,
 } from "react-icons/fa";
 import type { PaymentLink } from "@/lib/pago-link/paymentLink";
 import {
@@ -18,6 +21,23 @@ import {
   PAYMENT_LINK_PRICE_MIN,
 } from "@/lib/pago-link/paymentLink";
 import type { Taller } from "@/lib/talleres/types";
+import CopyButton from "@/components/ui/CopyButton";
+import StatusBadge from "@/components/admin/StatusBadge";
+import PaymentLinkPayersDrawer from "@/components/admin/talleres/PaymentLinkPayersDrawer";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
+
+type LinkFilter = "all" | "active" | "expired" | "inactive" | "withPayments";
+type LinkSortKey = "createdAt" | "price" | "timesPaid";
+type SortDir = "asc" | "desc";
+
+const FILTER_TABS: Array<{ key: LinkFilter; label: string }> = [
+  { key: "all", label: "Todos" },
+  { key: "active", label: "Activos" },
+  { key: "withPayments", label: "Con pagos" },
+  { key: "expired", label: "Expirados" },
+  { key: "inactive", label: "Desactivados" },
+];
 
 const inputClass =
   "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
@@ -65,6 +85,10 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<PaymentLink | "new" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<LinkFilter>("all");
+  const [sortKey, setSortKey] = useState<LinkSortKey>("createdAt");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const fetchLinks = useCallback(async () => {
     setLoading(true);
@@ -91,12 +115,129 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
     fetchLinks();
   }, [fetchLinks]);
 
+  const filtered = useMemo(() => {
+    const now = Date.now();
+    let out = links;
+    if (filter !== "all") {
+      out = out.filter((l) => {
+        const expired = new Date(l.expiresAt).getTime() < now;
+        if (filter === "active") return l.active && !expired;
+        if (filter === "expired") return l.active && expired;
+        if (filter === "inactive") return !l.active;
+        if (filter === "withPayments") return l.timesPaid > 0;
+        return true;
+      });
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      out = out.filter((l) =>
+        [l.token, l.label, l.publicLabel, l.notes]
+          .filter(Boolean)
+          .some((v) => (v as string).toLowerCase().includes(q)),
+      );
+    }
+    return out;
+  }, [links, filter, search]);
+
+  const sorted = useMemo(() => {
+    const copy = [...filtered];
+    copy.sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === "createdAt") {
+        cmp =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      } else if (sortKey === "price") {
+        cmp = a.price - b.price;
+      } else if (sortKey === "timesPaid") {
+        cmp = a.timesPaid - b.timesPaid;
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+    return copy;
+  }, [filtered, sortKey, sortDir]);
+
+  const counts = useMemo(() => {
+    const now = Date.now();
+    return {
+      all: links.length,
+      active: links.filter(
+        (l) => l.active && new Date(l.expiresAt).getTime() >= now,
+      ).length,
+      expired: links.filter(
+        (l) => l.active && new Date(l.expiresAt).getTime() < now,
+      ).length,
+      inactive: links.filter((l) => !l.active).length,
+      withPayments: links.filter((l) => l.timesPaid > 0).length,
+    };
+  }, [links]);
+
+  const toggleSort = (key: LinkSortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  };
+
+  const SortHeader = ({
+    label,
+    column,
+    align = "left",
+  }: {
+    label: string;
+    column: LinkSortKey;
+    align?: "left" | "right" | "center";
+  }) => {
+    const active = sortKey === column;
+    const Icon = !active ? FaSort : sortDir === "asc" ? FaSortUp : FaSortDown;
+    return (
+      <th className={`text-${align} p-4 font-medium text-text-main/50`}>
+        <button
+          type="button"
+          onClick={() => toggleSort(column)}
+          className={`inline-flex items-center gap-1.5 cursor-pointer hover:text-text-main transition-colors ${
+            active ? "text-primary" : ""
+          }`}
+        >
+          {label}
+          <Icon className="w-3 h-3 opacity-70" />
+        </button>
+      </th>
+    );
+  };
+
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm text-text-main/50">
-          Links de pago activos: <strong className="text-text-main">{links.filter((l) => l.active && !isExpiredIso(l.expiresAt)).length}</strong>
-        </p>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 flex-1">
+          {FILTER_TABS.map((t) => {
+            const active = filter === t.key;
+            const badge = counts[t.key];
+            return (
+              <button
+                key={t.key}
+                onClick={() => setFilter(t.key)}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                  active
+                    ? "bg-primary text-white"
+                    : "bg-surface-card border border-border-subtle text-text-main/60 hover:text-text-main hover:border-border-default"
+                }`}
+              >
+                {t.label}
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full min-w-4.5 text-center ${
+                    active
+                      ? "bg-white/20 text-white"
+                      : "bg-surface-elevated text-text-main/50"
+                  }`}
+                >
+                  {loading ? "—" : badge}
+                </span>
+              </button>
+            );
+          })}
+        </div>
         <button
           onClick={() => setEditing("new")}
           className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors cursor-pointer"
@@ -104,6 +245,17 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
           <FaPlus className="w-3.5 h-3.5" />
           Nuevo link
         </button>
+      </div>
+
+      <div className="relative mb-4">
+        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-main/30" />
+        <input
+          type="text"
+          placeholder="Buscar por token, nombre, etiqueta promo o notas…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={`${inputClass} w-full pl-9 pr-3 py-2.5`}
+        />
       </div>
 
       {error && (
@@ -115,9 +267,11 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
           <div className="p-8 text-center">
             <div className="simple-spinner mx-auto" />
           </div>
-        ) : links.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <div className="p-8 text-center text-text-main/50">
-            Todavía no hay links de pago. Creá el primero.
+            {links.length === 0
+              ? "Todavía no hay links de pago. Creá el primero."
+              : "Ningún link coincide con la búsqueda o filtro."}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -125,15 +279,16 @@ export default function PaymentLinksSection({ tallerId }: PaymentLinksSectionPro
               <thead>
                 <tr className="border-b border-border-subtle bg-surface-elevated">
                   <th className="text-left p-4 font-medium text-text-main/50">Link</th>
-                  <th className="text-right p-4 font-medium text-text-main/50">Precio</th>
+                  <SortHeader label="Precio" column="price" align="right" />
                   <th className="text-center p-4 font-medium text-text-main/50">Estado</th>
-                  <th className="text-center p-4 font-medium text-text-main/50">Pagos</th>
+                  <SortHeader label="Pagos" column="timesPaid" align="center" />
+                  <SortHeader label="Creado" column="createdAt" />
                   <th className="text-left p-4 font-medium text-text-main/50">Expira</th>
                   <th className="text-right p-4 font-medium text-text-main/50">Acciones</th>
                 </tr>
               </thead>
               <tbody>
-                {links.map((l) => (
+                {sorted.map((l) => (
                   <LinkRow
                     key={l.id}
                     link={l}
@@ -171,8 +326,10 @@ function LinkRow({
   onEdit: () => void;
   onChange: () => void;
 }) {
-  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showPayers, setShowPayers] = useState(false);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
 
   const expired = isExpiredIso(link.expiresAt);
   const url = buildPublicLink(link.token);
@@ -182,24 +339,24 @@ function LinkRow({
       ? "expired"
       : "active";
 
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {}
-  };
-
   const toggleActive = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      await fetch(`/api/admin/payment-links/${link.id}`, {
+      const res = await fetch(`/api/admin/payment-links/${link.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !link.active }),
       });
-      onChange();
+      if (res.ok) {
+        addToast({
+          type: "success",
+          message: link.active ? "Link desactivado" : "Link reactivado",
+        });
+        onChange();
+      } else {
+        addToast({ type: "error", message: "No se pudo cambiar el estado" });
+      }
     } finally {
       setBusy(false);
     }
@@ -207,18 +364,34 @@ function LinkRow({
 
   const remove = async () => {
     if (link.timesPaid > 0) {
-      alert("Este link ya tiene pagos. Solo se puede desactivar.");
+      addToast({
+        type: "warning",
+        message: "Este link ya tiene pagos. Solo se puede desactivar.",
+      });
       return;
     }
-    if (!confirm("¿Eliminar este link? No se puede deshacer.")) return;
+    const ok = await confirm({
+      title: "¿Eliminar este link?",
+      description:
+        "Esta acción no se puede deshacer. El link dejará de existir y la URL pública dará 404.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/payment-links/${link.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/payment-links/${link.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        alert(data?.error || "Error al eliminar");
+        addToast({
+          type: "error",
+          message: data?.error || "Error al eliminar",
+        });
         return;
       }
+      addToast({ type: "success", message: "Link eliminado" });
       onChange();
     } finally {
       setBusy(false);
@@ -226,23 +399,23 @@ function LinkRow({
   };
 
   return (
-    <tr className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0">
+    <tr className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0 align-top">
       <td className="p-4 min-w-80">
         <div className="flex items-center gap-2">
           <code className="text-xs text-text-main/70 bg-surface-elevated px-2 py-1 rounded truncate max-w-64">
             {url}
           </code>
-          <button
-            onClick={copy}
-            className="text-text-main/40 hover:text-primary transition-colors cursor-pointer shrink-0"
-            aria-label="Copiar link"
-            title="Copiar"
-          >
-            {copied ? <FaCheck className="w-3.5 h-3.5 text-success" /> : <FaCopy className="w-3.5 h-3.5" />}
-          </button>
+          <CopyButton text={url} ariaLabel="Copiar link" />
         </div>
         {link.label && (
-          <div className="text-xs text-text-main/50 mt-1.5">{link.label}</div>
+          <div className="text-xs text-text-main/70 font-medium mt-1.5">
+            {link.label}
+          </div>
+        )}
+        {link.publicLabel && (
+          <div className="text-[11px] text-primary/80 mt-0.5">
+            🔥 {link.publicLabel}
+          </div>
         )}
         {link.notes && (
           <div className="text-[11px] text-text-main/40 mt-0.5 italic truncate max-w-80">
@@ -254,15 +427,37 @@ function LinkRow({
         ${link.price.toFixed(2)}
       </td>
       <td className="p-4 text-center">
-        <StatusBadge status={status} />
+        <LinkStatusBadge status={status} />
       </td>
       <td className="p-4 text-center font-medium text-text-main">
-        {link.timesPaid}
-        {link.lastPaidAt && (
-          <div className="text-[10px] text-text-main/40 mt-0.5">
-            {formatDate(link.lastPaidAt)}
-          </div>
+        {link.timesPaid > 0 ? (
+          <button
+            onClick={() => setShowPayers(true)}
+            className="inline-flex flex-col items-center text-text-main hover:text-primary transition-colors cursor-pointer underline-offset-2 hover:underline"
+            title="Ver quiénes pagaron"
+          >
+            <span>{link.timesPaid}</span>
+            {link.lastPaidAt && (
+              <span className="text-[10px] text-text-main/40 mt-0.5 no-underline">
+                {formatDate(link.lastPaidAt)}
+              </span>
+            )}
+          </button>
+        ) : (
+          <span className="text-text-main/30">0</span>
         )}
+        {showPayers && (
+          <PaymentLinkPayersDrawer
+            isOpen={showPayers}
+            onClose={() => setShowPayers(false)}
+            paymentLinkId={link.id}
+            linkLabel={link.label || link.token}
+            expectedCount={link.timesPaid}
+          />
+        )}
+      </td>
+      <td className="p-4 text-text-main/60 text-xs whitespace-nowrap">
+        {formatDate(link.createdAt)}
       </td>
       <td className="p-4 text-text-main/60 text-xs whitespace-nowrap">
         {formatDateTime(link.expiresAt)}
@@ -299,27 +494,14 @@ function LinkRow({
   );
 }
 
-function StatusBadge({ status }: { status: "active" | "inactive" | "expired" }) {
+function LinkStatusBadge({ status }: { status: "active" | "inactive" | "expired" }) {
   if (status === "active") {
-    return (
-      <span className="inline-flex items-center gap-1 bg-success/15 text-success text-xs font-medium px-2.5 py-1 rounded-full">
-        <FaCheck className="w-2.5 h-2.5" />
-        Activo
-      </span>
-    );
+    return <StatusBadge tone="success" icon={FaCheck}>Activo</StatusBadge>;
   }
   if (status === "expired") {
-    return (
-      <span className="bg-warning/15 text-warning text-xs font-medium px-2.5 py-1 rounded-full">
-        Expirado
-      </span>
-    );
+    return <StatusBadge tone="warning">Expirado</StatusBadge>;
   }
-  return (
-    <span className="bg-text-main/10 text-text-main/60 text-xs font-medium px-2.5 py-1 rounded-full">
-      Desactivado
-    </span>
-  );
+  return <StatusBadge tone="neutral">Desactivado</StatusBadge>;
 }
 
 function isoToDateInput(iso: string): string {

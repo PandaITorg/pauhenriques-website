@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaPlus, FaSave, FaTrash } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
+import Switch from "@/components/ui/Switch";
 import DiscountTiersEditor, {
   emptyTierDraft,
   fromEcuadorLocalInput,
@@ -52,6 +55,8 @@ function tallerToFormState(t: Taller): FormState {
 
 export default function TallerInfoForm({ taller }: { taller: Taller }) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
   const [form, setForm] = useState<FormState>(() => tallerToFormState(taller));
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<
@@ -142,11 +147,20 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
 
   const handleDelete = async () => {
     if (form.active) {
-      alert("Desactivá el taller antes de eliminarlo.");
+      addToast({
+        type: "warning",
+        message: "Desactivá el taller antes de eliminarlo.",
+      });
       return;
     }
-    if (!confirm(`¿Eliminar el taller "${taller.name}"? No se puede deshacer.`))
-      return;
+    const ok = await confirm({
+      title: `¿Eliminar "${taller.name}"?`,
+      description:
+        "El taller se borra de Firestore. Las inscripciones y links de pago existentes quedan intactos pero perderán la referencia. No se puede deshacer.",
+      confirmLabel: "Eliminar taller",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setSubmitting(true);
     try {
       const res = await fetch(`/api/admin/talleres/${taller.id}`, {
@@ -154,9 +168,13 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        alert(data?.error || "Error al eliminar");
+        addToast({
+          type: "error",
+          message: data?.error || "Error al eliminar",
+        });
         return;
       }
+      addToast({ type: "success", message: "Taller eliminado" });
       router.push("/admin/talleres");
     } finally {
       setSubmitting(false);
@@ -315,15 +333,13 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
       </div>
 
       <div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.active}
-            onChange={(e) => update("active", e.target.checked)}
-            disabled={submitting}
-          />
-          <span className="text-sm text-text-main">Taller activo</span>
-        </label>
+        <Switch
+          checked={form.active}
+          onCheckedChange={(next) => update("active", next)}
+          disabled={submitting}
+          label="Taller activo"
+          description="Si está inactivo no se puede comprar y se oculta del link oficial."
+        />
       </div>
 
       <div className="border-t border-border-subtle pt-5">
