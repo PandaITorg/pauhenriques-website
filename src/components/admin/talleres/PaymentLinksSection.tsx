@@ -27,6 +27,7 @@ import PaymentLinkPayersDrawer from "@/components/admin/talleres/PaymentLinkPaye
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { buildPaymentLinkUrl } from "@/lib/admin/publicUrls";
 
 type LinkFilter = "all" | "active" | "expired" | "inactive" | "withPayments";
 type LinkSortKey = "createdAt" | "price" | "timesPaid";
@@ -43,10 +44,7 @@ const FILTER_TABS: Array<{ key: LinkFilter; label: string }> = [
 const inputClass =
   "bg-input-bg border border-border-default rounded-xl text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200";
 
-function buildPublicLink(token: string): string {
-  if (typeof window === "undefined") return `/pago/t/${token}`;
-  return `${window.location.origin}/pago/t/${token}`;
-}
+const buildPublicLink = buildPaymentLinkUrl;
 
 function formatDateTime(iso: string | null): string {
   if (!iso) return "—";
