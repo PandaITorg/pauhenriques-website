@@ -133,6 +133,12 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
     fetchEnrollments();
   }, [fetchEnrollments]);
 
+  // Marcar la tab como vista (resetea el badge "inscripciones nuevas" del
+  // sidebar) apenas el componente monta.
+  useEffect(() => {
+    fetch("/api/admin/talleres/inbox/mark-seen", { method: "POST" }).catch(() => {});
+  }, []);
+
   // Reset página cuando cambia search/tab.
   useEffect(() => {
     setPage(1);
