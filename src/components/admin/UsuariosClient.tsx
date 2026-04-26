@@ -14,6 +14,7 @@ import {
   FaKey,
 } from "react-icons/fa";
 import { ROLES, ROLE_LABELS, type Role } from "@/lib/auth/roles";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 interface UserListItem {
   uid: string;
@@ -138,9 +139,11 @@ export default function UsuariosClient({ currentUid }: { currentUid: string }) {
 
         <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="simple-spinner mx-auto" />
-            </div>
+            <TableSkeleton
+              rows={5}
+              showLeading
+              columnWidths={["28%", "20%", "16%", "12%", "14%", "10%"]}
+            />
           ) : filtered.length === 0 ? (
             <div className="p-8 text-center text-text-main/50">
               {search ? "Sin resultados." : "Todavia no hay usuarios."}

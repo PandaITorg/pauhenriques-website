@@ -6,6 +6,7 @@ import Image from "next/image";
 import { FaPlus, FaEdit, FaTrash, FaImage, FaSearch } from "react-icons/fa";
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 interface ProductRow {
   id: string;
@@ -144,9 +145,11 @@ export default function AdminProductosPage() {
 
       <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="simple-spinner mx-auto" />
-          </div>
+          <TableSkeleton
+            rows={6}
+            showLeading
+            columnWidths={["8%", "30%", "12%", "14%", "12%", "12%", "12%"]}
+          />
         ) : error ? (
           <div className="p-8 text-center">
             <p className="text-error text-sm font-medium mb-2">Error al cargar productos</p>
