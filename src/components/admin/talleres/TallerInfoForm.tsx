@@ -6,6 +6,7 @@ import { FaPlus, FaSave, FaTrash } from "react-icons/fa";
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
 import Switch from "@/components/ui/Switch";
+import TallerCoverUploader from "@/components/admin/talleres/TallerCoverUploader";
 import DiscountTiersEditor, {
   emptyTierDraft,
   fromEcuadorLocalInput,
@@ -73,7 +74,6 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
     if (!form.brand.trim()) return "Marca requerida.";
     if (!form.shortDescription.trim()) return "Descripción corta requerida.";
     if (!form.longDescription.trim()) return "Descripción larga requerida.";
-    if (!form.coverImage.trim()) return "Imagen de portada requerida.";
     if (
       !Number.isFinite(basePriceNum) ||
       basePriceNum < TALLER_PRICE_MIN ||
@@ -261,17 +261,15 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>
-            Imagen de portada <span className="text-error">*</span>
-          </label>
-          <input
-            type="text"
+          <label className={labelClass}>Imagen de portada</label>
+          <TallerCoverUploader
             value={form.coverImage}
-            onChange={(e) => update("coverImage", e.target.value)}
+            onChange={(url) => update("coverImage", url)}
             disabled={submitting}
-            placeholder="/assets/foto.webp o https://…"
-            className={inputClass}
           />
+          <p className="text-[11px] text-text-main/40 mt-1">
+            Opcional. Si la dejás vacía se usa la imagen del primer taller.
+          </p>
         </div>
         <div>
           <label className={labelClass}>

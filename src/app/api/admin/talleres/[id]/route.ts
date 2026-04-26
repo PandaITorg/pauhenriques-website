@@ -4,7 +4,9 @@ import { FieldValue } from "firebase-admin/firestore";
 import { dbAdmin } from "@/lib/firebase-admin";
 import { requireSection } from "@/lib/auth/server";
 import { docToTaller } from "@/lib/talleres/firestore";
+import { deleteFile, urlToFilePath } from "@/lib/storage";
 import {
+  DEFAULT_TALLER_COVER_IMAGE,
   TALLER_PRICE_MAX,
   TALLER_PRICE_MIN,
   TALLER_SLUG_REGEX,
@@ -25,7 +27,8 @@ const UpdateSchema = z
     brand: z.string().trim().min(1).max(80).optional(),
     shortDescription: z.string().trim().min(1).max(280).optional(),
     longDescription: z.string().trim().min(1).max(4000).optional(),
-    coverImage: z.string().trim().min(1).max(500).optional(),
+    // Vacío → resetea a la imagen default (DEFAULT_TALLER_COVER_IMAGE).
+    coverImage: z.string().trim().max(500).optional(),
     basePrice: z.number().finite().min(TALLER_PRICE_MIN).max(TALLER_PRICE_MAX).optional(),
     discountTiers: z.array(DiscountTierSchema).max(10).optional(),
     postPurchaseNote: z.string().trim().min(1).max(1000).optional(),
@@ -103,6 +106,11 @@ export async function PATCH(
       }
     }
 
+    const previousCoverImage =
+      typeof snap.data()?.coverImage === "string"
+        ? (snap.data()!.coverImage as string)
+        : null;
+
     const update: Record<string, unknown> = {
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -115,12 +123,39 @@ export async function PATCH(
           ...t,
           finalPrice: Math.round(t.finalPrice * 100) / 100,
         }));
+      } else if (k === "coverImage") {
+        // Vacío → resetear al default. Si viene URL, usarla.
+        update.coverImage =
+          typeof v === "string" && v.trim().length > 0
+            ? v.trim()
+            : DEFAULT_TALLER_COVER_IMAGE;
       } else {
         update[k] = v;
       }
     }
 
     await ref.update(update);
+
+    // Borrar la imagen anterior del Storage si:
+    //   1. coverImage cambió en este PATCH
+    //   2. La URL anterior pertenece a Firebase Storage (no es el default
+    //      local /assets/...)
+    //   3. La URL nueva es distinta a la anterior
+    const newCoverImage = update.coverImage as string | undefined;
+    if (
+      newCoverImage &&
+      previousCoverImage &&
+      previousCoverImage !== newCoverImage
+    ) {
+      const oldPath = urlToFilePath(previousCoverImage);
+      if (oldPath) {
+        // Best-effort: si falla la eliminación, el doc ya quedó actualizado.
+        deleteFile(oldPath).catch((err) =>
+          console.error(`[talleres][PATCH] no pude borrar ${oldPath}:`, err),
+        );
+      }
+    }
+
     const fresh = await ref.get();
     return NextResponse.json({ taller: docToTaller(fresh) });
   } catch (err: unknown) {
@@ -155,7 +190,25 @@ export async function DELETE(
         { status: 409 },
       );
     }
+
+    const coverImage =
+      typeof snap.data()?.coverImage === "string"
+        ? (snap.data()!.coverImage as string)
+        : null;
+
     await ref.delete();
+
+    // Best-effort: si la imagen vivía en Storage (no es el default local),
+    // limpiar el archivo. Si falla, el doc ya quedó eliminado.
+    if (coverImage) {
+      const oldPath = urlToFilePath(coverImage);
+      if (oldPath) {
+        deleteFile(oldPath).catch((err) =>
+          console.error(`[talleres][DELETE] no pude borrar ${oldPath}:`, err),
+        );
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error eliminando taller";
