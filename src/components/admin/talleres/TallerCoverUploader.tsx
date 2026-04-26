@@ -54,8 +54,15 @@ export default function TallerCoverUploader({ value, onChange, disabled }: Props
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const previewUrl = value?.trim() || DEFAULT_TALLER_COVER_IMAGE;
-  const isDefault = !value?.trim() || value === DEFAULT_TALLER_COVER_IMAGE;
+  // Tratamos tanto el default actual como el legacy .webp como "imagen por
+  // defecto" — el doc puede tener el path viejo guardado en Firestore.
+  const LEGACY_DEFAULTS = new Set([
+    DEFAULT_TALLER_COVER_IMAGE,
+    "/assets/de-toxica-a-sin-toxicos.webp",
+  ]);
+  const trimmed = value?.trim() ?? "";
+  const isDefault = !trimmed || LEGACY_DEFAULTS.has(trimmed);
+  const previewUrl = isDefault ? DEFAULT_TALLER_COVER_IMAGE : trimmed;
 
   const upload = useCallback(
     async (file: File) => {

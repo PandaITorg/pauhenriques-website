@@ -58,9 +58,9 @@ export const TALLER_PRICE_MIN = 1;
 export const TALLER_PRICE_MAX = 5000;
 
 // Imagen por defecto cuando el admin crea un taller sin subir imagen
-// propia. Es la del primer taller (Tóxica sin Tóxicos) — sirve como
-// placeholder hasta que Pau suba la imagen real.
-export const DEFAULT_TALLER_COVER_IMAGE = "/assets/de-toxica-a-sin-toxicos.webp";
+// propia. Misma imagen que usa la sección Podcast en la home (Tóxica
+// sin Tóxicos) — sirve como placeholder hasta que Pau suba la real.
+export const DEFAULT_TALLER_COVER_IMAGE = "/assets/de-toxica-a-sin-toxicos.jpg";
 
 export function isValidTallerSlug(slug: string): boolean {
   return (
