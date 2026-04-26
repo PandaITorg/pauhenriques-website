@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import AdminBanner from "@/components/admin/AdminBanner";
 import NavigationProgress from "@/components/NavigationProgress";
 import ToastContainer from "@/components/ui/ToastContainer";
+import AlertDialogHost from "@/components/ui/AlertDialog";
 import AnnouncementBanner from "@/components/ui/AnnouncementBanner";
 import { useLayoutEffect } from "react";
 
@@ -31,6 +32,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           <NavigationProgress />
         </Suspense>
         <ToastContainer />
+        <AlertDialogHost />
         <main>{children}</main>
       </Wrapper>
     );
@@ -43,6 +45,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           <NavigationProgress />
         </Suspense>
         <ToastContainer />
+        <AlertDialogHost />
         <main>{children}</main>
       </Wrapper>
     );
