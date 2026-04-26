@@ -14,6 +14,7 @@ import {
 import Switch from "@/components/ui/Switch";
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 interface PromotionRow {
   id: string;
@@ -250,9 +251,11 @@ export default function AdminPromocionesPage() {
 
       <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="simple-spinner mx-auto" />
-          </div>
+          <TableSkeleton
+            rows={6}
+            showLeading
+            columnWidths={["20%", "15%", "12%", "12%", "12%", "16%", "13%"]}
+          />
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-text-main/50">
             {promotions.length === 0

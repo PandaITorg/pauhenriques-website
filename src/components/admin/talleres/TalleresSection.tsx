@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 import DiscountTiersEditor, {
   emptyTierDraft,
   fromEcuadorLocalInput,
@@ -131,9 +132,11 @@ export default function TalleresSection() {
 
       <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="simple-spinner mx-auto" />
-          </div>
+          <TableSkeleton
+            rows={4}
+            showLeading
+            columnWidths={["32%", "12%", "12%", "12%", "14%", "18%"]}
+          />
         ) : talleres.length === 0 ? (
           <div className="p-8 text-center text-text-main/50">
             Todavía no hay talleres. Creá el primero.

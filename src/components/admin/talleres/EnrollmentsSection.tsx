@@ -23,6 +23,7 @@ import PhoneCell, {
 } from "@/components/admin/PhoneCell";
 import { useToastStore } from "@/stores/toast.store";
 import { useConfirm } from "@/stores/confirm.store";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 type AccessStatus = "pending_access" | "access_sent" | "refunded";
 
@@ -357,9 +358,15 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
 
       <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="simple-spinner mx-auto" />
-          </div>
+          <TableSkeleton
+            rows={6}
+            showLeading
+            columnWidths={
+              isGlobalView
+                ? ["12%", "18%", "16%", "16%", "14%", "8%", "8%", "8%", "8%"]
+                : ["12%", "18%", "20%", "16%", "10%", "8%", "8%", "8%"]
+            }
+          />
         ) : sorted.length === 0 ? (
           <div className="p-8 text-center text-text-main/50">
             {tab === "pending_access"

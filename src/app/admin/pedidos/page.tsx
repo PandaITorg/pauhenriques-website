@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { FaSearch } from "react-icons/fa";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",
@@ -129,9 +130,11 @@ export default function AdminPedidosPage() {
 
       <div className="bg-surface-card border border-border-subtle rounded-xl overflow-hidden">
         {loading ? (
-          <div className="p-8 text-center">
-            <div className="simple-spinner mx-auto" />
-          </div>
+          <TableSkeleton
+            rows={6}
+            showLeading
+            columnWidths={["20%", "20%", "12%", "14%", "14%", "20%"]}
+          />
         ) : filtered.length === 0 ? (
           <div className="p-8 text-center text-text-main/50">
             No hay pedidos

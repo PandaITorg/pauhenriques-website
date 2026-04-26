@@ -8,10 +8,21 @@ import { FaCog } from "react-icons/fa";
 // (pauhenriques.com/admin no existe — el panel solo vive en
 // admin.pauhenriques.com). Es <a> normal en lugar de <Link> porque es
 // cross-origin.
+//
+// NO se muestra cuando el user ya está navegando admin.pauhenriques.com
+// (banner sería redundante).
 export default function AdminBanner() {
   const { user, isAdmin } = useAuth();
 
   if (!isAdmin || !user) return null;
+
+  // Esconder en el subdomain admin — el sidebar ya tiene el contexto.
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "admin.pauhenriques.com"
+  ) {
+    return null;
+  }
 
   return (
     <div className="bg-surface-elevated text-text-main text-xs py-1.5 px-4 flex items-center justify-between z-50 border-b border-border-subtle">
