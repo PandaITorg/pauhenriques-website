@@ -23,6 +23,7 @@ import {
 import type { Taller } from "@/lib/talleres/types";
 import CopyButton from "@/components/ui/CopyButton";
 import StatusBadge from "@/components/admin/StatusBadge";
+import PaymentLinkPayersDrawer from "@/components/admin/talleres/PaymentLinkPayersDrawer";
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
 
@@ -326,6 +327,7 @@ function LinkRow({
   onChange: () => void;
 }) {
   const [busy, setBusy] = useState(false);
+  const [showPayers, setShowPayers] = useState(false);
   const confirm = useConfirm();
   const addToast = useToastStore((s) => s.addToast);
 
@@ -428,11 +430,30 @@ function LinkRow({
         <LinkStatusBadge status={status} />
       </td>
       <td className="p-4 text-center font-medium text-text-main">
-        {link.timesPaid}
-        {link.lastPaidAt && (
-          <div className="text-[10px] text-text-main/40 mt-0.5">
-            {formatDate(link.lastPaidAt)}
-          </div>
+        {link.timesPaid > 0 ? (
+          <button
+            onClick={() => setShowPayers(true)}
+            className="inline-flex flex-col items-center text-text-main hover:text-primary transition-colors cursor-pointer underline-offset-2 hover:underline"
+            title="Ver quiénes pagaron"
+          >
+            <span>{link.timesPaid}</span>
+            {link.lastPaidAt && (
+              <span className="text-[10px] text-text-main/40 mt-0.5 no-underline">
+                {formatDate(link.lastPaidAt)}
+              </span>
+            )}
+          </button>
+        ) : (
+          <span className="text-text-main/30">0</span>
+        )}
+        {showPayers && (
+          <PaymentLinkPayersDrawer
+            isOpen={showPayers}
+            onClose={() => setShowPayers(false)}
+            paymentLinkId={link.id}
+            linkLabel={link.label || link.token}
+            expectedCount={link.timesPaid}
+          />
         )}
       </td>
       <td className="p-4 text-text-main/60 text-xs whitespace-nowrap">

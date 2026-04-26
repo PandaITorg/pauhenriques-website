@@ -10,6 +10,8 @@ import {
   FaSpinner,
   FaTimes,
 } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 interface FeaturedRow {
   id: string;
@@ -48,6 +50,8 @@ export default function AdminWellMePage() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
   const [editing, setEditing] = useState<FeaturedRow | null>(null);
   const [form, setForm] = useState<Omit<FeaturedRow, "id">>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -126,14 +130,22 @@ export default function AdminWellMePage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Quitar este producto del homepage?")) return;
+    const ok = await confirm({
+      title: "¿Quitar este producto del homepage?",
+      description: "El producto sigue existiendo en el catálogo. Solo se quita del bento del homepage.",
+      confirmLabel: "Quitar",
+    });
+    if (!ok) return;
     setDeleting(id);
     try {
       const res = await fetch(`/api/admin/featured-products/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(`${res.status}`);
+      addToast({ type: "success", message: "Producto quitado del homepage" });
       fetchAll();
+    } catch {
+      addToast({ type: "error", message: "No se pudo quitar" });
     } finally {
       setDeleting(null);
     }

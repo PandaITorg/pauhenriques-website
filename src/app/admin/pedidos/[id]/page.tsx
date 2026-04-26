@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pendiente",
@@ -60,6 +62,8 @@ export default function AdminPedidoDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [refunding, setRefunding] = useState(false);
   const [refundResult, setRefundResult] = useState<{ success?: boolean; error?: string } | null>(null);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -76,7 +80,11 @@ export default function AdminPedidoDetailPage() {
   }, [orderId]);
 
   const updateStatus = async (newStatus: string) => {
-    if (!confirm(`¿Cambiar estado a "${STATUS_LABELS[newStatus]}"?`)) return;
+    const ok = await confirm({
+      title: `¿Cambiar estado a "${STATUS_LABELS[newStatus]}"?`,
+      confirmLabel: "Cambiar",
+    });
+    if (!ok) return;
     setUpdating(true);
     try {
       const res = await fetch(`/api/admin/orders/${orderId}`, {
@@ -88,16 +96,27 @@ export default function AdminPedidoDetailPage() {
         setOrder((prev) =>
           prev ? { ...prev, status: newStatus } : prev,
         );
+        addToast({ type: "success", message: "Estado actualizado" });
+      } else {
+        addToast({ type: "error", message: "No se pudo actualizar" });
       }
     } catch (err) {
       console.error("Error updating status:", err);
+      addToast({ type: "error", message: "Error de conexión" });
     } finally {
       setUpdating(false);
     }
   };
 
   const handleRefund = async () => {
-    if (!confirm("¿Estás seguro de que deseas reembolsar esta orden? Esta acción no se puede deshacer.")) return;
+    const ok = await confirm({
+      title: "¿Reembolsar esta orden?",
+      description:
+        "Se ejecutará el refund vía Nuvei. Si la inscripción está asociada también se marca como devuelta automáticamente. Esta acción no se puede deshacer.",
+      confirmLabel: "Reembolsar",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setRefunding(true);
     setRefundResult(null);
     try {
@@ -108,11 +127,17 @@ export default function AdminPedidoDetailPage() {
       if (res.ok) {
         setRefundResult({ success: true });
         setOrder((prev) => prev ? { ...prev, status: "refunded" } : prev);
+        addToast({ type: "success", message: "Reembolso procesado" });
       } else {
         setRefundResult({ error: data.error || "Error al reembolsar" });
+        addToast({
+          type: "error",
+          message: data.error || "Error al reembolsar",
+        });
       }
     } catch {
       setRefundResult({ error: "Error de conexión" });
+      addToast({ type: "error", message: "Error de conexión" });
     } finally {
       setRefunding(false);
     }

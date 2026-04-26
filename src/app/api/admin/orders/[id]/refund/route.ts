@@ -52,11 +52,36 @@ export async function POST(
     console.log("[refund] Nuvei response:", JSON.stringify(result));
 
     if (result.status === "success" || result.detail === "Completed") {
+      const now = new Date();
       await dbAdmin.collection("orders").doc(id).update({
         status: "refunded",
-        refundedAt: new Date(),
-        updatedAt: new Date(),
+        refundedAt: now,
+        refundedManually: false,
+        updatedAt: now,
       });
+
+      // Cascade al enrollment asociado (si existe). Una orden de taller
+      // tiene un courseEnrollment con orderId === id. Marcamos refunded
+      // para que desaparezca del pipeline de Inscripciones.
+      try {
+        const enrollSnap = await dbAdmin
+          .collection("courseEnrollments")
+          .where("orderId", "==", id)
+          .limit(1)
+          .get();
+        if (!enrollSnap.empty) {
+          await enrollSnap.docs[0].ref.update({
+            accessStatus: "refunded",
+            refundedAt: now,
+            refundedManually: false,
+            updatedAt: now,
+          });
+        }
+      } catch (err) {
+        // Best-effort: si falla el cascade, el refund automático ya
+        // pasó; el admin puede marcar manualmente la inscripción.
+        console.error("[refund] cascade enrollment falló:", err);
+      }
 
       return NextResponse.json({
         success: true,

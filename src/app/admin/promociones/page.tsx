@@ -10,9 +10,10 @@ import {
   FaPercent,
   FaDollarSign,
   FaTruck,
-  FaToggleOn,
-  FaToggleOff,
 } from "react-icons/fa";
+import Switch from "@/components/ui/Switch";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 interface PromotionRow {
   id: string;
@@ -83,6 +84,8 @@ export default function AdminPromocionesPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
 
   const fetchPromotions = useCallback(async () => {
     try {
@@ -124,15 +127,28 @@ export default function AdminPromocionesPage() {
             p.id === id ? { ...p, isActive: !currentActive } : p,
           ),
         );
+        addToast({
+          type: "success",
+          message: currentActive ? "Promoción desactivada" : "Promoción activada",
+        });
+      } else {
+        addToast({ type: "error", message: "No se pudo cambiar el estado" });
       }
     } catch (err) {
       console.error("Error toggling promotion:", err);
+      addToast({ type: "error", message: "Error de conexión" });
     }
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`¿Eliminar "${name}"? Si ya fue usada, se desactivara en su lugar.`))
-      return;
+    const ok = await confirm({
+      title: `¿Eliminar "${name}"?`,
+      description:
+        "Si la promoción ya fue usada, se desactivará en lugar de borrarse para preservar trazabilidad. Si nunca se usó, se elimina por completo.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setDeleting(id);
     try {
       const res = await fetch(`/api/admin/promotions/${id}`, {
@@ -144,12 +160,20 @@ export default function AdminPromocionesPage() {
           setPromotions((prev) =>
             prev.map((p) => (p.id === id ? { ...p, isActive: false } : p)),
           );
+          addToast({
+            type: "success",
+            message: "Promoción desactivada (ya fue usada)",
+          });
         } else {
           setPromotions((prev) => prev.filter((p) => p.id !== id));
+          addToast({ type: "success", message: "Promoción eliminada" });
         }
+      } else {
+        addToast({ type: "error", message: "No se pudo eliminar" });
       }
     } catch (err) {
       console.error("Error deleting promotion:", err);
+      addToast({ type: "error", message: "Error de conexión" });
     } finally {
       setDeleting(null);
     }
@@ -319,26 +343,15 @@ export default function AdminPromocionesPage() {
                         {formatDate(p.rules.validUntil)}
                       </td>
                       <td className="p-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() =>
+                        <div className="flex items-center justify-end gap-2">
+                          <Switch
+                            checked={p.isActive}
+                            onCheckedChange={() =>
                               handleToggleActive(p.id, p.isActive)
                             }
-                            className={`p-2 transition-colors cursor-pointer ${
-                              p.isActive
-                                ? "text-success hover:text-success/70"
-                                : "text-text-main/30 hover:text-text-main/50"
-                            }`}
-                            title={
-                              p.isActive ? "Desactivar" : "Activar"
-                            }
-                          >
-                            {p.isActive ? (
-                              <FaToggleOn className="w-5 h-5" />
-                            ) : (
-                              <FaToggleOff className="w-5 h-5" />
-                            )}
-                          </button>
+                            size="sm"
+                            ariaLabel={p.isActive ? "Desactivar" : "Activar"}
+                          />
                           <Link
                             href={`/admin/promociones/${p.id}/editar`}
                             className="p-2 text-text-main/30 hover:text-primary transition-colors"

@@ -16,6 +16,8 @@ import {
   FaMobileAlt,
 } from "react-icons/fa";
 import SlidePreview from "@/components/homepage/SlidePreview";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 interface SlideRow {
   id: string;
@@ -137,6 +139,8 @@ export default function AdminHomepagePage() {
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -229,13 +233,24 @@ export default function AdminHomepagePage() {
   };
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`¿Eliminar "${title || "este slide"}"? No se puede deshacer.`)) return;
+    const ok = await confirm({
+      title: `¿Eliminar "${title || "este slide"}"?`,
+      description: "No se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setDeleting(id);
     try {
-      await fetch(`/api/admin/slides/${id}`, { method: "DELETE" });
-      setSlides((prev) => prev.filter((s) => s.id !== id));
+      const res = await fetch(`/api/admin/slides/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setSlides((prev) => prev.filter((s) => s.id !== id));
+        addToast({ type: "success", message: "Slide eliminado" });
+      } else {
+        addToast({ type: "error", message: "No se pudo eliminar" });
+      }
     } catch {
-      // silent
+      addToast({ type: "error", message: "Error de conexión" });
     } finally {
       setDeleting(null);
     }
@@ -289,7 +304,12 @@ export default function AdminHomepagePage() {
   };
 
   const handleCreateSeed = async () => {
-    if (!confirm("¿Crear el slide de ejemplo por defecto?")) return;
+    const ok = await confirm({
+      title: "¿Crear slide de ejemplo?",
+      description: "Se agregará el slide de ejemplo por defecto al carrusel del homepage.",
+      confirmLabel: "Crear",
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       const res = await fetch("/api/admin/slides", {

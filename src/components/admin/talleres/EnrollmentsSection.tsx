@@ -12,6 +12,9 @@ import {
   FaSortDown,
   FaChevronLeft,
   FaChevronRight,
+  FaStickyNote,
+  FaSave,
+  FaUndo,
 } from "react-icons/fa";
 import CopyButton from "@/components/ui/CopyButton";
 import StatusBadge from "@/components/admin/StatusBadge";
@@ -19,6 +22,7 @@ import PhoneCell, {
   sanitizePhoneForWhatsApp,
 } from "@/components/admin/PhoneCell";
 import { useToastStore } from "@/stores/toast.store";
+import { useConfirm } from "@/stores/confirm.store";
 
 type AccessStatus = "pending_access" | "access_sent" | "refunded";
 
@@ -50,9 +54,13 @@ interface TallerLite {
   slug: string;
 }
 
-const STATUS_TABS: Array<{ key: "pending_access" | "access_sent" | ""; label: string }> = [
+const STATUS_TABS: Array<{
+  key: "pending_access" | "access_sent" | "refunded" | "";
+  label: string;
+}> = [
   { key: "pending_access", label: "Pendientes" },
   { key: "access_sent", label: "Enviados" },
+  { key: "refunded", label: "Devueltos" },
   { key: "", label: "Todos" },
 ];
 
@@ -75,7 +83,9 @@ interface EnrollmentsSectionProps {
 export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps = {}) {
   const isGlobalView = !courseId;
 
-  const [tab, setTab] = useState<"pending_access" | "access_sent" | "">("pending_access");
+  const [tab, setTab] = useState<
+    "pending_access" | "access_sent" | "refunded" | ""
+  >("pending_access");
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [talleres, setTalleres] = useState<Map<string, TallerLite>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -197,6 +207,7 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
     return {
       pending: enrollments.filter((e) => e.accessStatus === "pending_access").length,
       sent: enrollments.filter((e) => e.accessStatus === "access_sent").length,
+      refunded: enrollments.filter((e) => e.accessStatus === "refunded").length,
     };
   }, [enrollments]);
 
@@ -290,7 +301,9 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
                 ? counts.pending
                 : t.key === "access_sent"
                   ? counts.sent
-                  : enrollments.length;
+                  : t.key === "refunded"
+                    ? counts.refunded
+                    : enrollments.length;
             return (
               <button
                 key={t.key || "all"}
@@ -353,7 +366,9 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
               ? "No hay inscripciones pendientes de acceso."
               : tab === "access_sent"
                 ? "Todavía no enviaste acceso a nadie."
-                : "No hay inscripciones."}
+                : tab === "refunded"
+                  ? "No hay inscripciones devueltas."
+                  : "No hay inscripciones."}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -374,6 +389,9 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
                     Pago
                   </th>
                   <SortHeader label="Pagó" column="amount" align="right" />
+                  <th className="text-center p-4 font-medium text-text-main/50">
+                    Notas
+                  </th>
                   <th className="text-center p-4 font-medium text-text-main/50">
                     Estado
                   </th>
@@ -438,6 +456,9 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
                         ${e.amountPaid?.toFixed(2) ?? "0.00"}
                       </td>
                       <td className="p-4 text-center">
+                        <NotesIndicator notes={e.notes} />
+                      </td>
+                      <td className="p-4 text-center">
                         <AccessStatusBadge status={e.accessStatus} />
                         {e.accessStatus === "access_sent" && e.accessSentAt && (
                           <div className="text-[10px] text-text-main/40 mt-1">
@@ -446,23 +467,11 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
                         )}
                       </td>
                       <td className="p-4 text-right">
-                        {e.accessStatus === "pending_access" ? (
-                          <button
-                            onClick={() => setModalEnrollment(e)}
-                            className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <FaPaperPlane className="w-3 h-3" />
-                            Enviar acceso
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setModalEnrollment(e)}
-                            className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-                          >
-                            <FaExternalLinkAlt className="w-3 h-3" />
-                            Reenviar
-                          </button>
-                        )}
+                        <EnrollmentActions
+                          enrollment={e}
+                          onSendAccess={() => setModalEnrollment(e)}
+                          onChange={fetchEnrollments}
+                        />
                       </td>
                     </tr>
                   );
@@ -494,6 +503,102 @@ export default function EnrollmentsSection({ courseId }: EnrollmentsSectionProps
         />
       )}
     </>
+  );
+}
+
+function EnrollmentActions({
+  enrollment,
+  onSendAccess,
+  onChange,
+}: {
+  enrollment: Enrollment;
+  onSendAccess: () => void;
+  onChange: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
+
+  const handleMarkRefunded = async () => {
+    const ok = await confirm({
+      title: "¿Marcar como devuelta?",
+      description:
+        "Esta acción solo cambia el registro a 'Devuelto'. NO ejecuta ningún reembolso real ni cobro al banco. Usalo cuando ya devolviste el dinero por fuera del sistema (ej. transferencia bancaria directa).",
+      confirmLabel: "Marcar devuelta",
+      variant: "destructive",
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/cursos/enrollments/${enrollment.id}/mark-refunded`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        addToast({
+          type: "error",
+          message: data?.error || "No se pudo marcar como devuelta",
+        });
+        return;
+      }
+      addToast({ type: "success", message: "Marcada como devuelta" });
+      onChange();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (enrollment.accessStatus === "refunded") {
+    return (
+      <span className="text-xs text-text-main/40">—</span>
+    );
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1.5 justify-end">
+      {enrollment.accessStatus === "pending_access" ? (
+        <button
+          onClick={onSendAccess}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <FaPaperPlane className="w-3 h-3" />
+          Enviar acceso
+        </button>
+      ) : (
+        <button
+          onClick={onSendAccess}
+          disabled={busy}
+          className="inline-flex items-center gap-1.5 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+        >
+          <FaExternalLinkAlt className="w-3 h-3" />
+          Reenviar
+        </button>
+      )}
+      <button
+        onClick={handleMarkRefunded}
+        disabled={busy}
+        title="Marcar como devuelta (refund manual ejecutado fuera del sistema)"
+        className="inline-flex items-center gap-1.5 border border-error/30 text-error/80 hover:text-error hover:bg-error/10 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+      >
+        <FaUndo className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
+function NotesIndicator({ notes }: { notes?: string | null }) {
+  if (!notes || !notes.trim()) {
+    return <span className="text-text-main/20 text-xs">—</span>;
+  }
+  return (
+    <span
+      className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-primary/10 text-primary cursor-help"
+      title={notes}
+    >
+      <FaStickyNote className="w-3 h-3" />
+    </span>
   );
 }
 
@@ -618,9 +723,14 @@ interface SendAccessModalProps {
 function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) {
   const [accessLink, setAccessLink] = useState(enrollment.accessLink || "");
   const [message, setMessage] = useState(enrollment.accessMessage || "");
+  const [notes, setNotes] = useState(enrollment.notes || "");
+  const [initialNotes] = useState(enrollment.notes || "");
   const [sending, setSending] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const addToast = useToastStore((s) => s.addToast);
+
+  const notesChanged = notes !== initialNotes;
 
   const handleSend = async () => {
     setError(null);
@@ -652,6 +762,16 @@ function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) 
         setError(data.error || "Error al enviar el acceso");
         return;
       }
+      // Si las notas cambiaron, persistirlas también en el mismo flow
+      // (las notas son independientes del envío del email, pero por
+      // conveniencia se guardan en la misma acción).
+      if (notesChanged) {
+        await fetch(`/api/admin/cursos/enrollments/${enrollment.id}/notes`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: notes.trim() || null }),
+        }).catch(() => {});
+      }
       addToast({ type: "success", message: "Acceso enviado" });
       onSent();
     } catch {
@@ -661,9 +781,46 @@ function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) 
     }
   };
 
+  const handleSaveNotes = async () => {
+    setError(null);
+    setSavingNotes(true);
+    try {
+      const res = await fetch(
+        `/api/admin/cursos/enrollments/${enrollment.id}/notes`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: notes.trim() || null }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        addToast({
+          type: "error",
+          message: data?.error || "No se pudo guardar la nota",
+        });
+        return;
+      }
+      addToast({
+        type: "success",
+        message: notes.trim() ? "Nota guardada" : "Nota eliminada",
+      });
+      onSent();
+    } catch {
+      addToast({ type: "error", message: "Error de conexión" });
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const sanitizedAccessLink = accessLink.trim();
+  const canTestLink =
+    sanitizedAccessLink.length > 0 &&
+    /^https?:\/\//i.test(sanitizedAccessLink);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-surface-card border border-border-subtle rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
+      <div className="bg-surface-card border border-border-subtle rounded-xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
         <div className="flex items-start justify-between p-5 border-b border-border-subtle">
           <div>
             <h2 className="font-cormorant text-xl font-semibold text-text-main">
@@ -675,7 +832,7 @@ function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) 
           </div>
           <button
             onClick={onClose}
-            disabled={sending}
+            disabled={sending || savingNotes}
             className="w-8 h-8 flex items-center justify-center text-text-main/40 hover:text-text-main hover:bg-surface-elevated rounded-lg transition-colors cursor-pointer disabled:opacity-50"
             aria-label="Cerrar"
           >
@@ -683,23 +840,40 @@ function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) 
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div className="p-5 space-y-4 overflow-y-auto">
           <div>
             <label htmlFor="access-link" className="block text-xs font-medium text-text-main/60 mb-1.5">
               Link del curso <span className="text-error">*</span>
             </label>
-            <input
-              id="access-link"
-              type="url"
-              value={accessLink}
-              onChange={(ev) => setAccessLink(ev.target.value)}
-              placeholder="https://..."
-              disabled={sending}
-              autoFocus
-              className={`${inputClass} w-full px-3 py-2.5`}
-            />
+            <div className="flex items-center gap-2">
+              <input
+                id="access-link"
+                type="url"
+                value={accessLink}
+                onChange={(ev) => setAccessLink(ev.target.value)}
+                placeholder="https://..."
+                disabled={sending || savingNotes}
+                autoFocus
+                className={`${inputClass} flex-1 px-3 py-2.5`}
+              />
+              <a
+                href={canTestLink ? sanitizedAccessLink : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled={!canTestLink}
+                className={`inline-flex items-center gap-1.5 border border-border-default text-xs font-medium px-3 py-2.5 rounded-xl transition-colors ${
+                  canTestLink
+                    ? "text-text-main/70 hover:text-text-main hover:bg-surface-elevated cursor-pointer"
+                    : "text-text-main/30 cursor-not-allowed pointer-events-none opacity-50"
+                }`}
+                title="Abrir link en nueva pestaña"
+              >
+                <FaExternalLinkAlt className="w-3 h-3" />
+                Probar
+              </a>
+            </div>
             <p className="text-[11px] text-text-main/40 mt-1">
-              Pegá la URL donde el cliente accede al curso (Kajabi, Teachable, Drive, etc.)
+              URL donde el cliente accede al curso (Kajabi, Teachable, Drive, etc.). Probá antes de enviar.
             </p>
           </div>
 
@@ -712,10 +886,49 @@ function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) 
               value={message}
               onChange={(ev) => setMessage(ev.target.value)}
               placeholder="Ej: Te envío también un usuario temporal: ..."
-              disabled={sending}
-              rows={4}
+              disabled={sending || savingNotes}
+              rows={3}
               className={`${inputClass} w-full px-3 py-2.5 resize-none`}
             />
+            <p className="text-[11px] text-text-main/40 mt-1">
+              Texto extra que va dentro del email al cliente.
+            </p>
+          </div>
+
+          <div className="border-t border-border-subtle pt-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="notes" className="block text-xs font-medium text-text-main/60">
+                Notas internas (no visibles al cliente)
+              </label>
+              {notesChanged && (
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={savingNotes || sending}
+                  className="inline-flex items-center gap-1.5 text-[11px] text-primary hover:text-primary-hover font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {savingNotes ? (
+                    <div className="simple-spinner w-3! h-3! border-2! border-primary! border-b-transparent!" />
+                  ) : (
+                    <FaSave className="w-3 h-3" />
+                  )}
+                  Guardar nota
+                </button>
+              )}
+            </div>
+            <textarea
+              id="notes"
+              value={notes}
+              onChange={(ev) => setNotes(ev.target.value)}
+              placeholder="Ej: Cliente pidió factura a nombre de su empresa…"
+              disabled={sending || savingNotes}
+              rows={3}
+              maxLength={2000}
+              className={`${inputClass} w-full px-3 py-2.5 resize-none`}
+            />
+            <p className="text-[11px] text-text-main/40 mt-1">
+              Para registrar info interna (acuerdos, comprobantes, etc.).
+              Dejá vacío para borrar.
+            </p>
           </div>
 
           {error && (
@@ -726,14 +939,14 @@ function SendAccessModal({ enrollment, onClose, onSent }: SendAccessModalProps) 
         <div className="flex gap-3 p-5 border-t border-border-subtle bg-surface-elevated/30">
           <button
             onClick={onClose}
-            disabled={sending}
+            disabled={sending || savingNotes}
             className="flex-1 border border-border-default text-text-main/60 hover:text-text-main hover:bg-surface-elevated font-medium py-2.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleSend}
-            disabled={sending || !accessLink.trim()}
+            disabled={sending || savingNotes || !accessLink.trim()}
             className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-semibold py-2.5 rounded-xl transition-colors cursor-pointer disabled:bg-surface-elevated disabled:text-text-main/30"
           >
             {sending ? (

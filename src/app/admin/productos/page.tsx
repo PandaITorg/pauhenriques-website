@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { FaPlus, FaEdit, FaTrash, FaImage, FaSearch } from "react-icons/fa";
+import { useConfirm } from "@/stores/confirm.store";
+import { useToastStore } from "@/stores/toast.store";
 
 interface ProductRow {
   id: string;
@@ -23,6 +25,8 @@ export default function AdminProductosPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const confirm = useConfirm();
+  const addToast = useToastStore((s) => s.addToast);
 
   const fetchProducts = async () => {
     setError(null);
@@ -57,8 +61,13 @@ export default function AdminProductosPage() {
   }, [products, search, typeFilter]);
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`¿Eliminar "${name}"? Esta acción no se puede deshacer.`))
-      return;
+    const ok = await confirm({
+      title: `¿Eliminar "${name}"?`,
+      description: "Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      variant: "destructive",
+    });
+    if (!ok) return;
     setDeleting(id);
     try {
       const res = await fetch(`/api/admin/products/${id}`, {
@@ -66,9 +75,13 @@ export default function AdminProductosPage() {
       });
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
+        addToast({ type: "success", message: "Producto eliminado" });
+      } else {
+        addToast({ type: "error", message: "No se pudo eliminar" });
       }
     } catch (err) {
       console.error("Error deleting product:", err);
+      addToast({ type: "error", message: "Error de conexión" });
     } finally {
       setDeleting(null);
     }
