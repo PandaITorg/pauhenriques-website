@@ -7,6 +7,7 @@ import { docToTaller } from "@/lib/talleres/firestore";
 import { deleteFile, urlToFilePath } from "@/lib/storage";
 import {
   DEFAULT_TALLER_COVER_IMAGE,
+  DEFAULT_TALLER_COVER_IMAGE_THUMB,
   TALLER_PRICE_MAX,
   TALLER_PRICE_MIN,
   TALLER_SLUG_REGEX,
@@ -29,6 +30,7 @@ const UpdateSchema = z
     longDescription: z.string().trim().min(1).max(4000).optional(),
     // Vacío → resetea a la imagen default (DEFAULT_TALLER_COVER_IMAGE).
     coverImage: z.string().trim().max(500).optional(),
+    coverImageThumb: z.string().trim().max(500).optional(),
     basePrice: z.number().finite().min(TALLER_PRICE_MIN).max(TALLER_PRICE_MAX).optional(),
     discountTiers: z.array(DiscountTierSchema).max(10).optional(),
     postPurchaseNote: z.string().trim().min(1).max(1000).optional(),
@@ -110,6 +112,10 @@ export async function PATCH(
       typeof snap.data()?.coverImage === "string"
         ? (snap.data()!.coverImage as string)
         : null;
+    const previousCoverImageThumb =
+      typeof snap.data()?.coverImageThumb === "string"
+        ? (snap.data()!.coverImageThumb as string)
+        : null;
 
     const update: Record<string, unknown> = {
       updatedAt: FieldValue.serverTimestamp(),
@@ -129,6 +135,11 @@ export async function PATCH(
           typeof v === "string" && v.trim().length > 0
             ? v.trim()
             : DEFAULT_TALLER_COVER_IMAGE;
+      } else if (k === "coverImageThumb") {
+        update.coverImageThumb =
+          typeof v === "string" && v.trim().length > 0
+            ? v.trim()
+            : DEFAULT_TALLER_COVER_IMAGE_THUMB;
       } else {
         update[k] = v;
       }
@@ -152,6 +163,23 @@ export async function PATCH(
         // Best-effort: si falla la eliminación, el doc ya quedó actualizado.
         deleteFile(oldPath).catch((err) =>
           console.error(`[talleres][PATCH] no pude borrar ${oldPath}:`, err),
+        );
+      }
+    }
+
+    const newCoverImageThumb = update.coverImageThumb as string | undefined;
+    if (
+      newCoverImageThumb &&
+      previousCoverImageThumb &&
+      previousCoverImageThumb !== newCoverImageThumb
+    ) {
+      const oldThumbPath = urlToFilePath(previousCoverImageThumb);
+      if (oldThumbPath) {
+        deleteFile(oldThumbPath).catch((err) =>
+          console.error(
+            `[talleres][PATCH] no pude borrar thumb ${oldThumbPath}:`,
+            err,
+          ),
         );
       }
     }
@@ -195,13 +223,18 @@ export async function DELETE(
       typeof snap.data()?.coverImage === "string"
         ? (snap.data()!.coverImage as string)
         : null;
+    const coverImageThumb =
+      typeof snap.data()?.coverImageThumb === "string"
+        ? (snap.data()!.coverImageThumb as string)
+        : null;
 
     await ref.delete();
 
-    // Best-effort: si la imagen vivía en Storage (no es el default local),
-    // limpiar el archivo. Si falla, el doc ya quedó eliminado.
-    if (coverImage) {
-      const oldPath = urlToFilePath(coverImage);
+    // Best-effort: si las imágenes vivían en Storage (no son defaults
+    // locales), limpiar los archivos. Si falla, el doc ya quedó eliminado.
+    for (const url of [coverImage, coverImageThumb]) {
+      if (!url) continue;
+      const oldPath = urlToFilePath(url);
       if (oldPath) {
         deleteFile(oldPath).catch((err) =>
           console.error(`[talleres][DELETE] no pude borrar ${oldPath}:`, err),

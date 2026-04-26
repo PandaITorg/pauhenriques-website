@@ -21,6 +21,9 @@ export interface Taller {
   longDescription: string;
   // URL pública (Firebase Storage o /assets local).
   coverImage: string;
+  // Thumbnail cuadrado (~320px). Se genera al subir la cover. Usado en la
+  // tabla de admin y otras listas. Si está vacío → caemos al cover o al default.
+  coverImageThumb: string;
   // Precio base CON IVA (lo que paga el cliente sin ningún descuento aplicado).
   basePrice: number;
   // Tiers programados (opcional). Solo se usan en flujos sin paymentLink fijo.
@@ -46,6 +49,7 @@ export interface TallerInput {
   shortDescription: string;
   longDescription: string;
   coverImage: string;
+  coverImageThumb: string;
   basePrice: number;
   discountTiers: TallerDiscountTier[];
   postPurchaseNote: string;
@@ -61,6 +65,9 @@ export const TALLER_PRICE_MAX = 5000;
 // propia. Misma imagen que usa la sección Podcast en la home (Tóxica
 // sin Tóxicos) — sirve como placeholder hasta que Pau suba la real.
 export const DEFAULT_TALLER_COVER_IMAGE = "/assets/de-toxica-a-sin-toxicos.jpg";
+// Thumbnail cuadrado del default (~320px). Mismo motivo: placeholder hasta
+// que Pau suba el del taller real.
+export const DEFAULT_TALLER_COVER_IMAGE_THUMB = "/assets/de-toxica-a-sin-toxicos-thumb.jpg";
 
 export function isValidTallerSlug(slug: string): boolean {
   return (

@@ -33,6 +33,8 @@ export function docToTaller(doc: FirebaseFirestore.DocumentSnapshot): Taller {
     shortDescription: typeof d.shortDescription === "string" ? d.shortDescription : "",
     longDescription: typeof d.longDescription === "string" ? d.longDescription : "",
     coverImage: typeof d.coverImage === "string" ? d.coverImage : "",
+    coverImageThumb:
+      typeof d.coverImageThumb === "string" ? d.coverImageThumb : "",
     basePrice: typeof d.basePrice === "number" ? d.basePrice : 0,
     discountTiers: parseDiscountTiers(d.discountTiers),
     postPurchaseNote: typeof d.postPurchaseNote === "string" ? d.postPurchaseNote : "",

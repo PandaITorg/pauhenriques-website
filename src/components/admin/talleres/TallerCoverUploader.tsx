@@ -3,23 +3,71 @@
 import { useCallback, useRef, useState } from "react";
 import Image from "next/image";
 import { FaCloudUploadAlt, FaSpinner, FaTrash } from "react-icons/fa";
-import { DEFAULT_TALLER_COVER_IMAGE } from "@/lib/talleres/types";
+import {
+  DEFAULT_TALLER_COVER_IMAGE,
+  DEFAULT_TALLER_COVER_IMAGE_THUMB,
+} from "@/lib/talleres/types";
 
-const MAX_DIMENSION = 1600;
-const WEBP_QUALITY = 0.85;
+const COVER_MAX_DIMENSION = 1600;
+const COVER_QUALITY = 0.85;
+const THUMB_MAX_DIMENSION = 320;
+const THUMB_QUALITY = 0.8;
 
-function compressImage(file: File): Promise<File> {
+// Algunos defaults legacy guardados en docs viejos. El uploader debe
+// tratarlos como "por defecto" para mostrar el badge correcto y no
+// intentar borrarlos al cambiar.
+const LEGACY_DEFAULT_COVERS = new Set<string>([
+  DEFAULT_TALLER_COVER_IMAGE,
+  "/assets/de-toxica-a-sin-toxicos.webp",
+]);
+const LEGACY_DEFAULT_THUMBS = new Set<string>([
+  DEFAULT_TALLER_COVER_IMAGE_THUMB,
+  "/assets/de-toxica-a-sin-toxicos.webp",
+  DEFAULT_TALLER_COVER_IMAGE,
+]);
+
+function resizeAndCompress(
+  file: File,
+  maxDim: number,
+  quality: number,
+  squareCrop = false,
+): Promise<File> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
     img.onload = () => {
       let { width, height } = img;
-      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+
+      if (squareCrop) {
+        const side = Math.min(width, height);
+        const sx = Math.floor((width - side) / 2);
+        const sy = Math.floor((height - side) / 2);
+        const target = Math.min(side, maxDim);
+        const canvas = document.createElement("canvas");
+        canvas.width = target;
+        canvas.height = target;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, target, target);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Failed to encode"));
+            const baseName = file.name.replace(/\.[^.]+$/, "");
+            resolve(
+              new File([blob], `${baseName}.webp`, { type: "image/webp" }),
+            );
+          },
+          "image/webp",
+          quality,
+        );
+        return;
+      }
+
+      if (width > maxDim || height > maxDim) {
         if (width > height) {
-          height = Math.round((height * MAX_DIMENSION) / width);
-          width = MAX_DIMENSION;
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
         } else {
-          width = Math.round((width * MAX_DIMENSION) / height);
-          height = MAX_DIMENSION;
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
         }
       }
       const canvas = document.createElement("canvas");
@@ -29,12 +77,12 @@ function compressImage(file: File): Promise<File> {
       ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob(
         (blob) => {
-          if (!blob) return reject(new Error("Failed to compress image"));
+          if (!blob) return reject(new Error("Failed to encode"));
           const baseName = file.name.replace(/\.[^.]+$/, "");
           resolve(new File([blob], `${baseName}.webp`, { type: "image/webp" }));
         },
         "image/webp",
-        WEBP_QUALITY,
+        quality,
       );
     };
     img.onerror = () => reject(new Error("Failed to load image"));
@@ -42,9 +90,29 @@ function compressImage(file: File): Promise<File> {
   });
 }
 
+async function uploadOne(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", "talleres");
+  const res = await fetch("/api/admin/upload", {
+    method: "POST",
+    body: formData,
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    throw new Error(data?.error || "Error al subir");
+  }
+  return data.url as string;
+}
+
+export interface CoverImagePair {
+  cover: string;
+  thumb: string;
+}
+
 interface Props {
-  value: string;
-  onChange: (url: string) => void;
+  value: CoverImagePair;
+  onChange: (next: CoverImagePair) => void;
   disabled?: boolean;
 }
 
@@ -54,43 +122,33 @@ export default function TallerCoverUploader({ value, onChange, disabled }: Props
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Tratamos tanto el default actual como el legacy .webp como "imagen por
-  // defecto" — el doc puede tener el path viejo guardado en Firestore.
-  const LEGACY_DEFAULTS = new Set([
-    DEFAULT_TALLER_COVER_IMAGE,
-    "/assets/de-toxica-a-sin-toxicos.webp",
-  ]);
-  const trimmed = value?.trim() ?? "";
-  const isDefault = !trimmed || LEGACY_DEFAULTS.has(trimmed);
-  const previewUrl = isDefault ? DEFAULT_TALLER_COVER_IMAGE : trimmed;
+  const trimmedCover = value.cover?.trim() ?? "";
+  const isDefault = !trimmedCover || LEGACY_DEFAULT_COVERS.has(trimmedCover);
+  const previewUrl = isDefault ? DEFAULT_TALLER_COVER_IMAGE : trimmedCover;
 
   const upload = useCallback(
     async (file: File) => {
       setError(null);
       setUploading(true);
       try {
-        let processed: File;
-        try {
-          processed = await compressImage(file);
-        } catch {
-          processed = file;
-        }
-        const formData = new FormData();
-        formData.append("file", processed);
-        formData.append("folder", "talleres");
+        const [coverFile, thumbFile] = await Promise.all([
+          resizeAndCompress(file, COVER_MAX_DIMENSION, COVER_QUALITY).catch(
+            () => file,
+          ),
+          resizeAndCompress(
+            file,
+            THUMB_MAX_DIMENSION,
+            THUMB_QUALITY,
+            true,
+          ).catch(() => null),
+        ]);
 
-        const res = await fetch("/api/admin/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json().catch(() => null);
-        if (!res.ok) {
-          setError(data?.error || "Error al subir la imagen");
-          return;
-        }
-        onChange(data.url);
-      } catch {
-        setError("Error de conexión al subir");
+        const coverUrl = await uploadOne(coverFile);
+        const thumbUrl = thumbFile ? await uploadOne(thumbFile) : coverUrl;
+
+        onChange({ cover: coverUrl, thumb: thumbUrl });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error de conexión");
       } finally {
         setUploading(false);
         if (inputRef.current) inputRef.current.value = "";
@@ -111,7 +169,7 @@ export default function TallerCoverUploader({ value, onChange, disabled }: Props
 
   const reset = () => {
     if (disabled) return;
-    onChange("");
+    onChange({ cover: "", thumb: "" });
   };
 
   return (
@@ -180,13 +238,13 @@ export default function TallerCoverUploader({ value, onChange, disabled }: Props
           {uploading ? (
             <>
               <FaSpinner className="w-3.5 h-3.5 animate-spin" />
-              Subiendo…
+              Subiendo cover + thumbnail…
             </>
           ) : (
             <>
               <FaCloudUploadAlt className="w-4 h-4 text-text-main/40" />
               {isDefault
-                ? "Subí una imagen (opcional, se redimensiona a 1600px)"
+                ? "Subí una imagen (opcional, generamos cover + thumbnail)"
                 : "Cambiar imagen"}
             </>
           )}
@@ -198,4 +256,14 @@ export default function TallerCoverUploader({ value, onChange, disabled }: Props
       )}
     </div>
   );
+}
+
+// Helper opcional para que páginas que rendericen thumbs sepan resolver
+// el fallback a default.
+export function resolveThumbUrl(thumb: string, cover: string): string {
+  const t = thumb?.trim();
+  if (t && !LEGACY_DEFAULT_THUMBS.has(t)) return t;
+  const c = cover?.trim();
+  if (c && !LEGACY_DEFAULT_COVERS.has(c)) return c;
+  return DEFAULT_TALLER_COVER_IMAGE_THUMB;
 }

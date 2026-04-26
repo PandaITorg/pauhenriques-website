@@ -6,6 +6,7 @@ import { requireSection } from "@/lib/auth/server";
 import { docToTaller } from "@/lib/talleres/firestore";
 import {
   DEFAULT_TALLER_COVER_IMAGE,
+  DEFAULT_TALLER_COVER_IMAGE_THUMB,
   TALLER_PRICE_MAX,
   TALLER_PRICE_MIN,
   TALLER_SLUG_REGEX,
@@ -33,6 +34,7 @@ const CreateSchema = z.object({
   // Imagen opcional. Si viene vacío o no viene, se aplica el default
   // (DEFAULT_TALLER_COVER_IMAGE) en el handler.
   coverImage: z.string().trim().max(500).optional(),
+  coverImageThumb: z.string().trim().max(500).optional(),
   basePrice: z.number().finite().min(TALLER_PRICE_MIN).max(TALLER_PRICE_MAX),
   discountTiers: z.array(DiscountTierSchema).max(10).default([]),
   postPurchaseNote: z.string().trim().min(1).max(1000),
@@ -98,6 +100,8 @@ export async function POST(request: NextRequest) {
     const ref = await dbAdmin.collection("talleres").add({
       ...data,
       coverImage: data.coverImage?.trim() || DEFAULT_TALLER_COVER_IMAGE,
+      coverImageThumb:
+        data.coverImageThumb?.trim() || DEFAULT_TALLER_COVER_IMAGE_THUMB,
       basePrice: Math.round(data.basePrice * 100) / 100,
       discountTiers: data.discountTiers.map((t) => ({
         ...t,
