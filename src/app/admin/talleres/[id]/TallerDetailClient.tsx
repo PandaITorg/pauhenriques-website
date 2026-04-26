@@ -15,6 +15,7 @@ import type { Taller } from "@/lib/talleres/types";
 import TallerInfoForm from "@/components/admin/talleres/TallerInfoForm";
 import PaymentLinksSection from "@/components/admin/talleres/PaymentLinksSection";
 import EnrollmentsSection from "@/components/admin/talleres/EnrollmentsSection";
+import { buildTallerOfficialUrl } from "@/lib/admin/publicUrls";
 
 type SubTab = "info" | "links" | "inscripciones";
 
@@ -32,15 +33,10 @@ interface TallerDetailClientProps {
   taller: Taller;
 }
 
-function buildOfficialUrl(slug: string): string {
-  if (typeof window === "undefined") return `/pago/${slug}`;
-  return `${window.location.origin}/pago/${slug}`;
-}
-
 export default function TallerDetailClient({ taller }: TallerDetailClientProps) {
   const [tab, setTab] = useState<SubTab>("info");
   const [copied, setCopied] = useState(false);
-  const officialUrl = buildOfficialUrl(taller.slug);
+  const officialUrl = buildTallerOfficialUrl(taller.slug);
 
   const copyOfficial = async () => {
     try {
@@ -103,7 +99,7 @@ export default function TallerDetailClient({ taller }: TallerDetailClientProps) 
               {copied ? "Copiado" : "Copiar"}
             </button>
             <a
-              href={`/pago/${taller.slug}`}
+              href={officialUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 border border-border-default text-text-main/70 hover:text-text-main hover:bg-surface-elevated text-xs font-medium px-3 py-2 rounded-xl transition-colors cursor-pointer"
