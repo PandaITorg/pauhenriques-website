@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
-import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { Product, isWellMeProduct } from "@/types/product";
 
 interface CartItem {
   product: Product;
@@ -22,8 +22,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   const addToCart = (product: Product) => {
-    // Only allow adding Infrarrojo products
-    if (!isInfrrarrojoProduct(product)) {
+    // Only allow adding Well Me products
+    if (!isWellMeProduct(product)) {
       console.warn("Cannot add Carico product to cart");
       return;
     }

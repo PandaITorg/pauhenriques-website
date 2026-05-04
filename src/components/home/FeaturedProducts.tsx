@@ -15,8 +15,8 @@ const FeaturedProducts = () => {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const infrarrojo = await productService.getProductsByType("Infrarrojo");
-        setProducts(infrarrojo.slice(0, 6));
+        const wellMe = await productService.getProductsByType("WellMe");
+        setProducts(wellMe.slice(0, 6));
       } catch (err) {
         console.error("Error fetching featured products:", err);
       } finally {

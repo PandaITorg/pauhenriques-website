@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { HiOutlineShoppingBag } from "react-icons/hi2";
 import { FaBookOpen } from "react-icons/fa";
 import TiendaSchema from "@/components/schemas/TiendaSchema";
-import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { Product, isWellMeProduct } from "@/types/product";
 import { productService } from "@/services/firestore/productService";
 import CatalogoCard from "@/components/tienda/CatalogoCard";
 import CompraCard from "@/components/tienda/CompraCard";
@@ -114,8 +114,8 @@ export default function TiendaClient() {
   }, []);
 
   const filteredProducts = products.filter((p) => {
-    if (activeTab === "compra" && !isInfrrarrojoProduct(p)) return false;
-    if (activeTab === "catalogo" && isInfrrarrojoProduct(p)) return false;
+    if (activeTab === "compra" && !isWellMeProduct(p)) return false;
+    if (activeTab === "catalogo" && isWellMeProduct(p)) return false;
 
     if (selectedCategory) {
       if (p.subCategory !== selectedCategory && p.category !== selectedCategory)

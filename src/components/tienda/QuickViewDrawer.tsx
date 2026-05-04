@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { FaTimes, FaShoppingCart, FaWhatsapp, FaCheck } from "react-icons/fa";
-import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { Product, isWellMeProduct } from "@/types/product";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import PriceDisplay from "@/components/pricing/PriceDisplay";
 import Drawer from "@/components/ui/Drawer";
@@ -25,10 +25,10 @@ const QuickViewDrawer = ({ product, isOpen, onClose }: QuickViewDrawerProps) => 
 
   const hasImage = product.images && product.images.length > 0;
   const firstImage = hasImage ? product.images[0].replace(/"/g, "").trim() : "";
-  const isInfrarrojo = isInfrrarrojoProduct(product);
+  const isWellMe = isWellMeProduct(product);
 
   const handleAddToCart = () => {
-    if (isInfrarrojo) {
+    if (isWellMe) {
       for (let i = 0; i < qty; i++) {
         addItem(product);
       }
@@ -80,7 +80,7 @@ const QuickViewDrawer = ({ product, isOpen, onClose }: QuickViewDrawerProps) => 
         )}
 
         {/* Badge */}
-        {isInfrarrojo ? (
+        {isWellMe ? (
           <span className="absolute top-3 left-3 bg-success/90 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             Disponible
           </span>
@@ -100,7 +100,7 @@ const QuickViewDrawer = ({ product, isOpen, onClose }: QuickViewDrawerProps) => 
           {product.name}
         </h2>
 
-        {isInfrarrojo && (
+        {isWellMe && (
           <div className="mb-3">
             <PriceDisplay
               product={product}
@@ -132,7 +132,7 @@ const QuickViewDrawer = ({ product, isOpen, onClose }: QuickViewDrawerProps) => 
         )}
 
         {/* CTA */}
-        {isInfrarrojo ? (
+        {isWellMe ? (
           <div className="space-y-3">
             {/* Quantity */}
             <div className="flex items-center gap-3">

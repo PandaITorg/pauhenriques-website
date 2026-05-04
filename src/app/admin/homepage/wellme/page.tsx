@@ -27,7 +27,7 @@ interface ProductOption {
   name: string;
   price: number;
   images: string[];
-  productType: "Infrarrojo" | "Carico";
+  productType: "WellMe" | "Carico";
   isActive: boolean;
 }
 
@@ -181,13 +181,13 @@ export default function AdminWellMePage() {
     fetchAll();
   };
 
-  const infrarrojoOptions = products.filter((p) => p.productType === "Infrarrojo" && p.isActive);
+  const wellMeOptions = products.filter((p) => p.productType === "WellMe" && p.isActive);
 
   return (
     <div className="px-4 md:px-8 py-6">
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-text-main/60">
-          Curación manual del bento Well Me del homepage. Selecciona productos infrarrojo existentes.
+          Curación manual del bento Well Me del homepage. Selecciona productos Well Me existentes.
         </p>
         <button
           onClick={openCreate}
@@ -204,7 +204,7 @@ export default function AdminWellMePage() {
         <div className="bg-surface-card border border-border-subtle rounded-2xl p-10 text-center">
           <p className="text-text-main/50 mb-1">No hay productos destacados.</p>
           <p className="text-text-main/40 text-xs">
-            Agrega productos infrarrojo existentes desde el botón superior.
+            Agrega productos Well Me existentes desde el botón superior.
           </p>
         </div>
       )}
@@ -310,14 +310,14 @@ export default function AdminWellMePage() {
 
             <div className="px-6 py-5 space-y-4">
               <div>
-                <label className={labelClass}>Producto (solo Infrarrojo activos)</label>
+                <label className={labelClass}>Producto (solo Well Me activos)</label>
                 <select
                   value={form.productId}
                   onChange={(e) => setForm({ ...form, productId: e.target.value })}
                   className={inputClass}
                 >
                   <option value="">— Selecciona —</option>
-                  {infrarrojoOptions.map((p) => (
+                  {wellMeOptions.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name} · ${p.price.toFixed(2)}
                     </option>

@@ -100,11 +100,11 @@ export async function getFeaturedProducts(fallbackLimit = 8): Promise<FeaturedPr
       if (merged.length > 0) return merged;
     }
 
-    // Fallback: when no curation exists, surface the latest active Infrarrojo
+    // Fallback: when no curation exists, surface the latest active Well Me
     // products so the homepage never renders an empty Well Me grid.
     const fallbackSnapshot = await dbAdmin
       .collection('products')
-      .where('productType', '==', 'Infrarrojo')
+      .where('productType', '==', 'WellMe')
       .where('isActive', '==', true)
       .limit(fallbackLimit)
       .get();
