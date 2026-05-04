@@ -212,35 +212,39 @@ export default function DiscountTiersEditor({
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className={labelClass}>Etiqueta</label>
-                  <input
-                    type="text"
-                    value={draft.label}
-                    onChange={(e) => updateAt(i, { label: e.target.value })}
-                    disabled={disabled}
-                    placeholder="Ej: Compra anticipada"
-                    maxLength={80}
-                    className={inputClass}
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>Precio final (con IVA)</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-sm">
-                      $
-                    </span>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>Etiqueta</label>
                     <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={draft.finalPrice}
-                      onChange={(e) => updateAt(i, { finalPrice: e.target.value })}
+                      type="text"
+                      value={draft.label}
+                      onChange={(e) => updateAt(i, { label: e.target.value })}
                       disabled={disabled}
-                      placeholder="55.00"
-                      className={`${inputClass} pl-6`}
+                      placeholder="Ej: Compra anticipada"
+                      maxLength={80}
+                      className={inputClass}
                     />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Precio final (con IVA)</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-sm">
+                        $
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={draft.finalPrice}
+                        onChange={(e) =>
+                          updateAt(i, { finalPrice: e.target.value })
+                        }
+                        disabled={disabled}
+                        placeholder="55.00"
+                        className={`${inputClass} pl-6`}
+                      />
+                    </div>
                   </div>
                 </div>
                 <div>
