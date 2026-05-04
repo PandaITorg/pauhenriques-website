@@ -215,7 +215,7 @@ export default function TierUntilPicker({ value, onChange, disabled }: Props) {
 
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
         {PRESETS.map((p) => (
           <button
             key={p.id}
