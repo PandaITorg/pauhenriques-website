@@ -1,7 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { FaCalendarAlt, FaInfinity, FaClock } from "react-icons/fa";
+import { useEffect, useMemo, useState } from "react";
+import {
+  FaCalendarAlt,
+  FaInfinity,
+  FaClock,
+  FaMinus,
+  FaPlus,
+  FaSlidersH,
+} from "react-icons/fa";
 
 type Preset = {
   id: string;
@@ -15,8 +22,24 @@ const PRESETS: Preset[] = [
   { id: "30d", label: "30 dias", shortLabel: "30 d", days: 30 },
   { id: "3m", label: "3 meses", shortLabel: "3 m", days: 90 },
   { id: "1y", label: "1 ano", shortLabel: "1 ano", days: 365 },
-  { id: "open", label: "Sin fecha fin", shortLabel: "Sin fin", days: null },
+  { id: "open", label: "Sin fin", shortLabel: "Sin fin", days: null },
 ];
+
+type Unit = "days" | "weeks" | "months" | "years";
+
+const UNIT_OPTIONS: { id: Unit; label: string; shortLabel: string }[] = [
+  { id: "days", label: "dias", shortLabel: "Dias" },
+  { id: "weeks", label: "semanas", shortLabel: "Sem" },
+  { id: "months", label: "meses", shortLabel: "Meses" },
+  { id: "years", label: "anos", shortLabel: "Anos" },
+];
+
+const UNIT_MAX: Record<Unit, number> = {
+  days: 365,
+  weeks: 52,
+  months: 60,
+  years: 10,
+};
 
 const FAR_FUTURE_YEARS = 10;
 
@@ -56,6 +79,24 @@ function addDays(d: Date, days: number): Date {
   return x;
 }
 
+function addUnits(d: Date, amount: number, unit: Unit): Date {
+  const x = new Date(d);
+  switch (unit) {
+    case "days":
+      x.setDate(x.getDate() + amount);
+      return x;
+    case "weeks":
+      x.setDate(x.getDate() + amount * 7);
+      return x;
+    case "months":
+      x.setMonth(x.getMonth() + amount);
+      return x;
+    case "years":
+      x.setFullYear(x.getFullYear() + amount);
+      return x;
+  }
+}
+
 function formatHuman(d: Date): string {
   return d.toLocaleDateString("es-EC", {
     day: "numeric",
@@ -70,6 +111,17 @@ function isFarFuture(d: Date): boolean {
   return d > limit;
 }
 
+function pluralUnit(unit: Unit, amount: number): string {
+  const map: Record<Unit, [string, string]> = {
+    days: ["dia", "dias"],
+    weeks: ["semana", "semanas"],
+    months: ["mes", "meses"],
+    years: ["ano", "anos"],
+  };
+  const [singular, plural] = map[unit];
+  return amount === 1 ? singular : plural;
+}
+
 interface Props {
   validFrom: string; // datetime-local string
   validUntil: string;
@@ -82,6 +134,9 @@ export default function PromotionDateRangePicker({
   onChange,
 }: Props) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showCustom, setShowCustom] = useState(false);
+  const [customUnit, setCustomUnit] = useState<Unit>("days");
+  const [customAmount, setCustomAmount] = useState<number>(15);
 
   const fromDate = parseLocalDateTime(validFrom);
   const untilDate = parseLocalDateTime(validUntil);
@@ -113,7 +168,25 @@ export default function PromotionDateRangePicker({
       validFrom: toLocalInput(start),
       validUntil: toLocalInput(end),
     });
+    setShowCustom(false);
   };
+
+  const applyCustom = (unit: Unit, amount: number) => {
+    const safeAmount = Math.max(1, Math.min(UNIT_MAX[unit], amount));
+    const start = fromDate ? startOfDay(fromDate) : startOfDay(new Date());
+    const end = endOfDay(addDays(addUnits(start, safeAmount, unit), -1));
+    onChange({
+      validFrom: toLocalInput(start),
+      validUntil: toLocalInput(end),
+    });
+  };
+
+  // Reapply when user changes unit/amount inside custom mode
+  useEffect(() => {
+    if (!showCustom) return;
+    applyCustom(customUnit, customAmount);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCustom, customUnit, customAmount]);
 
   const setStartFromDateInput = (value: string) => {
     if (!value) {
@@ -167,9 +240,9 @@ export default function PromotionDateRangePicker({
       </div>
 
       {/* Presets — primary mobile-friendly UX */}
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {PRESETS.map((preset) => {
-          const active = detectedPreset === preset.id;
+          const active = !showCustom && detectedPreset === preset.id;
           return (
             <button
               key={preset.id}
@@ -193,7 +266,99 @@ export default function PromotionDateRangePicker({
             </button>
           );
         })}
+        <button
+          type="button"
+          onClick={() => {
+            setShowCustom(true);
+            applyCustom(customUnit, customAmount);
+          }}
+          className={`flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+            showCustom
+              ? "bg-primary/15 border-primary text-primary"
+              : "bg-surface-elevated border-border-default text-text-main/60 hover:border-primary/40"
+          }`}
+        >
+          <FaSlidersH className="w-3 h-3 shrink-0" />
+          <span className="truncate">Personalizar</span>
+        </button>
       </div>
+
+      {/* Custom builder: unit first, then amount with stepper */}
+      {showCustom && (
+        <div className="bg-surface-elevated/60 border border-border-subtle rounded-lg p-3 space-y-3">
+          <div>
+            <label className={labelClass}>1. Unidad</label>
+            <div className="grid grid-cols-4 gap-2">
+              {UNIT_OPTIONS.map((u) => {
+                const active = customUnit === u.id;
+                return (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => setCustomUnit(u.id)}
+                    className={`px-2 py-2 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
+                      active
+                        ? "bg-primary/15 border-primary text-primary"
+                        : "bg-input-bg border-border-default text-text-main/60 hover:border-primary/40"
+                    }`}
+                  >
+                    {u.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass}>2. Cantidad</label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setCustomAmount((v) => Math.max(1, v - 1))
+                }
+                disabled={customAmount <= 1}
+                className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg bg-input-bg border border-border-default text-text-main/70 hover:border-primary/40 hover:text-text-main transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Disminuir"
+              >
+                <FaMinus className="w-3 h-3" />
+              </button>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={UNIT_MAX[customUnit]}
+                value={customAmount}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (Number.isNaN(v)) return;
+                  setCustomAmount(
+                    Math.max(1, Math.min(UNIT_MAX[customUnit], v)),
+                  );
+                }}
+                className="flex-1 h-11 text-center text-lg font-semibold bg-input-bg border border-border-default rounded-lg text-text-main focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setCustomAmount((v) =>
+                    Math.min(UNIT_MAX[customUnit], v + 1),
+                  )
+                }
+                disabled={customAmount >= UNIT_MAX[customUnit]}
+                className="shrink-0 w-11 h-11 flex items-center justify-center rounded-lg bg-input-bg border border-border-default text-text-main/70 hover:border-primary/40 hover:text-text-main transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                aria-label="Aumentar"
+              >
+                <FaPlus className="w-3 h-3" />
+              </button>
+            </div>
+            <p className="text-xs text-text-main/50 mt-2">
+              {customAmount} {pluralUnit(customUnit, customAmount)} desde el dia
+              de inicio
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Summary card */}
       <div className="bg-surface-elevated rounded-lg p-3 border border-border-subtle">
