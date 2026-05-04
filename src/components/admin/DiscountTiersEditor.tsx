@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { FaPlus, FaTrash, FaCheckCircle, FaClock, FaHistory } from "react-icons/fa";
+import TierUntilPicker from "./TierUntilPicker";
 
 type TierStatus = "active" | "future" | "expired";
 
@@ -69,18 +70,6 @@ export function fromEcuadorLocalInput(local: string): Date | null {
   const iso = `${local}:00-05:00`;
   const d = new Date(iso);
   return isNaN(d.getTime()) ? null : d;
-}
-
-function formatEcuadorLabel(date: Date): string {
-  return new Intl.DateTimeFormat("es-EC", {
-    timeZone: ECUADOR_TZ,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(date);
 }
 
 function newUid(): string {
@@ -179,7 +168,7 @@ export default function DiscountTiersEditor({
         </div>
       ) : (
         computed.map((row, i) => {
-          const { draft, finalPrice, validUntil, status } = row;
+          const { draft, finalPrice, status } = row;
           const amountOff =
             finalPrice > 0 && basePriceWithVat > 0
               ? Math.max(0, basePriceWithVat - finalPrice)
@@ -255,23 +244,14 @@ export default function DiscountTiersEditor({
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>
-                    Válido hasta (hora Ecuador)
-                  </label>
-                  <input
-                    type="datetime-local"
+                  <label className={labelClass}>Vigencia</label>
+                  <TierUntilPicker
                     value={draft.validUntilLocal}
-                    onChange={(e) =>
-                      updateAt(i, { validUntilLocal: e.target.value })
+                    onChange={(next) =>
+                      updateAt(i, { validUntilLocal: next })
                     }
                     disabled={disabled}
-                    className={inputClass}
                   />
-                  <p className="text-[10px] text-text-main/40 mt-1">
-                    {validUntil
-                      ? `${formatEcuadorLabel(validUntil)} ECT`
-                      : "Vacío = permanente"}
-                  </p>
                 </div>
               </div>
             </div>
