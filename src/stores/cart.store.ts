@@ -1,15 +1,15 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { InfrrarrojoProduct } from "@/types/product";
+import { WellMeProduct } from "@/types/product";
 import { useToastStore } from "./toast.store";
 
-export interface CartItem extends InfrrarrojoProduct {
+export interface CartItem extends WellMeProduct {
   quantity: number;
 }
 
 interface CartState {
   items: CartItem[];
-  addItem: (product: InfrrarrojoProduct) => void;
+  addItem: (product: WellMeProduct) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;

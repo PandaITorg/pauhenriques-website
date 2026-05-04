@@ -31,6 +31,7 @@ interface FormState {
   shortDescription: string;
   longDescription: string;
   coverImage: string;
+  coverImageThumb: string;
   basePrice: string;
   postPurchaseNote: string;
   whatsappContact: string;
@@ -46,6 +47,7 @@ function tallerToFormState(t: Taller): FormState {
     shortDescription: t.shortDescription,
     longDescription: t.longDescription,
     coverImage: t.coverImage,
+    coverImageThumb: t.coverImageThumb,
     basePrice: String(t.basePrice),
     postPurchaseNote: t.postPurchaseNote,
     whatsappContact: t.whatsappContact ?? "",
@@ -112,6 +114,7 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
       shortDescription: form.shortDescription.trim(),
       longDescription: form.longDescription.trim(),
       coverImage: form.coverImage.trim(),
+      coverImageThumb: form.coverImageThumb.trim(),
       basePrice: basePriceNum,
       discountTiers: form.tiers.map((t) => ({
         finalPrice: Number(t.finalPrice),
@@ -263,12 +266,18 @@ export default function TallerInfoForm({ taller }: { taller: Taller }) {
         <div>
           <label className={labelClass}>Imagen de portada</label>
           <TallerCoverUploader
-            value={form.coverImage}
-            onChange={(url) => update("coverImage", url)}
+            value={{ cover: form.coverImage, thumb: form.coverImageThumb }}
+            onChange={({ cover, thumb }) =>
+              setForm((prev) => ({
+                ...prev,
+                coverImage: cover,
+                coverImageThumb: thumb,
+              }))
+            }
             disabled={submitting}
           />
           <p className="text-[11px] text-text-main/40 mt-1">
-            Opcional. Si la dejás vacía se usa la imagen del primer taller.
+            Opcional. Generamos cover (1600px) + thumbnail (320px) en la subida.
           </p>
         </div>
         <div>

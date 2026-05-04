@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   FaPlus,
@@ -13,7 +14,9 @@ import {
 import { useConfirm } from "@/stores/confirm.store";
 import { useToastStore } from "@/stores/toast.store";
 import TableSkeleton from "@/components/ui/TableSkeleton";
-import TallerCoverUploader from "@/components/admin/talleres/TallerCoverUploader";
+import TallerCoverUploader, {
+  resolveThumbUrl,
+} from "@/components/admin/talleres/TallerCoverUploader";
 import DiscountTiersEditor, {
   emptyTierDraft,
   fromEcuadorLocalInput,
@@ -283,14 +286,29 @@ function TallerRow({
       className="border-b border-border-subtle hover:bg-surface-elevated transition-colors last:border-b-0 cursor-pointer"
     >
       <td className="p-4 min-w-64">
-        <div className="font-medium text-text-main">{taller.name}</div>
-        <div className="flex items-center gap-2 mt-1">
-          <code className="text-[11px] text-text-main/60 bg-surface-elevated px-1.5 py-0.5 rounded">
-            {taller.slug}
-          </code>
-          <span className="text-[11px] text-text-main/40">
-            actualizado {formatDateTime(taller.updatedAt)}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-surface-elevated shrink-0 border border-border-subtle">
+            <Image
+              src={resolveThumbUrl(taller.coverImageThumb, taller.coverImage)}
+              alt={taller.name}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          </div>
+          <div className="min-w-0">
+            <div className="font-medium text-text-main truncate">
+              {taller.name}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <code className="text-[11px] text-text-main/60 bg-surface-elevated px-1.5 py-0.5 rounded">
+                {taller.slug}
+              </code>
+              <span className="text-[11px] text-text-main/40">
+                actualizado {formatDateTime(taller.updatedAt)}
+              </span>
+            </div>
+          </div>
         </div>
       </td>
       <td className="p-4 text-right font-semibold text-text-main whitespace-nowrap">
@@ -355,6 +373,7 @@ interface FormState {
   shortDescription: string;
   longDescription: string;
   coverImage: string;
+  coverImageThumb: string;
   basePrice: string;
   postPurchaseNote: string;
   whatsappContact: string;
@@ -370,6 +389,7 @@ function tallerToFormState(t: Taller): FormState {
     shortDescription: t.shortDescription,
     longDescription: t.longDescription,
     coverImage: t.coverImage,
+    coverImageThumb: t.coverImageThumb,
     basePrice: String(t.basePrice),
     postPurchaseNote: t.postPurchaseNote,
     whatsappContact: t.whatsappContact ?? "",
@@ -385,6 +405,7 @@ const EMPTY_FORM: FormState = {
   shortDescription: "",
   longDescription: "",
   coverImage: "",
+  coverImageThumb: "",
   basePrice: "",
   postPurchaseNote: "",
   whatsappContact: "",
@@ -457,6 +478,7 @@ function TallerFormModal({
       shortDescription: form.shortDescription.trim(),
       longDescription: form.longDescription.trim(),
       coverImage: form.coverImage.trim(),
+      coverImageThumb: form.coverImageThumb.trim(),
       basePrice: basePriceNum,
       discountTiers: form.tiers.map((t) => {
         const vu = fromEcuadorLocalInput(t.validUntilLocal);
@@ -599,12 +621,19 @@ function TallerFormModal({
             <div>
               <label className={labelClass}>Imagen de portada</label>
               <TallerCoverUploader
-                value={form.coverImage}
-                onChange={(url) => update("coverImage", url)}
+                value={{ cover: form.coverImage, thumb: form.coverImageThumb }}
+                onChange={({ cover, thumb }) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    coverImage: cover,
+                    coverImageThumb: thumb,
+                  }))
+                }
                 disabled={submitting}
               />
               <p className="text-[11px] text-text-main/40 mt-1">
-                Opcional. Si la dejás vacía se usa la imagen del primer taller.
+                Opcional. Generamos cover (1600px) + thumbnail (320px) en la
+                subida.
               </p>
             </div>
             <div>

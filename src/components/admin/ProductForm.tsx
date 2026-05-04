@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CATEGORIES, ALL_PARENT_CATEGORIES } from "@/constants/categories";
 import type { ProductType } from "@/types/product";
+import Switch from "@/components/ui/Switch";
 import ImageUploader from "./ImageUploader";
 
 interface ProductFormData {
@@ -33,7 +34,7 @@ const emptyForm: ProductFormData = {
   name: "",
   description: "",
   brand: "",
-  productType: "Infrarrojo",
+  productType: "WellMe",
   category: "",
   parentCategory: "",
   subCategory: "",
@@ -60,9 +61,18 @@ export default function ProductForm({
   productId?: string;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tipoParam = searchParams.get("tipo");
+  const initialProductType: ProductType =
+    tipoParam === "carico"
+      ? "Carico"
+      : tipoParam === "well-me"
+        ? "WellMe"
+        : (initialData?.productType ?? emptyForm.productType);
   const [form, setForm] = useState<ProductFormData>({
     ...emptyForm,
     ...initialData,
+    productType: initialProductType,
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +111,7 @@ export default function ProductForm({
         manufacturer: form.manufacturer || null,
       };
 
-      if (form.productType === "Infrarrojo") {
+      if (form.productType === "WellMe") {
         payload.price = form.price;
         payload.stock = form.stock;
       } else {
@@ -123,7 +133,11 @@ export default function ProductForm({
         throw new Error(data.error || "Error al guardar");
       }
 
-      router.push("/admin/productos");
+      const targetList =
+        form.productType === "Carico"
+          ? "/admin/productos/carico"
+          : "/admin/productos/well-me";
+      router.push(targetList);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -191,7 +205,7 @@ export default function ProductForm({
               onChange={(e) => set("productType", e.target.value)}
               className={inputClass}
             >
-              <option value="Infrarrojo">Infrarrojo (Venta Online)</option>
+              <option value="WellMe">Well Me (Venta Online)</option>
               <option value="Carico">Carico (Catálogo)</option>
             </select>
           </div>
@@ -204,17 +218,13 @@ export default function ProductForm({
               className={inputClass}
             />
           </div>
-          <div className="flex items-center gap-2 pt-6">
-            <input
-              type="checkbox"
-              id="isActive"
+          <div className="flex items-center pt-6">
+            <Switch
               checked={form.isActive}
-              onChange={(e) => set("isActive", e.target.checked)}
-              className="w-4 h-4 accent-primary rounded"
+              onCheckedChange={(next) => set("isActive", next)}
+              label="Producto activo"
+              description="Si está inactivo, no se muestra en la tienda pública."
             />
-            <label htmlFor="isActive" className="text-sm text-text-main/60">
-              Producto activo
-            </label>
           </div>
         </div>
       </div>
@@ -262,8 +272,8 @@ export default function ProductForm({
         </div>
       </div>
 
-      {/* Pricing (Infrarrojo only) */}
-      {form.productType === "Infrarrojo" && (
+      {/* Pricing (Well Me only) */}
+      {form.productType === "WellMe" && (
         <div className="bg-surface-card border border-border-subtle rounded-xl p-6">
           <h2 className="text-lg font-semibold text-text-main mb-4">
             Precio y Stock
@@ -362,7 +372,13 @@ export default function ProductForm({
       <div className="flex gap-3">
         <button
           type="button"
-          onClick={() => router.push("/admin/productos")}
+          onClick={() => {
+            const targetList =
+              form.productType === "Carico"
+                ? "/admin/productos/carico"
+                : "/admin/productos/well-me";
+            router.push(targetList);
+          }}
           className="flex-1 border border-border-default text-text-main/60 font-medium py-3 rounded-lg hover:bg-surface-elevated transition-colors"
         >
           Cancelar

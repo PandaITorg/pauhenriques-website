@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { Product, isWellMeProduct } from "@/types/product";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import PriceDisplay from "@/components/pricing/PriceDisplay";
 import { useCartStore } from "@/stores/cart.store";
@@ -21,14 +21,14 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
   const hasImage = product.images && product.images.length > 0;
   const firstImage = hasImage ? product.images[0].replace(/"/g, "").trim() : "";
 
-  const infraProduct = isInfrrarrojoProduct(product) ? product : null;
-  const inStock = infraProduct ? infraProduct.stock > 0 : false;
+  const wellMeProduct = isWellMeProduct(product) ? product : null;
+  const inStock = wellMeProduct ? wellMeProduct.stock > 0 : false;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (infraProduct && inStock) {
-      addItem(infraProduct);
+    if (wellMeProduct && inStock) {
+      addItem(wellMeProduct);
       setIsAdded(true);
       setTimeout(() => setIsAdded(false), 1500);
     }
@@ -92,10 +92,10 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
         </p>
 
         {/* Price */}
-        {infraProduct && (
+        {wellMeProduct && (
           <div className="mb-3">
             <PriceDisplay
-              product={infraProduct}
+              product={wellMeProduct}
               variant="inline"
               priceClassName="text-xl font-bold"
               priceColorClassName="text-primary"

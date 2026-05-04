@@ -46,7 +46,7 @@ async function importProducts(csvFilePath: string) {
   fs.createReadStream(csvFilePath)
     .pipe(csv())
     .on("data", (row: CsvRow) => {
-      const isInfrarrojo = row.brand.toLowerCase() === "well me";
+      const isWellMe = row.brand.toLowerCase() === "well me";
       const price = row.price ? parseFloat(row.price) : undefined;
 
       const whatsappMsg = encodeURIComponent(
@@ -59,7 +59,7 @@ async function importProducts(csvFilePath: string) {
         brand: row.brand,
         images: [],
         category: row.sub_categoria || row.categoria_padre,
-        productType: isInfrarrojo ? "Infrarrojo" : "Carico",
+        productType: isWellMe ? "WellMe" : "Carico",
         isActive: true,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -76,7 +76,7 @@ async function importProducts(csvFilePath: string) {
         tags: row.tags ? row.tags.split(",").map((t) => t.trim()) : [],
       };
 
-      if (isInfrarrojo) {
+      if (isWellMe) {
         product.price = price || 0;
         product.stock = 0;
       } else {

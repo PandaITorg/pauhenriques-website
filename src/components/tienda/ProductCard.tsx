@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Product, isInfrrarrojoProduct } from "@/types/product";
+import { Product, isWellMeProduct } from "@/types/product";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import PriceDisplay from "@/components/pricing/PriceDisplay";
 import { useCartStore } from "@/stores/cart.store";
@@ -22,14 +22,14 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isInfrrarrojoProduct(product)) {
+    if (isWellMeProduct(product)) {
       addItem(product);
       setIsAdded(true);
       setTimeout(() => setIsAdded(false), 1500);
     }
   };
 
-  const whatsappLink = isInfrrarrojoProduct(product)
+  const whatsappLink = isWellMeProduct(product)
     ? undefined
     : `https://api.whatsapp.com/send?phone=593991712532&text=${encodeURIComponent(
         `Hola Pau, quiero conocer más sobre "${product.name}".`,
@@ -76,7 +76,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
           {product.description}
         </p>
 
-        {isInfrrarrojoProduct(product) ? (
+        {isWellMeProduct(product) ? (
           <div className="mt-auto">
             <div className="mb-2">
               <PriceDisplay product={product} variant="inline" />

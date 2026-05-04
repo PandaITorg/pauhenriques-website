@@ -94,7 +94,7 @@ export default function TerminosServicio() {
                 Moss actua como asesora independiente de estos productos.
               </li>
               <li className={LI}>
-                <strong className="text-text-main/80">Productos de Venta Directa (Infrarrojo):</strong> Disponibles
+                <strong className="text-text-main/80">Productos de Venta Directa (Well Me):</strong> Disponibles
                 para compra directa en el sitio con carrito de compras, proceso de
                 checkout y pago seguro a traves de Nuvei. Se requiere registro
                 previo para completar la compra.

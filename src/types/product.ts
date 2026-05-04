@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 
-export type ProductType = "Infrarrojo" | "Carico";
+export type ProductType = "WellMe" | "Carico";
 
 /**
  * Descuento automático (sin código de cupón) programado por fecha.
@@ -52,8 +52,8 @@ export interface BaseProduct {
   autoDiscounts?: AutoDiscount[];
 }
 
-export interface InfrrarrojoProduct extends BaseProduct {
-  productType: "Infrarrojo";
+export interface WellMeProduct extends BaseProduct {
+  productType: "WellMe";
   price: number;
   stock: number;
   variants?: Array<{
@@ -70,12 +70,12 @@ export interface CaricoProduct extends BaseProduct {
   consultationPrice?: number;
 }
 
-export type Product = InfrrarrojoProduct | CaricoProduct;
+export type Product = WellMeProduct | CaricoProduct;
 
-export function isInfrrarrojoProduct(
+export function isWellMeProduct(
   product: Product,
-): product is InfrrarrojoProduct {
-  return product.productType === "Infrarrojo";
+): product is WellMeProduct {
+  return product.productType === "WellMe";
 }
 
 export function isCaricoProduct(product: Product): product is CaricoProduct {

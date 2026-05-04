@@ -11,22 +11,22 @@ import {
   FaUndo,
   FaChevronDown,
 } from "react-icons/fa";
-import { InfrrarrojoProduct, Product } from "@/types/product";
+import { WellMeProduct, Product } from "@/types/product";
 import { useCartStore } from "@/stores/cart.store";
 import ProductGallery from "@/components/tienda/ProductGallery";
 import CompraCard from "@/components/tienda/CompraCard";
 import QuickViewDrawer from "@/components/tienda/QuickViewDrawer";
 import PriceDisplay from "@/components/pricing/PriceDisplay";
 
-interface InfrarrojoDetailProps {
-  product: InfrrarrojoProduct;
+interface WellMeDetailProps {
+  product: WellMeProduct;
   related: Product[];
 }
 
-export default function InfrarrojoDetail({
+export default function WellMeDetail({
   product,
   related,
-}: InfrarrojoDetailProps) {
+}: WellMeDetailProps) {
   const [qty, setQty] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [openSection, setOpenSection] = useState<string | null>(null);

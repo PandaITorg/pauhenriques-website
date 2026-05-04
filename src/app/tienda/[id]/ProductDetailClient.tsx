@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Product,
-  isInfrrarrojoProduct,
+  isWellMeProduct,
   isCaricoProduct,
 } from "@/types/product";
 import { productService } from "@/services/firestore/productService";
 import CaricoDetail from "@/components/tienda/CaricoDetail";
-import InfrarrojoDetail from "@/components/tienda/InfrarrojoDetail";
+import WellMeDetail from "@/components/tienda/WellMeDetail";
 
 interface ProductDetailClientProps {
   productId: string;
@@ -69,8 +69,8 @@ export default function ProductDetailClient({
     return <CaricoDetail product={product} related={related} />;
   }
 
-  if (isInfrrarrojoProduct(product)) {
-    return <InfrarrojoDetail product={product} related={related} />;
+  if (isWellMeProduct(product)) {
+    return <WellMeDetail product={product} related={related} />;
   }
 
   return null;

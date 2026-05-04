@@ -31,7 +31,8 @@ interface NavItem {
 const ALL_NAV_ITEMS: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: FaTachometerAlt, section: "dashboard" },
   { href: "/admin/homepage", label: "Homepage", icon: FaHome, section: "homepage" },
-  { href: "/admin/productos", label: "Productos", icon: FaBox, section: "productos" },
+  { href: "/admin/productos/well-me", label: "Productos Well Me", icon: FaBox, section: "productos" },
+  { href: "/admin/productos/carico", label: "Productos Carico", icon: FaBox, section: "productos" },
   { href: "/admin/pedidos", label: "Pedidos", icon: FaClipboardList, section: "pedidos" },
   { href: "/admin/talleres", label: "Talleres", icon: FaGraduationCap, section: "cursos" },
   { href: "/admin/promociones", label: "Promociones", icon: FaTag, section: "promociones" },
