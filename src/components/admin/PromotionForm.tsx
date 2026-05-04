@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FaDice, FaPercent, FaDollarSign, FaTruck } from "react-icons/fa";
 import { ALL_PARENT_CATEGORIES } from "@/constants/categories";
 import type { PromotionType } from "@/types/promotion";
+import PromotionDateRangePicker from "./PromotionDateRangePicker";
 
 interface PromotionFormData {
   name: string;
@@ -22,6 +23,21 @@ interface PromotionFormData {
   applicableCategories: string[];
 }
 
+function toLocalInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function defaultValidFrom(): string {
+  return toLocalInputValue(new Date());
+}
+
+function defaultValidUntil(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return toLocalInputValue(d);
+}
+
 const emptyForm: PromotionFormData = {
   name: "",
   description: "",
@@ -33,8 +49,8 @@ const emptyForm: PromotionFormData = {
   minPurchaseAmount: null,
   maxTotalUses: null,
   maxUsesPerUser: null,
-  validFrom: "",
-  validUntil: "",
+  validFrom: defaultValidFrom(),
+  validUntil: defaultValidUntil(),
   applicableCategories: [],
 };
 
@@ -69,7 +85,8 @@ export default function PromotionForm({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rulesOpen, setRulesOpen] = useState(!!initialData);
+  const [fieldErrors, setFieldErrors] = useState<string[]>([]);
+  const [rulesOpen, setRulesOpen] = useState(true);
 
   const isEdit = !!promotionId;
   const codeIsLocked = isEdit && (currentUses ?? 0) > 0;
@@ -103,8 +120,18 @@ export default function PromotionForm({
     e.preventDefault();
     setSaving(true);
     setError(null);
+    setFieldErrors([]);
 
     try {
+      if (!form.validFrom || !form.validUntil) {
+        throw new Error("Las fechas de inicio y fin son obligatorias");
+      }
+      const validFromDate = new Date(form.validFrom);
+      const validUntilDate = new Date(form.validUntil);
+      if (isNaN(validFromDate.getTime()) || isNaN(validUntilDate.getTime())) {
+        throw new Error("Las fechas no son validas");
+      }
+
       const payload = {
         name: form.name,
         description: form.description || undefined,
@@ -117,8 +144,8 @@ export default function PromotionForm({
           minPurchaseAmount: form.minPurchaseAmount ?? undefined,
           maxTotalUses: form.maxTotalUses ?? undefined,
           maxUsesPerUser: form.maxUsesPerUser ?? undefined,
-          validFrom: new Date(form.validFrom).toISOString(),
-          validUntil: new Date(form.validUntil).toISOString(),
+          validFrom: validFromDate.toISOString(),
+          validUntil: validUntilDate.toISOString(),
           applicableCategories:
             form.applicableCategories.length > 0
               ? form.applicableCategories
@@ -138,6 +165,20 @@ export default function PromotionForm({
 
       if (!res.ok) {
         const data = await res.json();
+        const details = data?.details as
+          | {
+              formErrors?: string[];
+              fieldErrors?: Record<string, string[]>;
+            }
+          | undefined;
+        const collected: string[] = [];
+        if (details?.formErrors?.length) collected.push(...details.formErrors);
+        if (details?.fieldErrors) {
+          for (const [field, msgs] of Object.entries(details.fieldErrors)) {
+            for (const m of msgs) collected.push(`${field}: ${m}`);
+          }
+        }
+        if (collected.length) setFieldErrors(collected);
         throw new Error(data.error || "Error al guardar");
       }
 
@@ -157,8 +198,15 @@ export default function PromotionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-error/10 text-error p-4 rounded-lg text-sm">
-          {error}
+        <div className="bg-error/10 text-error p-4 rounded-lg text-sm space-y-2">
+          <div>{error}</div>
+          {fieldErrors.length > 0 && (
+            <ul className="list-disc pl-5 text-xs opacity-90">
+              {fieldErrors.map((m, i) => (
+                <li key={i}>{m}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -399,28 +447,17 @@ export default function PromotionForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Fecha inicio *</label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={form.validFrom}
-                  onChange={(e) => set("validFrom", e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Fecha fin *</label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={form.validUntil}
-                  onChange={(e) => set("validUntil", e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-            </div>
+            <PromotionDateRangePicker
+              validFrom={form.validFrom}
+              validUntil={form.validUntil}
+              onChange={(next) =>
+                setForm((prev) => ({
+                  ...prev,
+                  validFrom: next.validFrom,
+                  validUntil: next.validUntil,
+                }))
+              }
+            />
 
             {/* Category restrictions */}
             <div>
