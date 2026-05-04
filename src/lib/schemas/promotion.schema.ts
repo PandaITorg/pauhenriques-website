@@ -1,18 +1,18 @@
 import { z } from "zod";
 
 const PromotionRuleSchema = z.object({
-  minPurchaseAmount: z.number().min(0).optional(),
-  maxTotalUses: z.number().int().min(0).optional(),
-  maxUsesPerUser: z.number().int().min(0).optional(),
+  minPurchaseAmount: z.number().min(0).nullish(),
+  maxTotalUses: z.number().int().min(0).nullish(),
+  maxUsesPerUser: z.number().int().min(0).nullish(),
   validFrom: z.string().datetime(),
   validUntil: z.string().datetime(),
-  applicableProductIds: z.array(z.string()).optional(),
-  applicableCategories: z.array(z.string()).optional(),
+  applicableProductIds: z.array(z.string()).nullish(),
+  applicableCategories: z.array(z.string()).nullish(),
 });
 
 const BasePromotionSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio").max(100),
-  description: z.string().max(200).optional(),
+  description: z.string().max(200).nullish(),
   code: z
     .string()
     .min(3, "El codigo debe tener al menos 3 caracteres")
@@ -20,7 +20,7 @@ const BasePromotionSchema = z.object({
     .transform((v) => v.toUpperCase()),
   type: z.enum(["percentage", "fixed_amount", "free_shipping"]),
   value: z.number().min(0),
-  maxDiscountAmount: z.number().min(0).optional(),
+  maxDiscountAmount: z.number().min(0).nullish(),
   showAsBanner: z.boolean().default(false),
   rules: PromotionRuleSchema,
 });

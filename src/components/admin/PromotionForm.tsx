@@ -138,7 +138,10 @@ export default function PromotionForm({
         code: form.code.toUpperCase(),
         type: form.type,
         value: form.type === "free_shipping" ? 0 : form.value,
-        maxDiscountAmount: form.type === "percentage" ? form.maxDiscountAmount : undefined,
+        maxDiscountAmount:
+          form.type === "percentage" && form.maxDiscountAmount != null
+            ? form.maxDiscountAmount
+            : undefined,
         showAsBanner: form.showAsBanner,
         rules: {
           minPurchaseAmount: form.minPurchaseAmount ?? undefined,
