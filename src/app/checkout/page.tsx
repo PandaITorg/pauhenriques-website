@@ -19,9 +19,8 @@ import {
   FaCheckCircle,
   FaTimesCircle,
 } from "react-icons/fa";
-import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
+import { NuveiPaymentForm, SavedCards } from "@pandait.tech/payment-nuvei/ui";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
-import SavedCards from "@/components/checkout/SavedCards";
 import StepIndicator from "@/components/checkout/StepIndicator";
 import CouponInput, { AppliedCoupon } from "@/components/checkout/CouponInput";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
@@ -122,7 +121,7 @@ export default function CheckoutPage() {
   const [installmentsType, setInstallmentsType] = useState<number>(0); // 0=corriente, 1=con intereses, 2=sin intereses
   const [installmentsCount, setInstallmentsCount] = useState<number>(0); // 0=corriente (no diferido)
   // BIN info for selected card — used to filter installment options by carrier.
-  const [selectedCardBin, setSelectedCardBin] = useState<import("@/types/bin").BinInfo | null>(null);
+  const [selectedCardBin, setSelectedCardBin] = useState<import("@pandait.tech/payment-nuvei/ui").BinInfo | null>(null);
 
   const INSTALLMENTS_WITH_INTEREST = [3, 6, 9, 12, 18, 24, 36];
   const INSTALLMENTS_WITHOUT_INTEREST = [3, 6];
@@ -143,7 +142,7 @@ export default function CheckoutPage() {
       return;
     }
     let cancelled = false;
-    import("@/lib/bin-database").then(({ getBinDatabase, lookupBinSync }) => {
+    import("@pandait.tech/payment-nuvei/ui").then(({ getBinDatabase, lookupBinSync }) => {
       getBinDatabase().then((db) => {
         if (cancelled) return;
         setSelectedCardBin(lookupBinSync(selectedCardInfo.bin, db));
@@ -228,7 +227,7 @@ export default function CheckoutPage() {
     return false;
   }
 
-  const handleTokenSuccess = async (token: string, cardInfo: import("@/components/checkout/NuveiPaymentForm").TokenizedCardInfo, saveCard: boolean = true) => {
+  const handleTokenSuccess = async (token: string, cardInfo: import("@pandait.tech/payment-nuvei/ui").TokenizedCardInfo, saveCard: boolean = true) => {
     setSelectedCardToken(token);
     setIsNewlyTokenized(true);
     setDeleteCardAfterPayment(!saveCard);

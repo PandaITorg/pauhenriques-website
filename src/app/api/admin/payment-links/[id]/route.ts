@@ -6,7 +6,7 @@ import { requireSection } from "@/lib/auth/server";
 import {
   PAYMENT_LINK_PRICE_MAX,
   PAYMENT_LINK_PRICE_MIN,
-} from "@/lib/pago-link/paymentLink";
+} from "@pandait.tech/payment-nuvei/payment-links";
 
 export const dynamic = "force-dynamic";
 

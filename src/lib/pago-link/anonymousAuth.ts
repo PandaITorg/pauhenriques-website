@@ -1,35 +1,26 @@
-// Client-only helper: sign in anonymously and establish session cookie so the
-// guest checkout flow can reuse the existing Nuvei pipeline (init-checkout,
-// charge, 3DS, etc.) which requires a valid __session cookie.
+// Client-only adapter: instantiates the package's anonymous-auth helper with
+// Pau's Firebase client Auth instance and the session-cookie endpoint Pau
+// already exposes. Lazy so we don't initialize Firebase Auth during SSR.
+//
+// The original implementation lived here pre-Phase-1.5; the package now owns
+// the helper logic and this file just wires it to Pau's environment.
 
 import type { User } from "firebase/auth";
+import { createAnonymousAuthHelper } from "@pandait.tech/payment-nuvei/payment-links";
+import { getClientAuth } from "@/lib/firebase-auth";
 
-/**
- * Ensure an anonymous Firebase user exists and the server session cookie is set.
- * Idempotent: if a user is already signed in, just refreshes the session cookie.
- */
-export async function ensureAnonymousSession(existingUser: User | null): Promise<User> {
-  const { getClientAuth } = await import("@/lib/firebase-auth");
-  const auth = getClientAuth();
+let _ensureAnonymousSession:
+  | ((existingUser: User | null) => Promise<User>)
+  | null = null;
 
-  let user = existingUser ?? auth.currentUser;
-
-  if (!user) {
-    const { signInAnonymously } = await import("firebase/auth");
-    const cred = await signInAnonymously(auth);
-    user = cred.user;
+export async function ensureAnonymousSession(
+  existingUser: User | null,
+): Promise<User> {
+  if (!_ensureAnonymousSession) {
+    _ensureAnonymousSession = createAnonymousAuthHelper({
+      auth: getClientAuth(),
+      sessionEndpoint: "/api/auth/session",
+    });
   }
-
-  const idToken = await user.getIdToken(/* forceRefresh */ true);
-  const res = await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`No se pudo establecer la sesión (${res.status})`);
-  }
-
-  return user;
+  return _ensureAnonymousSession(existingUser);
 }

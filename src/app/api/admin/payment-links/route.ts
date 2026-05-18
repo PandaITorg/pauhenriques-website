@@ -8,7 +8,7 @@ import {
   PAYMENT_LINK_PRICE_MIN,
   generatePaymentLinkToken,
   type PaymentLink,
-} from "@/lib/pago-link/paymentLink";
+} from "@pandait.tech/payment-nuvei/payment-links";
 
 export const dynamic = "force-dynamic";
 

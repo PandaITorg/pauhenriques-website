@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { refundTransaction } from "@/lib/nuvei";
+import { refundTransaction } from "@pandait.tech/payment-nuvei";
 import { requireSection } from "@/lib/auth/server";
 
 export const dynamic = "force-dynamic";

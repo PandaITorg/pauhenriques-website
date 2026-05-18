@@ -20,8 +20,7 @@ import {
   FaExclamationCircle,
 } from "react-icons/fa";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
-import SavedCards from "@/components/checkout/SavedCards";
-import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
+import { NuveiPaymentForm, SavedCards } from "@pandait.tech/payment-nuvei/ui";
 
 interface UserProfile {
   nombre: string;

@@ -14,7 +14,7 @@ import {
 } from "react-icons/fa";
 
 import { useAuth } from "@/context/AuthContext";
-import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
+import { NuveiPaymentForm } from "@pandait.tech/payment-nuvei/ui";
 import TurnstileWidget from "@/components/pricing/TurnstileWidget";
 import TallerCard from "@/components/pago-link/TallerCard";
 import GuestInfoForm, {

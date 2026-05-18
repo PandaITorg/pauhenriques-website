@@ -14,12 +14,12 @@ import {
   FaSortDown,
   FaCheck,
 } from "react-icons/fa";
-import type { PaymentLink } from "@/lib/pago-link/paymentLink";
 import {
   PAYMENT_LINK_PRICE_CONFIRM_THRESHOLD,
   PAYMENT_LINK_PRICE_MAX,
   PAYMENT_LINK_PRICE_MIN,
-} from "@/lib/pago-link/paymentLink";
+  type PaymentLink,
+} from "@pandait.tech/payment-nuvei/payment-links";
 import type { Taller } from "@/lib/talleres/types";
 import CopyButton from "@/components/ui/CopyButton";
 import StatusBadge from "@/components/admin/StatusBadge";

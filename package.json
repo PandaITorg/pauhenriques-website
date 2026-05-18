@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pandait.tech/payment-nuvei": "^0.1.0",
     "csv-parser": "^3.2.0",
     "embla-carousel-react": "^8.6.0",
     "fast-xml-parser": "^5.5.12",
