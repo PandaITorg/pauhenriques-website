@@ -1,31 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { signInWithGoogle } from "@/lib/firebase-auth";
 import { createUserProfile } from "@/app/actions/auth";
-import { getRoleFromClaims } from "@/lib/auth/roles";
-import { computePostLoginRedirect } from "@/lib/auth/postLoginRedirect";
 
 interface GoogleSignInButtonProps {
   mode: "signin" | "signup";
-  /** Query ?redirect_uri= si vino de un guard. Pasar tal cual. */
+  /**
+   * Query ?redirect_uri= si vino de un guard. Accepted for API
+   * compatibility but no longer consumed here — the post-login redirect
+   * is centralized in the parent sign-in/sign-up page's useEffect (which
+   * observes AuthContext and fires once per state change). Keeping this
+   * button's responsibility limited to sign-in eliminates the race we
+   * used to have where both the button and the page tried to redirect.
+   */
   redirectUri?: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
-  /** Llamado si el user logueó en admin host sin rol válido. */
+  /**
+   * Kept for backward compatibility but never invoked here — the
+   * "blocked, no role on admin host" state is detected and surfaced
+   * by the parent page's useEffect that consumes computePostLoginRedirect.
+   */
   onBlockedNoRole?: () => void;
 }
 
 export default function GoogleSignInButton({
   mode,
-  redirectUri,
   onSuccess,
   onError,
-  onBlockedNoRole,
 }: GoogleSignInButtonProps) {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
@@ -65,23 +70,12 @@ export default function GoogleSignInButton({
         provider: "google",
       });
 
-      // 5. Redirigir según rol + host
+      // 5. Done. AuthContext will see the new user on the next tick;
+      //    the parent page's useEffect picks it up and fires the
+      //    canonical post-login redirect. No router.push here — having
+      //    two callers race to redirect (this + the page) caused the
+      //    "stuck on /sign-in after Google login" bug.
       onSuccess?.();
-      const tokenResult = await user.getIdTokenResult();
-      const role = getRoleFromClaims(
-        tokenResult.claims as unknown as Record<string, unknown>,
-      );
-      const action = computePostLoginRedirect({
-        role,
-        requestedRedirect: redirectUri ?? null,
-        currentHostname:
-          typeof window !== "undefined" ? window.location.hostname : "",
-      });
-      if (action.path) {
-        router.push(action.path);
-      } else if (action.blockedNoRole) {
-        onBlockedNoRole?.();
-      }
     } catch (error: unknown) {
       // Manejar errores específicos de Firebase
       let errorMessage =
