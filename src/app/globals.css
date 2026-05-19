@@ -1,6 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
+/* Make Tailwind scan the @pandait.tech/payment-nuvei UI bundle for utility
+   classes — its components use arbitrary values like
+   `bg-[var(--color-primary)]` that Tailwind v4 only generates when the source
+   is in the scan path. node_modules is excluded by default. */
+@source "../../node_modules/@pandait.tech/payment-nuvei/dist/**/*.{js,cjs}";
+
 /* --- Font utility classes --- */
 
 .font-dancing-script {
