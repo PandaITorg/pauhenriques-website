@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCartStore, CartItem } from "@/stores/cart.store";
+import { useToastStore } from "@/stores/toast.store";
 import { useAuth } from "@/context/AuthContext";
+import { productService } from "@/services/firestore/productService";
+import { isWellMeProduct } from "@/types/product";
 import {
   FaTrash,
   FaMinus,
@@ -168,6 +171,7 @@ export default function CheckoutPage() {
   const removeItem = useCartStore((state) => state.removeItem);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const clearCart = useCartStore((state) => state.clearCart);
+  const addToast = useToastStore((state) => state.addToast);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -184,6 +188,68 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  /**
+   * Revalidates each cart item against the live `products` collection in
+   * Firestore. Removes items that are no longer active / no longer exist,
+   * clears items whose stock dropped to 0, and clamps quantities to the
+   * available stock. Best-effort: per-item errors are swallowed and logged
+   * so a single failure doesn't break the whole cart.
+   *
+   * Called on mount (catches stale cart contents between sessions) and
+   * after a 409 stock error from the charge endpoint (catches races where
+   * inventory drained between page load and Pagar).
+   */
+  const revalidateCartStock = useCallback(async () => {
+    const cartItems = useCartStore.getState().items;
+    if (cartItems.length === 0) return;
+
+    await Promise.all(
+      cartItems.map(async (item) => {
+        try {
+          const fresh = await productService.getProductById(item.id);
+          if (!fresh || !fresh.isActive) {
+            useCartStore.getState().removeItem(item.id);
+            addToast({
+              type: "warning",
+              message: `"${item.name}" ya no está disponible y se removió del carrito.`,
+            });
+            return;
+          }
+          if (!isWellMeProduct(fresh)) return;
+          // Some WellMe products are flagged isDigital in Firestore (no stock
+          // tracking). The TS type doesn't declare it because it's optional
+          // and rarely present, so we access it via the broader record shape.
+          const isDigital =
+            (fresh as unknown as Record<string, unknown>).isDigital === true;
+          if (isDigital) return;
+          if (fresh.stock <= 0) {
+            useCartStore.getState().removeItem(item.id);
+            addToast({
+              type: "warning",
+              message: `"${item.name}" se agotó y se removió del carrito.`,
+            });
+          } else if (fresh.stock < item.quantity) {
+            useCartStore.getState().updateQuantity(item.id, fresh.stock);
+            addToast({
+              type: "warning",
+              message: `Solo quedan ${fresh.stock} unidades de "${item.name}". Ajustamos tu carrito.`,
+            });
+          }
+        } catch (err) {
+          console.error(`[checkout] Failed to revalidate ${item.id}:`, err);
+        }
+      }),
+    );
+  }, [addToast]);
+
+  // Bug fix: cart persists across sessions but may contain items that went
+  // out of stock or were deactivated since the last visit. Revalidate once
+  // on mount.
+  useEffect(() => {
+    revalidateCartStock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const challenges = useNuveiChallenges({
@@ -385,6 +451,19 @@ export default function CheckoutPage() {
         }
         paymentLockRef.current = false;
         setProcessingPayment(false);
+
+        // Bug fix: if the charge failed because an item ran out of stock
+        // between page load and Pagar (409 from the package's standard
+        // validation), resync the cart against live stock and bounce the
+        // user back to the cart step so they see the updated contents.
+        if (
+          response.status === 409 &&
+          /stock insuficiente|ya no está disponible|precio.*cambió|monto no coincide/i.test(errorMsg)
+        ) {
+          await revalidateCartStock();
+          setStep("cart");
+        }
+
         setPaymentFailed(errorMsg);
       }
     } catch (err) {
