@@ -19,9 +19,9 @@ import {
   FaCheckCircle,
   FaTimesCircle,
 } from "react-icons/fa";
-import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
+import { NuveiPaymentForm, SavedCards } from "@pandait.tech/payment-nuvei/ui";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
-import SavedCards from "@/components/checkout/SavedCards";
+import TurnstileWidget from "@/components/pricing/TurnstileWidget";
 import StepIndicator from "@/components/checkout/StepIndicator";
 import CouponInput, { AppliedCoupon } from "@/components/checkout/CouponInput";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
@@ -117,12 +117,16 @@ export default function CheckoutPage() {
   const [isNewlyTokenized, setIsNewlyTokenized] = useState(false);
   const [deleteCardAfterPayment, setDeleteCardAfterPayment] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  // Cloudflare Turnstile — the /api/payment/charge handler requires a token.
+  // The widget renders on the confirm step; the Pagar button stays disabled
+  // until the widget produces a token.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   // Installments / diferidos
   const [installmentsType, setInstallmentsType] = useState<number>(0); // 0=corriente, 1=con intereses, 2=sin intereses
   const [installmentsCount, setInstallmentsCount] = useState<number>(0); // 0=corriente (no diferido)
   // BIN info for selected card — used to filter installment options by carrier.
-  const [selectedCardBin, setSelectedCardBin] = useState<import("@/types/bin").BinInfo | null>(null);
+  const [selectedCardBin, setSelectedCardBin] = useState<import("@pandait.tech/payment-nuvei/ui").BinInfo | null>(null);
 
   const INSTALLMENTS_WITH_INTEREST = [3, 6, 9, 12, 18, 24, 36];
   const INSTALLMENTS_WITHOUT_INTEREST = [3, 6];
@@ -143,7 +147,7 @@ export default function CheckoutPage() {
       return;
     }
     let cancelled = false;
-    import("@/lib/bin-database").then(({ getBinDatabase, lookupBinSync }) => {
+    import("@pandait.tech/payment-nuvei/ui").then(({ getBinDatabase, lookupBinSync }) => {
       getBinDatabase().then((db) => {
         if (cancelled) return;
         setSelectedCardBin(lookupBinSync(selectedCardInfo.bin, db));
@@ -228,7 +232,7 @@ export default function CheckoutPage() {
     return false;
   }
 
-  const handleTokenSuccess = async (token: string, cardInfo: import("@/components/checkout/NuveiPaymentForm").TokenizedCardInfo, saveCard: boolean = true) => {
+  const handleTokenSuccess = async (token: string, cardInfo: import("@pandait.tech/payment-nuvei/ui").TokenizedCardInfo, saveCard: boolean = true) => {
     setSelectedCardToken(token);
     setIsNewlyTokenized(true);
     setDeleteCardAfterPayment(!saveCard);
@@ -330,6 +334,7 @@ export default function CheckoutPage() {
           userId: user.uid,
           userEmail: user.email,
           browserInfo,
+          turnstileToken,
           ...(installmentsCount > 0 ? { installments: installmentsCount, installmentsType } : {}),
           ...(deleteCardAfterPayment ? { deleteCardAfterPayment: true } : {}),
         }),
@@ -1038,6 +1043,16 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
+                {/* Cloudflare Turnstile — anti-abuse gate. Required by
+                    @pandait.tech/payment-nuvei/handlers' charge handler when
+                    the consumer wires a turnstile dep (Pau does, via
+                    nuvei-deps.ts). Renders an invisible widget that produces
+                    a single-use token; the Pagar button below stays disabled
+                    until the token is ready. */}
+                <div className="flex justify-center">
+                  <TurnstileWidget onToken={setTurnstileToken} />
+                </div>
+
                 <div className="flex gap-3">
                   <button
                     onClick={() => { setStep("payment"); setPaymentError(null); }}
@@ -1048,7 +1063,7 @@ export default function CheckoutPage() {
                   </button>
                   <button
                     onClick={handleConfirmPayment}
-                    disabled={processingPayment || !selectedCardToken || (!isNewlyTokenized && paymentMode === "saved" && !savedCardCvc)}
+                    disabled={processingPayment || !selectedCardToken || (!isNewlyTokenized && paymentMode === "saved" && !savedCardCvc) || !turnstileToken}
                     className="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white font-bold py-3.5 rounded-xl transition-all duration-200 disabled:bg-surface-elevated disabled:text-text-main/30 active:scale-[0.97]"
                   >
                     {processingPayment ? (

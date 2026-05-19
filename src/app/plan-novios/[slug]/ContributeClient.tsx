@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import NuveiPaymentForm from "@/components/checkout/NuveiPaymentForm";
-import type { TokenizedCardInfo } from "@/components/checkout/NuveiPaymentForm";
-import SavedCards from "@/components/checkout/SavedCards";
+import {
+  NuveiPaymentForm,
+  SavedCards,
+  type TokenizedCardInfo,
+} from "@pandait.tech/payment-nuvei/ui";
 import { useAuth } from "@/context/AuthContext";
 import { SavedCard, getCardBrandName } from "@/types/card";
 import { FaGift, FaSpinner, FaCreditCard, FaFileInvoice } from "react-icons/fa";

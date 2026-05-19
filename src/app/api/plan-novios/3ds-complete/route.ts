@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { dbAdmin } from "@/lib/firebase-admin";
-import { verifyThreeDS, deleteCard } from "@/lib/nuvei";
+import { verifyThreeDS, deleteCard } from "@pandait.tech/payment-nuvei";
 import { sendContributionConfirmation, sendContributionNotification } from "@/lib/email-plan-novios";
 import { FieldValue } from "firebase-admin/firestore";
 import { z } from "zod";
