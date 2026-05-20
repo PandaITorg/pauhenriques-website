@@ -59,6 +59,21 @@ export function middleware(request: NextRequest) {
     PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
   if (needsSession && !sessionCookie) {
+    // Los <Link> a rutas protegidas (ej. el ícono del carrito → /checkout)
+    // se PREFETCHEAN automáticamente. Si respondemos con un redirect a un
+    // prefetch, Next.js cachea ese redirect en su Router Cache y luego, al
+    // hacer click real, sirve el redirect STALE — mandando al usuario a
+    // /sign-in aunque ya tenga sesión (cookie recién creada post-login).
+    // Para prefetches NO redirigimos: devolvemos 204 (no-op) para no
+    // contaminar el cache. La navegación real (no-prefetch) sí redirige.
+    const isPrefetch =
+      request.headers.get("Next-Router-Prefetch") === "1" ||
+      request.headers.get("purpose") === "prefetch" ||
+      (request.headers.get("Sec-Purpose")?.includes("prefetch") ?? false);
+    if (isPrefetch) {
+      return new NextResponse(null, { status: 204 });
+    }
+
     const loginUrl = new URL("/sign-in", request.url);
     loginUrl.searchParams.set("redirect_uri", pathname);
     return NextResponse.redirect(loginUrl);
