@@ -18,8 +18,8 @@ import {
   PAYMENT_LINK_PRICE_CONFIRM_THRESHOLD,
   PAYMENT_LINK_PRICE_MAX,
   PAYMENT_LINK_PRICE_MIN,
-  type PaymentLink,
 } from "@pandait.tech/payment-nuvei/payment-links";
+import type { PaymentLink } from "@/lib/pago-link/types";
 import type { Taller } from "@/lib/talleres/types";
 import CopyButton from "@/components/ui/CopyButton";
 import StatusBadge from "@/components/admin/StatusBadge";
