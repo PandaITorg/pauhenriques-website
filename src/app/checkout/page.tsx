@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useCartStore, CartItem } from "@/stores/cart.store";
 import { useToastStore } from "@/stores/toast.store";
 import { useAuth } from "@/context/AuthContext";
@@ -30,10 +29,9 @@ import StepIndicator from "@/components/checkout/StepIndicator";
 import CouponInput from "@/components/checkout/CouponInput";
 import { useCupon } from "@/hooks/useCupon";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
-import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
 import { ShippingAddress } from "@/types/order";
 import { SavedCard, getCardBrandName } from "@/types/card";
-import { useNuveiChallenges } from "@/hooks/useNuveiChallenges";
+import { useCheckoutPayment } from "@/hooks/useCheckoutPayment";
 
 type Step = "cart" | "shipping" | "payment" | "confirm";
 
@@ -105,10 +103,6 @@ const CartItemRow = ({
 export default function CheckoutPage() {
   const [isClient, setIsClient] = useState(false);
   const [step, setStep] = useState<Step>("cart");
-  const [processingPayment, setProcessingPayment] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
-  const [paymentFailed, setPaymentFailed] = useState<string | null>(null);
-  const [paymentError, setPaymentError] = useState<string | null>(null);
   const [shipping, setShipping] = useState<ShippingAddress | null>(null);
 
   const [paymentMode, setPaymentMode] = useState<"saved" | "new">("saved");
@@ -174,7 +168,6 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((state) => state.clearCart);
   const addToast = useToastStore((state) => state.addToast);
   const { user } = useAuth();
-  const router = useRouter();
 
   const cupon = useCupon({
     subtotal: items.reduce((acc, i) => acc + i.price * i.quantity, 0),
@@ -253,35 +246,45 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const challenges = useNuveiChallenges({
-    user,
-    onSuccess: ({ orderId, emailSent }) => {
-      setPaymentSuccess(true);
-      clearCart();
-      const emailParam = emailSent === false ? "&emailSent=false" : "";
-      setTimeout(() => {
-        router.push(`/checkout/confirmacion?orderId=${orderId}${emailParam}`);
-      }, 1500);
-    },
-    onFailed: (error) => setPaymentFailed(error),
-    onProcessingChange: setProcessingPayment,
-  });
-
   const {
+    processingPayment,
+    paymentSuccess,
+    paymentFailed,
+    setPaymentFailed,
+    paymentError,
+    setPaymentError,
+    handleConfirmPayment,
     threeDSChallenge,
-    setThreeDSChallenge,
+    challengeVerifying,
     otpChallenge,
     setOtpChallenge,
     otpCode,
     setOtpCode,
     otpSubmitting,
     otpError,
-    setOtpError,
-    challengeVerifying,
     paymentLockRef,
-    threeDSCompleteCalledRef,
     submitOtp,
-  } = challenges;
+  } = useCheckoutPayment({
+    user,
+    shipping,
+    items,
+    discountedSubtotal,
+    vat,
+    total,
+    discount,
+    shippingCost,
+    selectedCardToken,
+    selectedCardInfo,
+    savedCardCvc,
+    deleteCardAfterPayment,
+    installmentsCount,
+    installmentsType,
+    turnstileToken,
+    appliedCoupon: cupon.appliedCoupon,
+    clearCart,
+    revalidateCartStock,
+    setStep,
+  });
 
   const currentStepIndex = STEPS.indexOf(step);
 
@@ -331,153 +334,6 @@ export default function CheckoutPage() {
   const handleTokenError = (error: string) => {
     setPaymentError(error || "Error al procesar la tarjeta.");
   };
-
-  async function handleConfirmPayment() {
-    if (!user || !shipping || !selectedCardToken) return;
-    if (paymentLockRef.current) return;
-    paymentLockRef.current = true;
-
-    setProcessingPayment(true);
-    setPaymentError(null);
-    threeDSCompleteCalledRef.current = false;
-
-    let orderId: string | null = null;
-
-    try {
-      const orderItems = items.map((item) => ({
-        productId: item.id,
-        name: item.name,
-        brand: item.brand,
-        price: item.price,
-        quantity: item.quantity,
-      }));
-
-      orderId = await createOrder({
-        userId: user.uid,
-        items: orderItems,
-        subtotal: discountedSubtotal,
-        vat,
-        shipping: shippingCost,
-        total,
-        shippingAddress: shipping,
-        paymentToken: selectedCardToken,
-        ...(selectedCardInfo?.type && { cardBrand: selectedCardInfo.type }),
-        ...(selectedCardInfo?.number && { cardLast4: selectedCardInfo.number }),
-        ...(cupon.appliedCoupon && {
-          discount,
-          couponCode: cupon.appliedCoupon.code,
-          promotionId: cupon.appliedCoupon.promotionId,
-          discountType: cupon.appliedCoupon.type,
-        }),
-        ...(installmentsCount > 0 && {
-          installments: installmentsCount,
-          installmentsType,
-        }),
-        ...(deleteCardAfterPayment && { deleteCardAfterPayment: true }),
-      });
-
-      const browserInfo = {
-        accept_header: "text/html",
-        user_agent: navigator.userAgent,
-        language: navigator.language,
-        timezone_offset: new Date().getTimezoneOffset(),
-        screen_width: window.screen.width,
-        screen_height: window.screen.height,
-        color_depth: window.screen.colorDepth,
-        js_enabled: true,
-        java_enabled: false,
-      };
-
-      const response = await fetch("/api/payment/charge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          token: selectedCardToken,
-          ...(savedCardCvc ? { cvc: savedCardCvc } : {}),
-          orderId,
-          amount: total,
-          vat,
-          description: `Orden ${orderId} - Pau Henriques`,
-          userId: user.uid,
-          userEmail: user.email,
-          browserInfo,
-          turnstileToken,
-          ...(installmentsCount > 0 ? { installments: installmentsCount, installmentsType } : {}),
-          ...(deleteCardAfterPayment ? { deleteCardAfterPayment: true } : {}),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setProcessingPayment(false);
-        setPaymentSuccess(true);
-        clearCart();
-        const emailParam = data.emailSent === false ? "&emailSent=false" : "";
-        setTimeout(() => {
-          router.push(`/checkout/confirmacion?orderId=${orderId}${emailParam}`);
-        }, 1500);
-      } else if (data.review) {
-        // Payment under review — treat as pending success, clear cart
-        setProcessingPayment(false);
-        setPaymentSuccess(true);
-        clearCart();
-        setTimeout(() => {
-          router.push(`/checkout/confirmacion?orderId=${orderId}&review=1`);
-        }, 1500);
-      } else if (data.otpRequired) {
-        // OTP verification required (status_detail 31) — show OTP form
-        setProcessingPayment(false);
-        setOtpChallenge({
-          orderId: data.orderId,
-          nuveiTransactionId: data.nuveiTransactionId || "",
-        });
-        setOtpCode("");
-        setOtpError(null);
-      } else if (data.challenge) {
-        // 3DS challenge required — show challenge modal (status 35 or 36)
-        setProcessingPayment(false);
-        setThreeDSChallenge({
-          html: data.challengeHtml,
-          orderId: data.orderId,
-          isDeviceFingerprint: data.isDeviceFingerprint ?? false,
-          nuveiTransactionId: data.nuveiTransactionId || "",
-          statusDetail: data.statusDetail || 36,
-        });
-        // Don't reset paymentLockRef — payment is still in progress via 3DS
-      } else {
-        const errorMsg = data.error || "Error al procesar el pago.";
-        if (orderId) {
-          try { await markOrderFailed(orderId); } catch { /* best effort */ }
-        }
-        paymentLockRef.current = false;
-        setProcessingPayment(false);
-
-        // Bug fix: if the charge failed because an item ran out of stock
-        // between page load and Pagar (409 from the package's standard
-        // validation), resync the cart against live stock and bounce the
-        // user back to the cart step so they see the updated contents.
-        if (
-          response.status === 409 &&
-          /stock insuficiente|ya no está disponible|precio.*cambió|monto no coincide/i.test(errorMsg)
-        ) {
-          await revalidateCartStock();
-          setStep("cart");
-        }
-
-        setPaymentFailed(errorMsg);
-      }
-    } catch (err) {
-      console.error("Payment error:", err);
-      if (orderId) {
-        try { await markOrderFailed(orderId); } catch {}
-      }
-      const errorMsg = "Error de conexión. Intenta de nuevo.";
-      paymentLockRef.current = false;
-      setProcessingPayment(false);
-      setPaymentFailed(errorMsg);
-    }
-  }
 
   if (!isClient) {
     return (
