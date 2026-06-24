@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { FaTag, FaTimes, FaSpinner } from "react-icons/fa";
-import { useToastStore } from "@/stores/toast.store";
 
 export interface AppliedCoupon {
   code: string;
@@ -13,72 +11,24 @@ export interface AppliedCoupon {
 }
 
 interface CouponInputProps {
-  subtotal: number;
-  items: Array<{ productId: string; price: number; quantity: number }>;
+  couponCode: string;
+  onCodeChange: (code: string) => void;
   appliedCoupon: AppliedCoupon | null;
-  onApply: (coupon: AppliedCoupon) => void;
+  loading: boolean;
+  error: string | null;
+  onApply: () => void;
   onRemove: () => void;
 }
 
 export default function CouponInput({
-  subtotal,
-  items,
+  couponCode,
+  onCodeChange,
   appliedCoupon,
+  loading,
+  error,
   onApply,
   onRemove,
 }: CouponInputProps) {
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const addToast = useToastStore((s) => s.addToast);
-
-  const handleApply = async () => {
-    if (!code.trim()) return;
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/promotions/validate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: code.trim(),
-          subtotal,
-          items,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.valid) {
-        onApply({
-          code: code.trim().toUpperCase(),
-          discount: data.discount,
-          promotionId: data.promotionId,
-          type: data.type,
-          description: data.description,
-        });
-        addToast({
-          message: `Cupon ${code.trim().toUpperCase()} aplicado`,
-          type: "success",
-        });
-        setCode("");
-        setError(null);
-      } else {
-        setError(data.reason || "Cupon invalido");
-      }
-    } catch {
-      setError("Error al validar el cupon");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRemove = () => {
-    onRemove();
-    addToast({ message: "Cupon removido", type: "info" });
-  };
-
   if (appliedCoupon) {
     return (
       <div className="flex items-center justify-between gap-3 bg-success/10 border border-success/20 rounded-lg p-3">
@@ -94,7 +44,7 @@ export default function CouponInput({
           </span>
         </div>
         <button
-          onClick={handleRemove}
+          onClick={onRemove}
           className="p-1.5 text-text-main/40 hover:text-error transition-colors cursor-pointer shrink-0"
           aria-label="Quitar cupon"
         >
@@ -112,15 +62,12 @@ export default function CouponInput({
           <input
             type="text"
             placeholder="Codigo de cupon"
-            value={code}
-            onChange={(e) => {
-              setCode(e.target.value.toUpperCase());
-              setError(null);
-            }}
+            value={couponCode}
+            onChange={(e) => onCodeChange(e.target.value.toUpperCase())}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                handleApply();
+                onApply();
               }
             }}
             className="w-full pl-9 pr-3 py-2.5 bg-surface-elevated border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors font-mono uppercase"
@@ -129,8 +76,8 @@ export default function CouponInput({
         </div>
         <button
           type="button"
-          onClick={handleApply}
-          disabled={loading || !code.trim()}
+          onClick={onApply}
+          disabled={loading || !couponCode.trim()}
           className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg transition-colors disabled:bg-surface-elevated disabled:text-text-main/30 cursor-pointer shrink-0"
         >
           {loading ? (
