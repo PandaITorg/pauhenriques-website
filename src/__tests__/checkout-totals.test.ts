@@ -1,31 +1,5 @@
 import { describe, it, expect } from "vitest";
-
-// ── P1: totales del checkout — fija el comportamiento de la aritmética inline ─
-//
-// La lógica vive en src/app/checkout/page.tsx (líneas 178–187).
-// No está exportada como función pura, por eso la espejamos aquí para fijar
-// el comportamiento actual sin tocar producción.
-// Si estos tests fallan tras un cambio en la página, es señal de una regresión.
-
-interface Item {
-  price: number;
-  quantity: number;
-}
-
-/** Espejo exacto de la aritmética de checkout/page.tsx:178-187 */
-function calcCheckoutTotals(
-  items: Item[],
-  couponDiscount = 0,
-): { subtotal: number; discount: number; discountedSubtotal: number; vat: number; total: number } {
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const discount = couponDiscount;
-  const discountedSubtotal = Math.max(0, subtotal - discount);
-  const IVA_RATE = 0.15;
-  const vat = Math.round(discountedSubtotal * IVA_RATE * 100) / 100;
-  const shippingCost = 0;
-  const total = Math.round((discountedSubtotal + vat + shippingCost) * 100) / 100;
-  return { subtotal, discount, discountedSubtotal, vat, total };
-}
+import { calcCheckoutTotals } from "@/lib/checkout-totals";
 
 describe("calcCheckoutTotals — carrito vacío", () => {
   it("devuelve ceros cuando no hay ítems", () => {
