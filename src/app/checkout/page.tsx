@@ -8,6 +8,7 @@ import { useCartStore, CartItem } from "@/stores/cart.store";
 import { useToastStore } from "@/stores/toast.store";
 import { useAuth } from "@/context/AuthContext";
 import { productService } from "@/services/firestore/productService";
+import { calcCheckoutTotals } from "@/lib/checkout-totals";
 import { isWellMeProduct } from "@/types/product";
 import {
   FaTrash,
@@ -175,16 +176,11 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const subtotal = items.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0,
+  const { subtotal, discount, discountedSubtotal, vat, total } = calcCheckoutTotals(
+    items,
+    appliedCoupon?.discount ?? 0,
   );
-  const discount = appliedCoupon?.discount ?? 0;
-  const discountedSubtotal = Math.max(0, subtotal - discount);
-  const IVA_RATE = 0.15;
-  const vat = Math.round(discountedSubtotal * IVA_RATE * 100) / 100;
   const shippingCost: number = 0;
-  const total = Math.round((discountedSubtotal + vat + shippingCost) * 100) / 100;
 
   useEffect(() => {
     setIsClient(true);
