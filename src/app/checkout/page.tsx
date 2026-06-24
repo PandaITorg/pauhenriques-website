@@ -27,7 +27,8 @@ import { NuveiPaymentForm, SavedCards } from "@pandait.tech/payment-nuvei/ui";
 import SavedAddresses from "@/components/checkout/SavedAddresses";
 import TurnstileWidget from "@/components/pricing/TurnstileWidget";
 import StepIndicator from "@/components/checkout/StepIndicator";
-import CouponInput, { AppliedCoupon } from "@/components/checkout/CouponInput";
+import CouponInput from "@/components/checkout/CouponInput";
+import { useCupon } from "@/hooks/useCupon";
 import ProductPlaceholder from "@/components/ui/ProductPlaceholder";
 import { createOrder, markOrderFailed } from "@/services/firestore/orderService";
 import { ShippingAddress } from "@/types/order";
@@ -120,7 +121,6 @@ export default function CheckoutPage() {
   const [savedCardCvc, setSavedCardCvc] = useState("");
   const [isNewlyTokenized, setIsNewlyTokenized] = useState(false);
   const [deleteCardAfterPayment, setDeleteCardAfterPayment] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   // Cloudflare Turnstile — the /api/payment/charge handler requires a token.
   // The widget renders on the confirm step; the Pagar button stays disabled
   // until the widget produces a token.
@@ -176,9 +176,14 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
 
+  const cupon = useCupon({
+    subtotal: items.reduce((acc, i) => acc + i.price * i.quantity, 0),
+    items: items.map((i) => ({ productId: i.id, price: i.price, quantity: i.quantity })),
+  });
+
   const { subtotal, discount, discountedSubtotal, vat, total } = calcCheckoutTotals(
     items,
-    appliedCoupon?.discount ?? 0,
+    cupon.discount,
   );
   const shippingCost: number = 0;
 
@@ -358,11 +363,11 @@ export default function CheckoutPage() {
         paymentToken: selectedCardToken,
         ...(selectedCardInfo?.type && { cardBrand: selectedCardInfo.type }),
         ...(selectedCardInfo?.number && { cardLast4: selectedCardInfo.number }),
-        ...(appliedCoupon && {
+        ...(cupon.appliedCoupon && {
           discount,
-          couponCode: appliedCoupon.code,
-          promotionId: appliedCoupon.promotionId,
-          discountType: appliedCoupon.type,
+          couponCode: cupon.appliedCoupon.code,
+          promotionId: cupon.appliedCoupon.promotionId,
+          discountType: cupon.appliedCoupon.type,
         }),
         ...(installmentsCount > 0 && {
           installments: installmentsCount,
@@ -751,15 +756,13 @@ export default function CheckoutPage() {
                 {/* Coupon code input */}
                 <div className="mt-4 pt-4 border-t border-border-subtle">
                   <CouponInput
-                    subtotal={subtotal}
-                    items={items.map((i) => ({
-                      productId: i.id,
-                      price: i.price,
-                      quantity: i.quantity,
-                    }))}
-                    appliedCoupon={appliedCoupon}
-                    onApply={setAppliedCoupon}
-                    onRemove={() => setAppliedCoupon(null)}
+                    couponCode={cupon.couponCode}
+                    onCodeChange={cupon.setCouponCode}
+                    appliedCoupon={cupon.appliedCoupon}
+                    loading={cupon.loading}
+                    error={cupon.error}
+                    onApply={cupon.applyCoupon}
+                    onRemove={cupon.removeCoupon}
                   />
                 </div>
 
@@ -1185,10 +1188,10 @@ export default function CheckoutPage() {
                     ${subtotal.toFixed(2)}
                   </span>
                 </div>
-                {appliedCoupon && discount > 0 && (
+                {cupon.appliedCoupon && discount > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-success">
-                      Descuento ({appliedCoupon.code})
+                      Descuento ({cupon.appliedCoupon.code})
                     </span>
                     <span className="font-medium text-success">
                       -${discount.toFixed(2)}
