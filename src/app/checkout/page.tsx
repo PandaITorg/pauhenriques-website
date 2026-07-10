@@ -79,7 +79,7 @@ export default function CheckoutPage() {
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const clearCart = useCartStore((state) => state.clearCart);
   const addToast = useToastStore((state) => state.addToast);
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const cupon = useCupon({
     subtotal: items.reduce((acc, i) => acc + i.price * i.quantity, 0),
@@ -211,7 +211,10 @@ export default function CheckoutPage() {
     setPaymentError(error || "Error al procesar la tarjeta.");
   };
 
-  if (!isClient) {
+  // ponytail: guard en la raíz del carrito — espera a que el auth resuelva antes
+  // de renderizar los pasos. Evita que CheckoutShippingStep/PaymentStep vean
+  // user=null mientras Firebase inicializa y muestren "Debes iniciar sesión".
+  if (!isClient || authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="simple-spinner" />
