@@ -1,5 +1,6 @@
 "use client";
 
+import { checkoutShouldBlock } from "@/lib/checkout-auth-guard";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useCartStore } from "@/stores/cart.store";
@@ -211,10 +212,7 @@ export default function CheckoutPage() {
     setPaymentError(error || "Error al procesar la tarjeta.");
   };
 
-  // ponytail: guard en la raíz del carrito — espera a que el auth resuelva antes
-  // de renderizar los pasos. Evita que CheckoutShippingStep/PaymentStep vean
-  // user=null mientras Firebase inicializa y muestren "Debes iniciar sesión".
-  if (!isClient || authLoading) {
+  if (checkoutShouldBlock(isClient, authLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="simple-spinner" />
