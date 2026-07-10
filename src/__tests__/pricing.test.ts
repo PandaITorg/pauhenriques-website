@@ -167,3 +167,31 @@ describe("getTallerPriceDisplay", () => {
     expect(r.percentOff).toBe(0);
   });
 });
+
+// ── PriceDisplay prop withVat — lógica de selección de cifras ─────────────────
+// Verifica que los campos correctos de getPriceDisplay se usen según withVat.
+// (PriceDisplay.tsx usa finalSubtotal/baseSubtotal cuando withVat=false.)
+
+describe("PriceDisplay — selección de cifras según withVat", () => {
+  it("sin descuento: finalSubtotal < finalPrice (IVA excluido)", () => {
+    const r = getPriceDisplay({ price: 100 });
+    // withVat=true → muestra finalPrice (115)
+    expect(r.finalPrice).toBe(115);
+    // withVat=false → muestra finalSubtotal (100)
+    expect(r.finalSubtotal).toBe(100);
+    expect(r.finalSubtotal).toBeLessThan(r.finalPrice);
+  });
+
+  it("con descuento: baseSubtotal/finalSubtotal son las cifras sin IVA", () => {
+    const r = getPriceDisplay({
+      price: 100,
+      autoDiscounts: [{ finalPrice: 92, label: "Oferta", validUntil: null }],
+    });
+    // withVat=false → baseSubtotal = product.price, finalSubtotal = sin IVA del descuento
+    expect(r.baseSubtotal).toBe(100);
+    expect(r.finalSubtotal).toBeLessThan(r.finalPrice); // finalSubtotal < finalPrice (92)
+    expect(r.finalSubtotal).toBeLessThan(r.finalPrice);
+    // Coherencia: finalSubtotal + finalVat ≈ finalPrice
+    expect(Math.round((r.finalSubtotal + r.finalVat) * 100) / 100).toBe(r.finalPrice);
+  });
+});

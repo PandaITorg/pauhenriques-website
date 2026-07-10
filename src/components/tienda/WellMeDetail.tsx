@@ -124,6 +124,7 @@ export default function WellMeDetail({
                   variant="stacked"
                   priceClassName="text-3xl font-bold"
                   priceColorClassName="text-primary"
+                  withVat={false}
                 />
                 <span
                   className={`text-xs font-semibold px-2.5 py-1 rounded-full shrink-0 ${
