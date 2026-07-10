@@ -45,6 +45,8 @@ export interface BaseProduct {
    * (por ejemplo productos digitales vendidos vía link de pago dedicado).
    */
   hiddenFromCatalog?: boolean;
+  /** Posición en la grilla de la tienda. Menor = primero. Default 0 (aditivo). */
+  sortOrder?: number;
   /**
    * Descuentos automáticos programados (sin cupón). Ver AutoDiscount y
    * getPriceDisplay() en @/lib/pricing.
