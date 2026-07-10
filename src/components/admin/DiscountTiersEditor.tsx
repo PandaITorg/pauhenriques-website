@@ -6,6 +6,8 @@ import TierUntilPicker from "./TierUntilPicker";
 
 type TierStatus = "active" | "future" | "expired";
 
+// ponytail: finalPrice es la fuente de verdad; percentOff/percentInput son para el badge y el round-trip del editor.
+// ponytail: si el precio base cambia con un descuento activo, hay que re-guardar el tier (raro; no auto-recalculo).
 export interface TierDraft {
   // UI-only id so React keys don't collide while editing.
   uid: string;
@@ -13,12 +15,17 @@ export interface TierDraft {
   label: string;
   /** Datetime-local string (YYYY-MM-DDTHH:mm) in Ecuador time, or empty for permanente. */
   validUntilLocal: string;
+  /** Which input mode the user is in. Not persisted — derived from percentOff on load. */
+  inputMode: "pct" | "price";
+  /** Raw string in the % input while the user types. UI only. */
+  percentInput: string;
 }
 
 export interface RawTier {
   finalPrice: number;
   label: string;
   validUntil?: unknown;
+  percentOff?: number;
 }
 
 const ECUADOR_TZ = "America/Guayaquil";
@@ -76,18 +83,35 @@ function newUid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
 export function rawTierToDraft(raw: RawTier): TierDraft {
   const vu = toDate(raw.validUntil);
+  const hasPct =
+    typeof raw.percentOff === "number" &&
+    raw.percentOff >= 1 &&
+    raw.percentOff <= 99;
   return {
     uid: newUid(),
     finalPrice: String(raw.finalPrice ?? ""),
     label: raw.label ?? "",
     validUntilLocal: vu ? toEcuadorLocalInput(vu) : "",
+    inputMode: hasPct ? "pct" : "price",
+    percentInput: hasPct ? String(raw.percentOff) : "",
   };
 }
 
 export function emptyTierDraft(): TierDraft {
-  return { uid: newUid(), finalPrice: "", label: "", validUntilLocal: "" };
+  return {
+    uid: newUid(),
+    finalPrice: "",
+    label: "",
+    validUntilLocal: "",
+    inputMode: "pct",
+    percentInput: "",
+  };
 }
 
 function statusOf(date: Date | null, now: Date): TierStatus {
@@ -155,6 +179,37 @@ export default function DiscountTiersEditor({
     onChange(value.map((d, i) => (i === index ? { ...d, ...patch } : d)));
   }
 
+  function updatePctAt(index: number, pctStr: string) {
+    const pct = parseFloat(pctStr);
+    const finalPriceNum =
+      !isNaN(pct) && pct > 0 && pct < 100 && basePriceWithVat > 0
+        ? round2(basePriceWithVat * (1 - pct / 100))
+        : 0;
+    updateAt(index, {
+      percentInput: pctStr,
+      finalPrice: finalPriceNum > 0 ? String(finalPriceNum) : "",
+    });
+  }
+
+  function switchMode(index: number, mode: "pct" | "price") {
+    const d = value[index];
+    if (mode === d.inputMode) return;
+    if (mode === "pct") {
+      // Pre-fill the % from current finalPrice when possible
+      const fp = Number(d.finalPrice);
+      if (fp > 0 && basePriceWithVat > 0) {
+        const derivedPct = Math.round((1 - fp / basePriceWithVat) * 100);
+        if (derivedPct >= 1 && derivedPct <= 99) {
+          updateAt(index, { inputMode: "pct", percentInput: String(derivedPct) });
+          return;
+        }
+      }
+      updateAt(index, { inputMode: "pct", percentInput: "" });
+    } else {
+      updateAt(index, { inputMode: "price", percentInput: "" });
+    }
+  }
+
   const inputClass =
     "w-full p-2 bg-input-bg border border-border-default rounded-lg text-sm text-text-main placeholder:text-text-main/35 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-colors";
   const labelClass =
@@ -173,10 +228,16 @@ export default function DiscountTiersEditor({
             finalPrice > 0 && basePriceWithVat > 0
               ? Math.max(0, basePriceWithVat - finalPrice)
               : 0;
-          const percentOff =
+          const derivedPct =
             basePriceWithVat > 0
               ? Math.round((amountOff / basePriceWithVat) * 100)
               : 0;
+          // Use stored % in pct mode (exact round-trip), otherwise derive.
+          const pctNum = parseFloat(draft.percentInput);
+          const displayPct =
+            draft.inputMode === "pct" && !isNaN(pctNum) && pctNum > 0
+              ? Math.round(pctNum)
+              : derivedPct;
 
           return (
             <div
@@ -191,9 +252,9 @@ export default function DiscountTiersEditor({
             >
               <div className="flex items-center gap-2 mb-3">
                 <StatusBadge status={status} />
-                {percentOff > 0 && (
+                {displayPct > 0 && (
                   <span className="text-[11px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                    -{percentOff}% OFF
+                    -{displayPct}% OFF
                   </span>
                 )}
                 {amountOff > 0 && (
@@ -226,25 +287,85 @@ export default function DiscountTiersEditor({
                       className={inputClass}
                     />
                   </div>
-                  <div>
-                    <label className={labelClass}>Precio final (con IVA)</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-sm">
-                        $
-                      </span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={draft.finalPrice}
-                        onChange={(e) =>
-                          updateAt(i, { finalPrice: e.target.value })
-                        }
+                  <div className="space-y-1.5">
+                    {/* Mode toggle */}
+                    <div className="flex text-xs font-medium border border-border-default rounded-md overflow-hidden w-fit">
+                      <button
+                        type="button"
+                        onClick={() => switchMode(i, "pct")}
                         disabled={disabled}
-                        placeholder="55.00"
-                        className={`${inputClass} pl-6`}
-                      />
+                        className={`px-3 py-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                          draft.inputMode === "pct"
+                            ? "bg-primary text-white"
+                            : "text-text-main/60 hover:bg-surface-elevated"
+                        }`}
+                      >
+                        % OFF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => switchMode(i, "price")}
+                        disabled={disabled}
+                        className={`px-3 py-1.5 transition-colors cursor-pointer disabled:cursor-not-allowed ${
+                          draft.inputMode === "price"
+                            ? "bg-primary text-white"
+                            : "text-text-main/60 hover:bg-surface-elevated"
+                        }`}
+                      >
+                        $ Precio final
+                      </button>
                     </div>
+
+                    {draft.inputMode === "pct" ? (
+                      <div>
+                        <label className={labelClass}>Porcentaje de descuento</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="1"
+                            min="1"
+                            max="99"
+                            value={draft.percentInput}
+                            onChange={(e) => updatePctAt(i, e.target.value)}
+                            disabled={disabled}
+                            placeholder="35"
+                            className={`${inputClass} pr-8`}
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-text-main/40 text-sm">
+                            %
+                          </span>
+                        </div>
+                        {Number(draft.finalPrice) > 0 && (
+                          <p className="text-[11px] text-text-main/50 mt-1">
+                            Precio resultante:{" "}
+                            <strong className="text-text-main">
+                              ${Number(draft.finalPrice).toFixed(2)}
+                            </strong>
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div>
+                        <label className={labelClass}>Precio final (con IVA)</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-main/40 text-sm">
+                            $
+                          </span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={draft.finalPrice}
+                            onChange={(e) =>
+                              updateAt(i, { finalPrice: e.target.value })
+                            }
+                            disabled={disabled}
+                            placeholder="55.00"
+                            className={`${inputClass} pl-6`}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div>
