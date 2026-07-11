@@ -1,0 +1,7 @@
+{
+  "_note": "Credenciales de prueba. Sobreescribe con QA_USER_EMAIL + QA_USER_PASSWORD en .env.local. No commitear credenciales reales aquí.",
+  "customer": {
+    "email": null,
+    "password": null
+  }
+}

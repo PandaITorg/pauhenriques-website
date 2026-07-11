@@ -1,25 +1,22 @@
 import { describe, it, expect } from "vitest";
+import { checkoutShouldBlock } from "@/lib/checkout-auth-guard";
 
-// Replica the guard condition from checkout/page.tsx.
-// Cuando authLoading=true, el checkout debe mostrar spinner — nunca
-// los pasos (que contienen el prompt "Debes iniciar sesión").
-function checkoutShouldRenderContent(isClient: boolean, authLoading: boolean): boolean {
-  return isClient && !authLoading;
-}
-
+// checkoutShouldBlock = true → spinner; false → renderiza pasos.
+// Cuando true, los pasos (que tienen "Debes iniciar sesión") nunca se ven
+// durante la inicialización de Firebase.
 describe("checkout auth guard", () => {
-  it("no renderiza contenido mientras hydrating (isClient=false)", () => {
-    expect(checkoutShouldRenderContent(false, false)).toBe(false);
-    expect(checkoutShouldRenderContent(false, true)).toBe(false);
+  it("bloquea mientras hydrating (isClient=false)", () => {
+    expect(checkoutShouldBlock(false, false)).toBe(true);
+    expect(checkoutShouldBlock(false, true)).toBe(true);
   });
 
-  it("no renderiza contenido mientras auth carga (loading=true)", () => {
+  it("bloquea mientras auth carga (loading=true)", () => {
     // Cubre el caso: usuario AUTENTICADO pero Firebase aún no resolvió.
     // Sin este guard, user===null → los pasos muestran "Debes iniciar sesión".
-    expect(checkoutShouldRenderContent(true, true)).toBe(false);
+    expect(checkoutShouldBlock(true, true)).toBe(true);
   });
 
-  it("renderiza contenido cuando auth resolvió", () => {
-    expect(checkoutShouldRenderContent(true, false)).toBe(true);
+  it("no bloquea cuando auth resolvió", () => {
+    expect(checkoutShouldBlock(true, false)).toBe(false);
   });
 });
