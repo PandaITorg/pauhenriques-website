@@ -28,6 +28,7 @@ interface ProductFormData {
   manufacturer: string;
   isActive: boolean;
   images: string[];
+  sortOrder: number;
 }
 
 const emptyForm: ProductFormData = {
@@ -51,6 +52,7 @@ const emptyForm: ProductFormData = {
   manufacturer: "",
   isActive: true,
   images: [],
+  sortOrder: 0,
 };
 
 export default function ProductForm({
@@ -109,6 +111,7 @@ export default function ProductForm({
         power: form.power || null,
         warranty: form.warranty || null,
         manufacturer: form.manufacturer || null,
+        sortOrder: form.sortOrder,
       };
 
       if (form.productType === "WellMe") {
@@ -217,6 +220,17 @@ export default function ProductForm({
               onChange={(e) => set("manufacturer", e.target.value)}
               className={inputClass}
             />
+          </div>
+          <div>
+            <label className={labelClass}>Orden en la tienda</label>
+            <input
+              type="number"
+              min={0}
+              value={form.sortOrder}
+              onChange={(e) => set("sortOrder", parseInt(e.target.value) || 0)}
+              className={inputClass}
+            />
+            <p className="text-xs text-text-main/40 mt-1">Menor = primero. 0 por defecto.</p>
           </div>
           <div className="flex items-center pt-6">
             <Switch
