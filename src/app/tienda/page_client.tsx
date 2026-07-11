@@ -113,27 +113,34 @@ export default function TiendaClient() {
     setSearchTerm(term);
   }, []);
 
-  const filteredProducts = products.filter((p) => {
-    if (activeTab === "compra" && !isWellMeProduct(p)) return false;
-    if (activeTab === "catalogo" && isWellMeProduct(p)) return false;
+  const filteredProducts = products
+    .filter((p) => {
+      if (activeTab === "compra" && !isWellMeProduct(p)) return false;
+      if (activeTab === "catalogo" && isWellMeProduct(p)) return false;
 
-    if (selectedCategory) {
-      if (p.subCategory !== selectedCategory && p.category !== selectedCategory)
-        return false;
-    }
+      if (selectedCategory) {
+        if (p.subCategory !== selectedCategory && p.category !== selectedCategory)
+          return false;
+      }
 
-    if (searchTerm) {
-      const lower = searchTerm.toLowerCase();
-      const matches =
-        p.name.toLowerCase().includes(lower) ||
-        p.description.toLowerCase().includes(lower) ||
-        p.brand.toLowerCase().includes(lower) ||
-        (p.tags && p.tags.some((t) => t.toLowerCase().includes(lower)));
-      if (!matches) return false;
-    }
+      if (searchTerm) {
+        const lower = searchTerm.toLowerCase();
+        const matches =
+          p.name.toLowerCase().includes(lower) ||
+          p.description.toLowerCase().includes(lower) ||
+          p.brand.toLowerCase().includes(lower) ||
+          (p.tags && p.tags.some((t) => t.toLowerCase().includes(lower)));
+        if (!matches) return false;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .sort((a, b) => {
+      const orderA = a.sortOrder ?? 0;
+      const orderB = b.sortOrder ?? 0;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.name.localeCompare(b.name);
+    });
 
   const isCatalogo = activeTab === "catalogo";
 

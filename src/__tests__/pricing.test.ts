@@ -140,6 +140,40 @@ describe("getPriceDisplay — normalización de fechas", () => {
   });
 });
 
+
+// ── percentOff almacenado ─────────────────────────────────────────────────────
+
+describe("getPriceDisplay — percentOff almacenado", () => {
+  it("35% sobre base 100 subtotal → finalPrice 74.75", () => {
+    // basePrice = 100 * 1.15 = 115; 35% OFF → 115 * 0.65 = 74.75
+    const r = getPriceDisplay({
+      price: 100,
+      autoDiscounts: [{ finalPrice: 74.75, label: "35% OFF", validUntil: null, percentOff: 35 }],
+    });
+    expect(r.hasActiveDiscount).toBe(true);
+    expect(r.finalPrice).toBe(74.75);
+    expect(r.percentOff).toBe(35); // usa el guardado exacto
+  });
+
+  it("round-trip: percentOff guardado prevalece aunque la base tenga centavos", () => {
+    const r = getPriceDisplay({
+      price: 100.01,
+      autoDiscounts: [{ finalPrice: 74.75, label: "35% OFF", validUntil: null, percentOff: 35 }],
+    });
+    expect(r.percentOff).toBe(35);
+  });
+
+  it("tier legacy sin percentOff sigue derivando el %", () => {
+    const r = getPriceDisplay({
+      price: 100,
+      autoDiscounts: [{ finalPrice: 92, label: "Lanzamiento", validUntil: null }],
+    });
+    expect(r.percentOff).toBe(20); // round(23/115*100) ≈ 20
+    expect(r.hasActiveDiscount).toBe(true);
+  });
+});
+
+
 // ── P1 también: getTallerPriceDisplay ────────────────────────────────────────
 // Envuelve getPriceDisplay convirtiendo basePrice (CON IVA) a subtotal.
 
@@ -165,5 +199,26 @@ describe("getTallerPriceDisplay", () => {
     const r = getTallerPriceDisplay({ basePrice: 69, discountTiers: [] });
     expect(r.finalPrice).toBe(69);
     expect(r.percentOff).toBe(0);
+  });
+});
+
+// ── PriceDisplay prop withVat — lógica de selección de cifras ─────────────────
+
+describe("PriceDisplay — selección de cifras según withVat", () => {
+  it("sin descuento: finalSubtotal < finalPrice (IVA excluido)", () => {
+    const r = getPriceDisplay({ price: 100 });
+    expect(r.finalPrice).toBe(115);
+    expect(r.finalSubtotal).toBe(100);
+    expect(r.finalSubtotal).toBeLessThan(r.finalPrice);
+  });
+
+  it("con descuento: baseSubtotal/finalSubtotal son las cifras sin IVA", () => {
+    const r = getPriceDisplay({
+      price: 100,
+      autoDiscounts: [{ finalPrice: 92, label: "Oferta", validUntil: null }],
+    });
+    expect(r.baseSubtotal).toBe(100);
+    expect(r.finalSubtotal).toBeLessThan(r.finalPrice);
+    expect(Math.round((r.finalSubtotal + r.finalVat) * 100) / 100).toBe(r.finalPrice);
   });
 });

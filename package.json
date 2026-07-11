@@ -8,10 +8,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "node qa/flows/login-checkout.mjs"
   },
   "dependencies": {
-    "@pandait.tech/payment-nuvei": "^0.2.0",
+    "@pandait.tech/payment-nuvei": "^1.0.0",
     "csv-parser": "^3.2.0",
     "embla-carousel-react": "^8.6.0",
     "fast-xml-parser": "^5.5.12",

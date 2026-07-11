@@ -41,6 +41,12 @@ env:
     secret: "nuvei-server-app-key"
   - variable: NUVEI_ENV
     value: "prod"
+  # Shared secret to authenticate the Nuvei webhook (DMN) endpoint. Incoming
+  # POSTs must carry ?key=<this> (or x-webhook-key); mismatches → 401. Nuvei
+  # does not currently call this endpoint for Pau, so this closes it as an
+  # attack surface; if DMNs are enabled later, append ?key=<this> to the URL.
+  - variable: NUVEI_WEBHOOK_SECRET
+    secret: "nuvei-webhook-secret"
 
   # Email — Resend
   - variable: RESEND_API_KEY

@@ -20,27 +20,21 @@ interface PriceDisplayProps {
   priceColorClassName?: string;
   /** Muestra el badge del label del descuento cuando aplica. Default: true. */
   showLabel?: boolean;
+  /**
+   * Muestra precios con IVA (default: true). La tienda usa false para mostrar
+   * subtotales; el IVA se detalla en el carrito/checkout.
+   * ponytail: withVat default true no toca a nadie; solo la tienda opta por sin-IVA.
+   */
+  withVat?: boolean;
 }
 
-/**
- * Componente reusable que muestra el precio de un producto aplicando los
- * auto-discounts vigentes. Siempre muestra precios CON IVA (15%) ya que es
- * lo que el cliente paga y el estándar comercial en Ecuador.
- *
- * Si el producto tiene un descuento activo, renderiza:
- *   - Label del descuento (badge)
- *   - Precio base tachado
- *   - Precio final destacado
- *   - -XX% OFF
- *
- * Si no hay descuento, solo el precio final (= precio base).
- */
 export default function PriceDisplay({
   product,
   variant = "inline",
   priceClassName,
   priceColorClassName = "text-text-inverted",
   showLabel = true,
+  withVat = true,
 }: PriceDisplayProps) {
   const display = getPriceDisplay({
     price: product.price,
@@ -48,6 +42,9 @@ export default function PriceDisplay({
       ? (product.autoDiscounts as DiscountForPricing)
       : undefined,
   });
+
+  const shownFinal = withVat ? display.finalPrice : display.finalSubtotal;
+  const shownBase = withVat ? display.basePrice : display.baseSubtotal;
 
   if (variant === "stacked") {
     return (
@@ -61,12 +58,12 @@ export default function PriceDisplay({
           <span
             className={`${priceClassName ?? "text-3xl font-bold"} ${priceColorClassName}`}
           >
-            ${display.finalPrice.toFixed(2)}
+            ${shownFinal.toFixed(2)}
           </span>
           {display.hasActiveDiscount && (
             <>
               <span className="text-base text-text-main/40 line-through">
-                ${display.basePrice.toFixed(2)}
+                ${shownBase.toFixed(2)}
               </span>
               <span className="text-xs font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
                 -{display.percentOff}% OFF
@@ -74,6 +71,11 @@ export default function PriceDisplay({
             </>
           )}
         </div>
+        {!withVat && (
+          <p className="text-[11px] text-text-main/50 leading-none">
+            + IVA en el carrito
+          </p>
+        )}
       </div>
     );
   }
@@ -90,12 +92,12 @@ export default function PriceDisplay({
         <span
           className={`${priceClassName ?? "text-lg font-bold"} ${priceColorClassName}`}
         >
-          ${display.finalPrice.toFixed(2)}
+          ${shownFinal.toFixed(2)}
         </span>
         {display.hasActiveDiscount && (
           <>
             <span className="text-xs text-text-inverted/40 line-through">
-              ${display.basePrice.toFixed(2)}
+              ${shownBase.toFixed(2)}
             </span>
             <span className="text-[10px] font-bold text-success">
               -{display.percentOff}%
@@ -103,6 +105,11 @@ export default function PriceDisplay({
           </>
         )}
       </div>
+      {!withVat && (
+        <p className="text-[10px] text-text-main/50 leading-none">
+          + IVA en el carrito
+        </p>
+      )}
     </div>
   );
 }

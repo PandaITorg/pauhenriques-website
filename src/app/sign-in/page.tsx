@@ -35,6 +35,12 @@ async function performPostLoginRedirect(
       typeof window !== "undefined" ? window.location.hostname : "",
   });
   if (action.path) {
+    // ponytail: router.refresh() vacía el Router Cache de Next.js antes de navegar.
+    // Sin esto, el redirect 307 que el middleware devolvió cuando el usuario visitó
+    // /checkout sin sesión queda cacheado; router.push('/checkout') lo serviría
+    // directo desde cache — mandando al usuario de vuelta a /sign-in aunque la
+    // session cookie ya exista.
+    router.refresh();
     router.push(action.path);
     return { redirected: true, blockedNoRole: false };
   }

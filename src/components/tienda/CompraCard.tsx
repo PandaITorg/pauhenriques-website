@@ -99,6 +99,7 @@ const CompraCard = ({ product, onQuickView }: CompraCardProps) => {
               variant="inline"
               priceClassName="text-xl font-bold"
               priceColorClassName="text-primary"
+              withVat={false}
             />
           </div>
         )}

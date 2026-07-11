@@ -7,8 +7,8 @@ import {
   PAYMENT_LINK_PRICE_MAX,
   PAYMENT_LINK_PRICE_MIN,
   generatePaymentLinkToken,
-  type PaymentLink,
 } from "@pandait.tech/payment-nuvei/payment-links";
+import type { PaymentLink } from "@/lib/pago-link/types";
 
 export const dynamic = "force-dynamic";
 
