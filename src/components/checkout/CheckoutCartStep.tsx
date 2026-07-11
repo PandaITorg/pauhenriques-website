@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FaArrowLeft } from "react-icons/fa";
 import { CartItem } from "@/stores/cart.store";
-import CouponInput from "@/components/checkout/CouponInput";
+import CouponInput, { AppliedCoupon } from "@/components/checkout/CouponInput";
 import { CartItemRow } from "@/components/checkout/CartItemRow";
 
 type Step = "cart" | "shipping" | "payment" | "confirm";
@@ -11,7 +11,7 @@ type Step = "cart" | "shipping" | "payment" | "confirm";
 interface CuponState {
   couponCode: string;
   setCouponCode: (code: string) => void;
-  appliedCoupon: { code: string } | null;
+  appliedCoupon: AppliedCoupon | null;
   loading: boolean;
   error: string | null;
   applyCoupon: () => void;
