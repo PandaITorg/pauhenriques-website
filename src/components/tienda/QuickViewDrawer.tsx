@@ -107,6 +107,7 @@ const QuickViewDrawer = ({ product, isOpen, onClose }: QuickViewDrawerProps) => 
               variant="stacked"
               priceClassName="text-2xl font-bold"
               priceColorClassName="text-primary"
+              withVat={false}
             />
           </div>
         )}

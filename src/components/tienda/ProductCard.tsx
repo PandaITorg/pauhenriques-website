@@ -79,7 +79,7 @@ const ProductCard = ({ product, onQuickView }: ProductCardProps) => {
         {isWellMeProduct(product) ? (
           <div className="mt-auto">
             <div className="mb-2">
-              <PriceDisplay product={product} variant="inline" />
+              <PriceDisplay product={product} variant="inline" withVat={false} />
             </div>
             <button
               onClick={handleAddToCart}
