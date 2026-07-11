@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "source": "apphosting"
+    "source": "."
   },
   "firestore": {
     "rules": "firestore.rules",
