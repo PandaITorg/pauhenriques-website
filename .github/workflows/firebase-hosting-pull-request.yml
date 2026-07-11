@@ -19,3 +19,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PAU_HENRIQUES_WEB_V1 }}
           projectId: pau-henriques-web-v1
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
