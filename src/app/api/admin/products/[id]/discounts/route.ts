@@ -10,6 +10,8 @@ interface IncomingDiscount {
   label: string;
   /** ISO string (del datetime-local del form) o null para permanente. */
   validUntil: string | null;
+  /** Porcentaje entero (1–99) guardado para round-trip exacto del badge. Opcional. */
+  percentOff?: number;
 }
 
 /**
@@ -43,6 +45,7 @@ export async function PUT(
     finalPrice: number;
     label: string;
     validUntil: Timestamp | null;
+    percentOff?: number;
   }> = [];
 
   for (let i = 0; i < raw.length; i++) {
@@ -53,6 +56,20 @@ export async function PUT(
       typeof d?.validUntil === "string" && d.validUntil.length > 0
         ? d.validUntil
         : null;
+    const rawPct = (d as Partial<IncomingDiscount>)?.percentOff;
+    const percentOff =
+      typeof rawPct === "number" &&
+      Number.isInteger(rawPct) &&
+      rawPct >= 1 &&
+      rawPct <= 99
+        ? rawPct
+        : undefined;
+    if (rawPct !== undefined && percentOff === undefined) {
+      return NextResponse.json(
+        { error: `Tier ${i + 1}: percentOff inválido (debe ser entero 1–99)` },
+        { status: 400 },
+      );
+    }
 
     if (!Number.isFinite(finalPrice) || finalPrice <= 0) {
       return NextResponse.json(
@@ -91,7 +108,7 @@ export async function PUT(
       validUntil = Timestamp.fromDate(date);
     }
 
-    parsed.push({ finalPrice, label, validUntil });
+    parsed.push({ finalPrice, label, validUntil, ...(percentOff !== undefined ? { percentOff } : {}) });
   }
 
   const ref = dbAdmin.collection("products").doc(id);

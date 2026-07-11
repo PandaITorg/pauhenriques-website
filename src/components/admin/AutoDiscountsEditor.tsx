@@ -43,10 +43,16 @@ export default function AutoDiscountsEditor({
       const payload = drafts.map((d) => {
         const finalPrice = Number(d.finalPrice);
         const vu = fromEcuadorLocalInput(d.validUntilLocal);
+        const pct = parseFloat(d.percentInput);
+        const percentOff =
+          d.inputMode === "pct" && !isNaN(pct) && pct >= 1 && pct <= 99
+            ? Math.round(pct)
+            : undefined;
         return {
           finalPrice,
           label: d.label.trim(),
           validUntil: vu ? vu.toISOString() : null,
+          ...(percentOff !== undefined ? { percentOff } : {}),
         };
       });
 

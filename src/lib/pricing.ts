@@ -48,6 +48,8 @@ interface AutoDiscountLike {
   finalPrice: number;
   label: string;
   validUntil: RawTimestamp;
+  /** Porcentaje entero guardado para badge exacto. Si está presente, se usa en lugar del derivado. */
+  percentOff?: number;
 }
 
 interface ProductLike {
@@ -119,6 +121,7 @@ export function getPriceDisplay(
       finalPrice: Number(d.finalPrice),
       label: String(d.label ?? ""),
       validUntil: toDate(d.validUntil),
+      percentOff: typeof d.percentOff === "number" ? d.percentOff : undefined,
     }))
     .filter((d) => Number.isFinite(d.finalPrice) && d.finalPrice > 0);
 
@@ -141,7 +144,13 @@ export function getPriceDisplay(
   const finalSubtotal = round2(finalPrice / (1 + IVA_RATE));
   const finalVat = round2(finalPrice - finalSubtotal);
   const amountOff = round2(basePrice - finalPrice);
-  const percentOff = basePrice > 0 ? Math.round((amountOff / basePrice) * 100) : 0;
+  // Use stored percentOff for exact badge (avoids re-derivation drift from rounding).
+  const percentOff =
+    active.percentOff != null && active.percentOff > 0
+      ? active.percentOff
+      : basePrice > 0
+        ? Math.round((amountOff / basePrice) * 100)
+        : 0;
 
   return {
     basePrice,
