@@ -1,3 +1,8 @@
+---
+status: cerrado
+prereqs: []
+---
+
 # Prompt M2c — Extraer `useCheckoutPayment` (la máquina 3DS) net-first
 
 > Tercer corte de `checkout/page.tsx`, el más delicado: la lógica de pago (`procesarPago`, máquina 3DS

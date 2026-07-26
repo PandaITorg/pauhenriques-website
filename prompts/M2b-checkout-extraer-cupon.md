@@ -1,3 +1,8 @@
+---
+status: cerrado
+prereqs: []
+---
+
 # Prompt M2b — Extraer `useCupon` del checkout (corte seguro, sin tocar el flujo de pago)
 
 > Segundo corte del monolito `checkout/page.tsx`. Sacamos la lógica de **cupón** (estado, aplicar/quitar,

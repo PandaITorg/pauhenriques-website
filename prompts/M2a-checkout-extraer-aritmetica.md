@@ -1,3 +1,8 @@
+---
+status: cerrado
+prereqs: []
+---
+
 # Prompt M2a — Extraer la aritmética del checkout a módulo puro + convertir el test-espejo en red real
 
 > Primer corte del monolito `checkout/page.tsx` (1227 líneas, el #1 del audit). Net-first: extraemos la

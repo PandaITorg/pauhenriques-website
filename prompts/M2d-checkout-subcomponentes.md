@@ -1,3 +1,8 @@
+---
+status: cerrado
+prereqs: []
+---
+
 # Prompt M2d — Partir el render del checkout en subcomponentes (corte final, UI)
 
 > Último corte de `checkout/page.tsx` (aún 1082 líneas: la lógica ya salió, pero el render JSX sigue enorme).

@@ -1,3 +1,8 @@
+---
+status: cerrado
+prereqs: []
+---
+
 # Prompt T1 — Red de seguridad: tests de DINERO (Pau · P1–P4)
 
 > Tercera y última red del plan `PLAN-tests-dinero.md` (wellme y carico ya están). **Solo AÑADES tests.** Un test
