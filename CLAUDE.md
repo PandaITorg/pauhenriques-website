@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # CLAUDE.md - pauhenriques-website
 
 ## ⚠️ IMPORTANTE — Datos de contacto fijos
