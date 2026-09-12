@@ -106,14 +106,21 @@ export async function updatePlan(
   });
 }
 
+/**
+ * La comprobación de slug pasa por la API, no por Firestore: las reglas ya no
+ * permiten consultar `planNovios` por slug (la lectura quedó restringida al
+ * dueño del plan). Esta consulta necesita mirar planes ajenos, así que la
+ * resuelve el Admin SDK en /api/plan-novios/slug-available.
+ */
 export async function isSlugAvailable(slug: string): Promise<boolean> {
-  const q = query(
-    collection(db, PLANS_COLLECTION),
-    where("slug", "==", slug),
-    limit(1),
+  const res = await fetch(
+    `/api/plan-novios/slug-available?slug=${encodeURIComponent(slug)}`,
   );
-  const snapshot = await getDocs(q);
-  return snapshot.empty;
+  if (!res.ok) {
+    throw new Error("No se pudo verificar la disponibilidad del enlace");
+  }
+  const data = await res.json();
+  return data.available === true;
 }
 
 export async function getContributions(

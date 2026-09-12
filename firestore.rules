@@ -87,9 +87,39 @@ service cloud.firestore {
 
     // Plan Novios — registro de bodas
     match /planNovios/{planId} {
-      allow read: if true; // Público (landing page, contribucion invitados)
-      allow create: if request.auth != null; // Usuario registrado crea su plan
-      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      // LECTURA — solo el dueño del plan.
+      // La página pública (/plan-novios/[slug]) NO lee Firestore: pasa por
+      // /api/plan-novios/[slug], que usa Admin SDK y devuelve únicamente datos
+      // no financieros (nombres, fecha, mensaje, % de avance). Con `if true`
+      // aquí, ese cuidado era inútil: cualquiera podía leer el documento crudo
+      // —balance, totalContributed, goalAmount, userEmail— e incluso listar
+      // todos los planes del sitio.
+      // getPlanByUserId() sigue funcionando: su query filtra por userId, que es
+      // justo lo que esta regla exige.
+      allow read: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+
+      // CREACIÓN — el plan tiene que ser suyo y arrancar en cero.
+      // Antes bastaba con estar autenticado: se podía crear un plan a nombre de
+      // otro usuario, o nacido con saldo.
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.totalContributed == 0
+        && request.resource.data.totalRedeemed == 0
+        && request.resource.data.balance == 0;
+
+      // EDICIÓN — el dueño cambia la presentación, nunca el dinero ni la identidad.
+      // Antes podía escribir CUALQUIER campo del documento, incluido `balance`:
+      // inflarlo desde el navegador y canjear productos sin haber recibido un
+      // solo aporte. Los saldos los mueve exclusivamente el Admin SDK desde el
+      // flujo de pago (FieldValue.increment en /api/plan-novios/contribute).
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.userId
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.totalContributed == resource.data.totalContributed
+        && request.resource.data.totalRedeemed == resource.data.totalRedeemed
+        && request.resource.data.balance == resource.data.balance;
+
       allow delete: if false;
 
       // Contribuciones — solo lectura por el dueño del plan, escritura via Admin SDK

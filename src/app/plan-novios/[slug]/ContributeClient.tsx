@@ -35,6 +35,20 @@ export default function ContributeClient() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // uid con el que se tokeniza la tarjeta en Nuvei.
+  //
+  // El token de tarjeta PERTENECE a un usuario: al cobrar se envían `user.id` y
+  // `card.token` juntos, y el servidor tiene que usar el mismo uid con el que el
+  // navegador tokenizó. Antes cada lado se inventaba su propio
+  // `guest_<planId>_<Date.now()>` — dos relojes distintos que nunca coinciden, y
+  // el navegador ni siquiera le decía el suyo al servidor.
+  //
+  // Ahora el invitado obtiene una sesión anónima real de Firebase: el uid viaja
+  // en la cookie __session, el servidor lo lee de ahí y ambos lados hablan del
+  // mismo usuario. Es el mismo patrón que usa Tálou.
+  const [nuveiUid, setNuveiUid] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState(false);
+
   // Form state
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -69,6 +83,56 @@ export default function ContributeClient() {
   const [nuveiUserId, setNuveiUserId] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const challengeRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Garantiza una sesión de Firebase (la del cliente logueado, o una anónima
+   * nueva) y la cookie __session del servidor. Devuelve el uid.
+   *
+   * Se verifica `res.ok`: /api/auth/session es quien crea la cookie, y sin ella
+   * el servidor no puede saber con qué uid se tokenizó. Si eso falla en silencio,
+   * el fallo reaparece mucho después, en el cobro, y con la tarjeta ya escrita.
+   */
+  const ensureNuveiSession = useCallback(async (): Promise<string> => {
+    let current = user;
+    if (!current) {
+      const { signInAnonymously } = await import("firebase/auth");
+      const { getClientAuth } = await import("@/lib/firebase-auth");
+      const result = await signInAnonymously(getClientAuth());
+      current = result.user;
+    }
+    const idToken = await current.getIdToken(true);
+    const res = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) {
+      throw new Error(`/api/auth/session respondio ${res.status}`);
+    }
+    return current.uid;
+  }, [user]);
+
+  // La sesión se establece al cargar el plan, antes de que el invitado llegue a
+  // la tarjeta: si falla, se le avisa en vez de dejarlo escribir los datos para
+  // que el cobro reviente al final.
+  useEffect(() => {
+    if (!plan || nuveiUid) return;
+    let cancelled = false;
+    ensureNuveiSession()
+      .then((uid) => {
+        if (!cancelled) {
+          setNuveiUid(uid);
+          setSessionError(false);
+        }
+      })
+      .catch((err) => {
+        console.error("[plan-novios] no se pudo iniciar la sesion de pago:", err);
+        if (!cancelled) setSessionError(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [plan, nuveiUid, ensureNuveiSession]);
 
   // Pre-fill guest info from auth if available
   useEffect(() => {
@@ -647,10 +711,33 @@ export default function ContributeClient() {
                     </div>
                   )}
                 </>
+              ) : sessionError ? (
+                /* Guest: la sesión de pago no se pudo establecer. Se dice acá y
+                   no al cobrar, cuando la tarjeta ya está escrita. */
+                <div className="bg-surface-card border border-border-default rounded-xl p-6 text-center">
+                  <p className="text-text-main">
+                    No pudimos preparar el pago con tarjeta en este momento.
+                  </p>
+                  <p className="text-text-main/60 text-sm mt-2">
+                    Recarga la página e intenta de nuevo.
+                  </p>
+                </div>
+              ) : !nuveiUid ? (
+                /* Guest: esperando la sesión anónima. El formulario no puede
+                   montarse sin uid — tokenizaría contra un usuario inexistente. */
+                <div className="flex items-center justify-center gap-3 p-8 text-text-main/60">
+                  <FaSpinner className="w-5 h-5 animate-spin" />
+                  <span className="text-sm">Preparando el pago seguro…</span>
+                </div>
               ) : (
                 /* Guest: only new card form */
                 <NuveiPaymentForm
-                  uid={`guest_${plan.id}_${Date.now()}`}
+                  uid={nuveiUid}
+                  // TODO: agregar `autoReplaceDuplicateCard` cuando se actualice
+                  // @pandait.tech/payment-nuvei a >=1.1.0. Esa prop resuelve sola
+                  // el "Card already added" que ahora puede aparecerle a un
+                  // invitado que reintenta tras un aporte fallido — antes no
+                  // pasaba porque el uid era desechable, ahora el anónimo persiste.
                   email={guestEmail || "guest@pauhenriques.com"}
                   onTokenSuccess={handleTokenSuccess}
                   onTokenError={(error) => {

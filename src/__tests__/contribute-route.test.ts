@@ -6,7 +6,12 @@
 //
 // P3 — route `contribute` (src/app/api/plan-novios/contribute/route.ts).
 //   Fija el comportamiento actual de las 7 ramas de resultado Nuvei más las
-//   rutas de validación/acceso. Invitado vs autenticado incluido.
+//   rutas de validación/acceso. Invitado anónimo vs autenticado incluido.
+//
+// CONTRATO ACTUAL (cambió): la sesión es OBLIGATORIA. El invitado llega con
+// una sesión ANÓNIMA de Firebase y el uid de Nuvei sale de esa cookie, nunca
+// de un `guest_<planId>_<Date.now()>` inventado en el servidor. Sin cookie el
+// endpoint responde 401 antes de mirar el body.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
@@ -36,6 +41,9 @@ import { debitWithToken, deleteCard } from "@pandait.tech/payment-nuvei";
 import { POST } from "@/app/api/plan-novios/contribute/route";
 
 // ── Datos base ────────────────────────────────────────────────────────────────
+
+/** uid que Firebase asigna a la sesión anónima del invitado. */
+const ANON_UID = "anon-firebase-uid-001";
 
 const PLAN_ACTIVO = {
   status: "active",
@@ -92,15 +100,30 @@ function setupFirestore(planData: Record<string, unknown> | null = PLAN_ACTIVO) 
   vi.mocked(dbAdmin.batch).mockReturnValue(mockBatch as ReturnType<typeof dbAdmin.batch>);
 }
 
+/**
+ * Por defecto simula la sesión ANÓNIMA del invitado: es el caso normal del
+ * endpoint público. Pasar un uid simula una cuenta real (provider `password`),
+ * cuyo `sign_in_provider` distinto de `anonymous` es lo que impide borrar la
+ * tarjeta.
+ */
 function setupAuth(uid: string | null = null) {
-  if (uid) {
-    vi.mocked(auth.verifySessionCookie).mockResolvedValue({ uid } as never);
-  } else {
-    vi.mocked(auth.verifySessionCookie).mockRejectedValue(new Error("no session"));
-  }
+  const decoded = uid
+    ? { uid, firebase: { sign_in_provider: "password" } }
+    : { uid: ANON_UID, firebase: { sign_in_provider: "anonymous" } };
+  vi.mocked(auth.verifySessionCookie).mockResolvedValue(decoded as never);
 }
 
-function makeRequest(body: unknown, cookieHeader = "") {
+/** Cookie presente pero inválida/expirada. */
+function setupSessionInvalida() {
+  vi.mocked(auth.verifySessionCookie).mockRejectedValue(new Error("session expired"));
+}
+
+/**
+ * La cookie `__session` va por defecto: sin ella el endpoint corta con 401
+ * antes de llegar a validar nada, así que omitirla solo tiene sentido en los
+ * tests que prueban justamente esa puerta.
+ */
+function makeRequest(body: unknown, cookieHeader: string | null = "__session=valid-session") {
   return new NextRequest(
     "https://pauhenriques.com/api/plan-novios/contribute",
     {
@@ -119,12 +142,52 @@ async function json(res: Response) {
   return res.json() as Promise<Record<string, unknown>>;
 }
 
+/** `discardGuestCard` dispara y olvida; hay que ceder un tick del event loop. */
+async function tick() {
+  await new Promise((r) => setTimeout(r, 0));
+}
+
 // ── Limpieza entre tests ──────────────────────────────────────────────────────
 beforeEach(() => {
   vi.clearAllMocks();
   mockContribRef.set.mockResolvedValue(undefined);
   mockContribRef.update.mockResolvedValue(undefined);
   mockBatch.commit.mockResolvedValue(undefined);
+  vi.mocked(deleteCard).mockResolvedValue(undefined as never);
+});
+
+// ── Sesión obligatoria ────────────────────────────────────────────────────────
+
+describe("contribute POST — sesión obligatoria", () => {
+  it("sin cookie __session → 401 (y no toca Nuvei ni Firestore)", async () => {
+    setupAuth();
+    setupFirestore();
+
+    const res = await POST(makeRequest(BODY_VALIDO, null));
+
+    expect(res.status).toBe(401);
+    expect((await json(res)).error).toMatch(/no autorizado/i);
+    expect(debitWithToken).not.toHaveBeenCalled();
+    expect(mockContribRef.set).not.toHaveBeenCalled();
+  });
+
+  it("cookie presente pero sesión inválida → 401", async () => {
+    setupSessionInvalida();
+    setupFirestore();
+
+    const res = await POST(makeRequest(BODY_VALIDO));
+
+    expect(res.status).toBe(401);
+    expect((await json(res)).error).toMatch(/sesion invalida/i);
+    expect(debitWithToken).not.toHaveBeenCalled();
+  });
+
+  it("la sesión se verifica antes de validar el body", async () => {
+    // Body basura + sin cookie: gana el 401, no el 400.
+    setupAuth();
+    const res = await POST(makeRequest({}, null));
+    expect(res.status).toBe(401);
+  });
 });
 
 // ── Validación de entrada ─────────────────────────────────────────────────────
@@ -215,8 +278,8 @@ describe("contribute POST — rama: pago aprobado (3)", () => {
     expect(mockBatch.commit).toHaveBeenCalledTimes(1);
   });
 
-  it("borra la tarjeta del invitado al aprobar", async () => {
-    setupAuth(null); // invitado
+  it("borra la tarjeta del invitado anónimo al aprobar, con el uid de su sesión", async () => {
+    setupAuth(null); // invitado anónimo
     setupFirestore();
 
     vi.mocked(debitWithToken).mockResolvedValue({
@@ -224,10 +287,11 @@ describe("contribute POST — rama: pago aprobado (3)", () => {
     } as never);
 
     await POST(makeRequest(BODY_VALIDO));
+    await tick();
 
-    // deleteCard se llama en fire-and-forget; esperamos un tick
-    await new Promise((r) => setTimeout(r, 0));
-    expect(deleteCard).toHaveBeenCalledWith(BODY_VALIDO.token, expect.stringContaining("guest_"));
+    // El uid del borrado debe ser EXACTAMENTE el de la sesión: es el único con
+    // el que el navegador tokenizó, y por tanto el único dueño del token.
+    expect(deleteCard).toHaveBeenCalledWith(BODY_VALIDO.token, ANON_UID);
   });
 
   it("no borra la tarjeta cuando el usuario está autenticado", async () => {
@@ -238,10 +302,26 @@ describe("contribute POST — rama: pago aprobado (3)", () => {
       transaction: { status: "success", status_detail: 3, id: "tx-3", authorization_code: null },
     } as never);
 
-    await POST(makeRequest(BODY_VALIDO, "__session=s123"));
+    await POST(makeRequest(BODY_VALIDO));
+    await tick();
 
-    await new Promise((r) => setTimeout(r, 0));
     expect(deleteCard).not.toHaveBeenCalled();
+  });
+
+  it("un fallo de deleteCard no rompe la respuesta 200", async () => {
+    setupAuth(null);
+    setupFirestore();
+    vi.mocked(deleteCard).mockRejectedValue(new Error("nuvei down") as never);
+
+    vi.mocked(debitWithToken).mockResolvedValue({
+      transaction: { status: "success", status_detail: 3, id: "tx-4", authorization_code: null },
+    } as never);
+
+    const res = await POST(makeRequest(BODY_VALIDO));
+    await tick();
+
+    expect(res.status).toBe(200);
+    expect((await json(res)).success).toBe(true);
   });
 });
 
@@ -262,6 +342,20 @@ describe("contribute POST — rama: revisión/pendiente (1)", () => {
     expect(res.status).toBe(200);
     expect(body.review).toBe(true);
     expect(body.contributionId).toBe("contrib-test-id");
+  });
+
+  it("no borra la tarjeta mientras el pago sigue vivo", async () => {
+    setupAuth(null);
+    setupFirestore();
+
+    vi.mocked(debitWithToken).mockResolvedValue({
+      transaction: { status: "pending", status_detail: 1, id: "tx-rev-2" },
+    } as never);
+
+    await POST(makeRequest(BODY_VALIDO));
+    await tick();
+
+    expect(deleteCard).not.toHaveBeenCalled();
   });
 });
 
@@ -284,16 +378,32 @@ describe("contribute POST — rama: 3DS fingerprint (35)", () => {
     expect(body.challenge).toBe(true);
     expect(body.isDeviceFingerprint).toBe(true);
     expect(body.statusDetail).toBe(35);
+    expect(body.nuveiUserId).toBe(ANON_UID);
     expect(mockContribRef.update).toHaveBeenCalledWith(
       expect.objectContaining({ status: "3ds-pending", isDeviceFingerprint: true }),
     );
+  });
+
+  it("no borra la tarjeta: el 3DS todavía puede terminar en cobro", async () => {
+    setupAuth(null);
+    setupFirestore();
+
+    vi.mocked(debitWithToken).mockResolvedValue({
+      transaction: { status: "pending", status_detail: 35, id: "tx-35b" },
+      "3ds": { browser_response: { hidden_iframe: "<iframe />" } },
+    } as never);
+
+    await POST(makeRequest(BODY_VALIDO));
+    await tick();
+
+    expect(deleteCard).not.toHaveBeenCalled();
   });
 });
 
 // ── P3 rama 4: OTP requerido (status_detail 31) ───────────────────────────────
 
 describe("contribute POST — rama: OTP requerido (31)", () => {
-  it("devuelve otpRequired:true", async () => {
+  it("devuelve otpRequired:true con el uid de la sesión", async () => {
     setupAuth();
     setupFirestore();
 
@@ -308,6 +418,7 @@ describe("contribute POST — rama: OTP requerido (31)", () => {
     expect(body.otpRequired).toBe(true);
     expect(body.statusDetail).toBe(31);
     expect(body.nuveiTransactionId).toBe("tx-otp");
+    expect(body.nuveiUserId).toBe(ANON_UID);
     expect(mockContribRef.update).toHaveBeenCalledWith(
       expect.objectContaining({ status: "otp-pending" }),
     );
@@ -382,6 +493,7 @@ describe("contribute POST — rama: pago fallido (P2 + P3)", () => {
       vi.clearAllMocks();
       mockContribRef.set.mockResolvedValue(undefined);
       mockContribRef.update.mockResolvedValue(undefined);
+      vi.mocked(deleteCard).mockResolvedValue(undefined as never);
       setupFirestore();
       setupAuth();
 
@@ -404,7 +516,7 @@ describe("contribute POST — rama: pago fallido (P2 + P3)", () => {
     }
   });
 
-  it("invitado: borra tarjeta al fallar", async () => {
+  it("invitado: borra la tarjeta al fallar, con el uid de su sesión", async () => {
     setupAuth(null);
     setupFirestore();
 
@@ -413,16 +525,45 @@ describe("contribute POST — rama: pago fallido (P2 + P3)", () => {
     } as never);
 
     await POST(makeRequest(BODY_VALIDO));
-    await new Promise((r) => setTimeout(r, 0));
+    await tick();
 
-    expect(deleteCard).toHaveBeenCalledWith(BODY_VALIDO.token, expect.stringContaining("guest_"));
+    expect(deleteCard).toHaveBeenCalledWith(BODY_VALIDO.token, ANON_UID);
+  });
+
+  it("autenticado: NO borra la tarjeta al fallar", async () => {
+    setupAuth("uid-registrado");
+    setupFirestore();
+
+    vi.mocked(debitWithToken).mockResolvedValue({
+      transaction: { status: "failure", status_detail: 4, id: "tx-user-fail" },
+    } as never);
+
+    await POST(makeRequest(BODY_VALIDO));
+    await tick();
+
+    expect(deleteCard).not.toHaveBeenCalled();
+  });
+
+  it("un deleteCard que revienta no convierte el 400 en 500", async () => {
+    setupAuth(null);
+    setupFirestore();
+    vi.mocked(deleteCard).mockRejectedValue(new Error("boom") as never);
+
+    vi.mocked(debitWithToken).mockResolvedValue({
+      transaction: { status: "failure", status_detail: 4, id: "tx-boom" },
+    } as never);
+
+    const res = await POST(makeRequest(BODY_VALIDO));
+    await tick();
+
+    expect(res.status).toBe(400);
   });
 });
 
-// ── P3: usuario autenticado vs invitado ───────────────────────────────────────
+// ── P3: usuario autenticado vs invitado anónimo ───────────────────────────────
 
 describe("contribute POST — invitado vs autenticado", () => {
-  it("invitado: nuveiUserId comienza con 'guest_'", async () => {
+  it("invitado anónimo: el userId de Nuvei es el uid de la sesión, no un guest_ inventado", async () => {
     setupAuth(null);
     setupFirestore();
 
@@ -433,9 +574,26 @@ describe("contribute POST — invitado vs autenticado", () => {
     await POST(makeRequest(BODY_VALIDO));
 
     expect(debitWithToken).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: expect.stringMatching(/^guest_/),
-      }),
+      expect.objectContaining({ userId: ANON_UID }),
+    );
+    // Regresión: el uid del servidor ya no se inventa.
+    expect(debitWithToken).not.toHaveBeenCalledWith(
+      expect.objectContaining({ userId: expect.stringMatching(/^guest_/) }),
+    );
+  });
+
+  it("invitado anónimo: la contribución no queda ligada a ninguna cuenta", async () => {
+    setupAuth(null);
+    setupFirestore();
+
+    vi.mocked(debitWithToken).mockResolvedValue({
+      transaction: { status: "success", status_detail: 3, id: "tx-ok-2", authorization_code: null },
+    } as never);
+
+    await POST(makeRequest(BODY_VALIDO));
+
+    expect(mockContribRef.set).toHaveBeenCalledWith(
+      expect.objectContaining({ authenticatedUserId: null }),
     );
   });
 
@@ -447,10 +605,13 @@ describe("contribute POST — invitado vs autenticado", () => {
       transaction: { status: "success", status_detail: 3, id: "tx-ok", authorization_code: null },
     } as never);
 
-    await POST(makeRequest(BODY_VALIDO, "__session=valid-session"));
+    await POST(makeRequest(BODY_VALIDO));
 
     expect(debitWithToken).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "uid-abc" }),
+    );
+    expect(mockContribRef.set).toHaveBeenCalledWith(
+      expect.objectContaining({ authenticatedUserId: "uid-abc" }),
     );
   });
 });

@@ -81,17 +81,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
 
-    // Check for optional auth — logged-in users get their real userId
-    let authenticatedUserId: string | null = null;
-    const sessionCookie = request.cookies.get("__session")?.value;
-    if (sessionCookie && auth) {
-      try {
-        const decoded = await auth.verifySessionCookie(sessionCookie, true);
-        authenticatedUserId = decoded.uid;
-      } catch {
-        // Session expired or invalid — continue as guest
-      }
+    // La sesión es OBLIGATORIA, incluso para invitados.
+    //
+    // El token de tarjeta pertenece a un usuario de Nuvei: al cobrar hay que
+    // mandar el MISMO uid con el que el navegador tokenizó. Antes este endpoint
+    // aceptaba peticiones sin sesión y se inventaba
+    // `guest_<planId>_<Date.now()>` — un uid que el navegador nunca vio, así que
+    // el cobro apuntaba a un usuario que no era dueño del token y el
+    // `deleteCard` posterior no podía funcionar.
+    //
+    // Ahora el invitado llega con una sesión anónima de Firebase (ver
+    // ContributeClient) y el uid sale de la cookie, que es la única fuente que
+    // el servidor puede verificar.
+    if (!auth) {
+      return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
     }
+    const sessionCookie = request.cookies.get("__session")?.value;
+    if (!sessionCookie) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    let nuveiUserId: string;
+    let isAnonymousGuest: boolean;
+    try {
+      const decoded = await auth.verifySessionCookie(sessionCookie, true);
+      nuveiUserId = decoded.uid;
+      // Distingue una cuenta real de un invitado anónimo. Solo al invitado se le
+      // borra la tarjeta: la de un cliente registrado es suya y debe quedarse.
+      isAnonymousGuest = decoded.firebase?.sign_in_provider === "anonymous";
+    } catch {
+      return NextResponse.json({ error: "Sesion invalida" }, { status: 401 });
+    }
+    const authenticatedUserId = isAnonymousGuest ? null : nuveiUserId;
 
     const rawBody = await request.json();
     const parsed = ContributeSchema.safeParse(rawBody);
@@ -140,9 +161,22 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // Build Nuvei user ID: real userId if authenticated, temp ID if guest
-    const nuveiUserId = authenticatedUserId || `guest_${planId}_${Date.now()}`;
     const nuveiUserEmail = guestEmail || "guest@pauhenriques.com";
+
+    /**
+     * Borra la tarjeta del invitado en Nuvei. Se usa tanto en el éxito como en
+     * los fallos definitivos: Paymentez obliga a tokenizar antes de cobrar, así
+     * que un aporte que no prospera dejaba la tarjeta registrada para siempre.
+     * Dispara y olvida, envuelto para que nunca pueda romper la respuesta.
+     */
+    function discardGuestCard(): void {
+      if (!isAnonymousGuest) return;
+      void Promise.resolve()
+        .then(() => deleteCard(token, nuveiUserId))
+        .catch((err) =>
+          console.error("[plan-novios/contribute] Failed to delete guest card:", err),
+        );
+    }
 
     // Build term_url for 3DS
     const functionsBase = process.env.CLOUD_FUNCTIONS_BASE_URL
@@ -205,11 +239,11 @@ export async function POST(request: NextRequest) {
 
       await batch.commit();
 
-      // Delete card token (guests never save cards)
-      if (!authenticatedUserId) {
-        deleteCard(token, nuveiUserId).catch((err) =>
-          console.error("[plan-novios/contribute] Failed to delete guest card:", err),
-        );
+      // Delete card token (guests never save cards).
+      // Ahora sí puede funcionar: nuveiUserId es el uid con el que se tokenizó,
+      // no uno inventado del lado del servidor.
+      if (isAnonymousGuest) {
+        discardGuestCard();
       }
 
       // Send emails (non-blocking)
@@ -329,10 +363,10 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     });
 
-    // Clean up guest card
-    if (!authenticatedUserId) {
-      deleteCard(token, nuveiUserId).catch(() => {});
-    }
+    // Clean up guest card. Se unifica con el camino de éxito: antes este
+    // `.catch(() => {})` se tragaba el error sin dejar rastro, así que un
+    // borrado que fallara era invisible.
+    discardGuestCard();
 
     return NextResponse.json({ error: failedErrorMsg }, { status: 400 });
   } catch (error) {
