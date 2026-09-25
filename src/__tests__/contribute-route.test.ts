@@ -444,6 +444,10 @@ describe("contribute POST — rama: 3DS challenge (36 y 37)", () => {
     expect(body.challenge).toBe(true);
     expect(body.isDeviceFingerprint).toBe(false);
     expect(body.statusDetail).toBe(sd);
+    // 3ds-complete lo necesita para borrar la tarjeta del invitado al terminar.
+    expect(mockContribRef.update).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "3ds-pending", paymentToken: BODY_VALIDO.token }),
+    );
   });
 });
 
