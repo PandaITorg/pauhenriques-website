@@ -32,6 +32,97 @@ exports.threeDSCallback = onRequest(
 );
 
 /**
+ * 3DS Callback del Plan Novios — el term_url de los aportes
+ * (src/app/api/plan-novios/contribute) apunta aquí.
+ *
+ * Hace lo mismo que threeDSCallback, pero el pago vive en
+ * planNovios/{planId}/contributions/{contributionId} y no en orders/{id}.
+ * El handler del paquete solo sabe escribir en orders, por eso va a mano.
+ * Guarda threeDSCres/threeDSTransStatus solo si el aporte está en 3ds-pending;
+ * /api/plan-novios/3ds-complete los lee en su polling.
+ */
+function pickCres(src) {
+  for (const [key, v] of Object.entries(src)) {
+    const k = key.toLowerCase();
+    if ((k === "cres" || k === "value") && typeof v === "string" && v) return v;
+  }
+  return "";
+}
+
+function transStatusFromCres(cres) {
+  try {
+    // "base64" en Node también acepta el alfabeto base64url y sin padding.
+    const decoded = JSON.parse(Buffer.from(cres, "base64").toString("utf-8"));
+    return typeof decoded?.transStatus === "string" ? decoded.transStatus : null;
+  } catch {
+    return null;
+  }
+}
+
+const isDocId = (v) => typeof v === "string" && /^[A-Za-z0-9_-]+$/.test(v);
+
+exports.threeDSCallbackPlanNovios = onRequest(
+  { cors: true, region: "us-central1" },
+  async (req, res) => {
+    const { planId, contributionId } = req.query;
+    const src = {
+      ...req.query,
+      ...(req.body && typeof req.body === "object" ? req.body : {}),
+    };
+    const cres = pickCres(src);
+    const transStatus =
+      (cres && transStatusFromCres(cres)) ||
+      src.transStatus ||
+      src.TransStatus ||
+      "U";
+
+    if (isDocId(planId) && isDocId(contributionId)) {
+      try {
+        const ref = db
+          .collection("planNovios")
+          .doc(planId)
+          .collection("contributions")
+          .doc(contributionId);
+        const snap = await ref.get();
+        if (snap.exists && snap.data().status === "3ds-pending") {
+          const update = { threeDSTransStatus: transStatus, updatedAt: new Date() };
+          if (cres) update.threeDSCres = cres;
+          await ref.update(update);
+        } else {
+          console.warn("[threeDSCallbackPlanNovios] rechazado: no está en 3ds-pending", {
+            planId,
+            contributionId,
+            status: snap.data()?.status,
+          });
+        }
+      } catch (err) {
+        console.error("[threeDSCallbackPlanNovios] no se pudo guardar la CRES:", err);
+      }
+    }
+
+    // ContributeClient escucha este postMessage y empieza el polling.
+    const safeId = isDocId(contributionId) ? contributionId : "";
+    const safeStatus = String(transStatus).replace(/[^a-zA-Z0-9]/g, "");
+    res.set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>3DS Verification</title></head>
+<body>
+<script>
+(function() {
+  var message = { type: "3DS_COMPLETE", contributionId: "${safeId}", transStatus: "${safeStatus}" };
+  try {
+    if (window.parent && window.parent !== window) window.parent.postMessage(message, "*");
+    else if (window.opener) window.opener.postMessage(message, "*");
+  } catch(e) {}
+})();
+</script>
+<p style="font-family:sans-serif;color:#666;text-align:center;margin-top:40px">
+Verificando autenticaci&oacute;n...
+</p>
+</body></html>`);
+  },
+);
+
+/**
  * Nuvei API Proxy — forwards requests from App Hosting to Nuvei's API.
  * Cloud Run (App Hosting) gets 500 from Nuvei; Cloud Functions work fine.
  * Now backed by the package's createNuveiProxyHandler (same forwarding logic).
