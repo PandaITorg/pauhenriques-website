@@ -294,6 +294,8 @@ export async function POST(request: NextRequest) {
         isDeviceFingerprint: true,
         nuveiTransactionId: nuveiData.transaction.id || null,
         nuveiUserId,
+        // 3ds-complete lo usa para borrar la tarjeta del invitado y luego lo quita.
+        paymentToken: token,
         updatedAt: new Date(),
       });
       return NextResponse.json({
@@ -314,6 +316,7 @@ export async function POST(request: NextRequest) {
         status: "otp-pending",
         nuveiTransactionId: nuveiData.transaction.id || null,
         nuveiUserId,
+        paymentToken: token,
         updatedAt: new Date(),
       });
       return NextResponse.json({
@@ -337,6 +340,7 @@ export async function POST(request: NextRequest) {
           status: "3ds-pending",
           nuveiTransactionId: nuveiData.transaction.id || null,
           nuveiUserId,
+          paymentToken: token,
           updatedAt: new Date(),
         });
         return NextResponse.json({

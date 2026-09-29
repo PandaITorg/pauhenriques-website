@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dbAdmin } from "@/lib/firebase-admin";
+import { dbAdmin, auth } from "@/lib/firebase-admin";
 import { verifyThreeDS, deleteCard } from "@pandait.tech/payment-nuvei";
 import { sendContributionConfirmation, sendContributionNotification } from "@/lib/email-plan-novios";
 import { FieldValue } from "firebase-admin/firestore";
@@ -18,8 +18,21 @@ const ThreeDSSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    if (!dbAdmin) {
+    if (!dbAdmin || !auth) {
       return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+    }
+
+    // Misma sesión que en /contribute (anónima para invitados). Sin esto
+    // cualquiera podía completar el 3DS de otro aporte mandando su nuveiUserId.
+    const sessionCookie = request.cookies.get("__session")?.value;
+    if (!sessionCookie) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+    let sessionUid: string;
+    try {
+      sessionUid = (await auth.verifySessionCookie(sessionCookie, true)).uid;
+    } catch {
+      return NextResponse.json({ error: "Sesion invalida" }, { status: 401 });
     }
 
     const rawBody = await request.json();
@@ -29,6 +42,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { contributionId, planId, nuveiUserId, type, nuveiTransactionId: bodyTxId, otpCode } = parsed.data;
+    if (nuveiUserId !== sessionUid) {
+      return NextResponse.json({ error: "Usuario no coincide" }, { status: 403 });
+    }
 
     // Read contribution
     const contribRef = dbAdmin.collection("planNovios").doc(planId).collection("contributions").doc(contributionId);
@@ -38,6 +54,25 @@ export async function POST(request: NextRequest) {
     }
 
     const contribData = contribDoc.data()!;
+    // El aporte guarda el uid con el que se cobró: tiene que ser el de la sesión.
+    if (contribData.nuveiUserId && contribData.nuveiUserId !== sessionUid) {
+      return NextResponse.json({ error: "Usuario no coincide" }, { status: 403 });
+    }
+    const userId: string = contribData.nuveiUserId || sessionUid;
+
+    /**
+     * Borra la tarjeta del invitado en Nuvei cuando el aporte termina (pagado o
+     * fallido). Dispara y olvida; el token se quita del documento en el mismo
+     * update que cierra el aporte.
+     */
+    function discardGuestCard(): void {
+      if (contribData.authenticatedUserId || !contribData.paymentToken) return;
+      void Promise.resolve()
+        .then(() => deleteCard(contribData.paymentToken, userId))
+        .catch((err) =>
+          console.error("[plan-novios/3ds-complete] Failed to delete guest card:", err),
+        );
+    }
 
     // Idempotency
     if (contribData.status === "paid") {
@@ -55,7 +90,12 @@ export async function POST(request: NextRequest) {
     // Check for failed 3DS auth status stored by callback
     const storedTransStatus = contribData.threeDSTransStatus;
     if (storedTransStatus && storedTransStatus !== "Y" && storedTransStatus !== "A") {
-      await contribRef.update({ status: "failed", updatedAt: new Date() });
+      await contribRef.update({
+        status: "failed",
+        paymentToken: FieldValue.delete(),
+        updatedAt: new Date(),
+      });
+      discardGuestCard();
       const msg =
         storedTransStatus === "N" ? "Autenticacion 3DS rechazada por tu banco." :
         storedTransStatus === "R" ? "Tu banco rechazo la autenticacion 3DS." :
@@ -88,7 +128,6 @@ export async function POST(request: NextRequest) {
     }
 
     const verifyValue = type === "BY_OTP" ? otpCode : cresValue;
-    const userId = contribData.nuveiUserId || nuveiUserId;
 
     const verifyResult = await verifyThreeDS({
       transactionId,
@@ -119,6 +158,7 @@ export async function POST(request: NextRequest) {
         threeDSCres: FieldValue.delete(),
         threeDSTransStatus: FieldValue.delete(),
         isDeviceFingerprint: FieldValue.delete(),
+        paymentToken: FieldValue.delete(),
       });
 
       // Increment plan balance
@@ -137,13 +177,7 @@ export async function POST(request: NextRequest) {
       const coupleNames = planData ? `${planData.partner1Name} y ${planData.partner2Name}` : "";
       const slug = planData?.slug || "";
 
-      // Delete guest card
-      if (!contribData.authenticatedUserId) {
-        const cardToken = contribData.paymentToken || "";
-        if (cardToken) {
-          deleteCard(cardToken, userId).catch(() => {});
-        }
-      }
+      discardGuestCard();
 
       // Emails (non-blocking)
       if (contribData.guestEmail) {
@@ -203,7 +237,9 @@ export async function POST(request: NextRequest) {
       status: "failed",
       updatedAt: new Date(),
       threeDSCres: FieldValue.delete(),
+      paymentToken: FieldValue.delete(),
     });
+    discardGuestCard();
 
     return NextResponse.json(
       { error: "Pago rechazado tras autenticacion 3DS." },
