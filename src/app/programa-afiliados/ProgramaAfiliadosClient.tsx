@@ -5,7 +5,7 @@ import PhoneInput, {
   isValidPhoneNumber,
   getCountryCallingCode,
 } from "react-phone-number-input";
-import type { CountryCode } from "libphonenumber-js";
+import type { Country as CountryCode } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import {
   FaInstagram,
