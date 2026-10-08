@@ -15,8 +15,8 @@ env:
   - variable: NEXT_PUBLIC_NUVEI_ENV
     value: "stg"
   - variable: NUVEI_SERVER_APP_CODE
-    value: "NUVEISTG-EC-SERVER"
+    secret: nuvei-server-app-code-stg
   - variable: NUVEI_SERVER_APP_KEY
-    value: "Kn9v6ICvoRXQozQG2rK92WtjG6l08a"
+    secret: nuvei-server-app-key-stg
   - variable: NUVEI_ENV
     value: "stg"
