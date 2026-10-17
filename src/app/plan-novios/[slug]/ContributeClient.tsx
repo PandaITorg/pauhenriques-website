@@ -1,5 +1,7 @@
 "use client";
 
+import { PAGO_CON_TARJETA } from "@/lib/pago-tarjeta";
+import { PagoTarjetaNoDisponible } from "@/components/PagoTarjetaNoDisponible";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -646,8 +648,11 @@ export default function ContributeClient() {
                 Metodo de Pago
               </h2>
 
-              {/* Authenticated user: show saved cards or new card toggle */}
-              {user ? (
+              {/* Cobro con tarjeta apagado (Nuvei desactivó la aplicación): regalo por WhatsApp. */}
+              {!PAGO_CON_TARJETA ? (
+                <PagoTarjetaNoDisponible mensaje={`Hola, quiero hacer un regalo en el plan de novios de ${coupleNames}.`} />
+              ) : /* Authenticated user: show saved cards or new card toggle */
+              user ? (
                 <>
                   {paymentMode === "saved" ? (
                     <div className="space-y-4">

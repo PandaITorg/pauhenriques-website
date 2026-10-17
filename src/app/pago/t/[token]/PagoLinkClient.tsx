@@ -1,5 +1,7 @@
 "use client";
 
+import { PAGO_CON_TARJETA } from "@/lib/pago-tarjeta";
+import { PagoTarjetaNoDisponible } from "@/components/PagoTarjetaNoDisponible";
 import { useState } from "react";
 import type { User } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -584,7 +586,12 @@ export default function PagoLinkClient({
                     </div>
                   )}
 
-                  {!payingUser ? (
+                  {!PAGO_CON_TARJETA ? (
+                    // Número general: el whatsappContact del taller es solo post-compra (CLAUDE.md).
+                    <PagoTarjetaNoDisponible
+                      mensaje={`Hola, quiero pagar mi inscripción en ${taller.name} (${pricing.finalPrice.toFixed(2)}). Mi correo: ${guestInfo.email}`}
+                    />
+                  ) : !payingUser ? (
                     <div className="flex items-center justify-center gap-3 py-8">
                       <div className="simple-spinner" />
                       <span className="text-sm text-text-main/60">

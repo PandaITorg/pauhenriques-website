@@ -1,5 +1,7 @@
 "use client";
 
+import { PAGO_CON_TARJETA } from "@/lib/pago-tarjeta";
+import { PagoTarjetaNoDisponible } from "@/components/PagoTarjetaNoDisponible";
 import { checkoutShouldBlock } from "@/lib/checkout-auth-guard";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -361,7 +363,17 @@ export default function CheckoutPage() {
               />
             )}
 
-            {step === "payment" && (
+            {step === "payment" && !PAGO_CON_TARJETA && (
+              <PagoTarjetaNoDisponible
+                mensaje={[
+                  "Hola, quiero hacer este pedido en pauhenriques.com:",
+                  ...items.map((i) => `• ${i.quantity}× ${i.name} — ${(i.price * i.quantity).toFixed(2)}`),
+                  `Total con IVA: ${total.toFixed(2)}`,
+                  shipping ? `Entregar a: ${shipping.fullName}, ${shipping.address}, ${shipping.city}, ${shipping.province} · ${shipping.phone}` : "",
+                ].filter(Boolean).join(String.fromCharCode(10))}
+              />
+            )}
+            {step === "payment" && PAGO_CON_TARJETA && (
               <CheckoutPaymentStep
                 user={user}
                 paymentMode={paymentMode}
