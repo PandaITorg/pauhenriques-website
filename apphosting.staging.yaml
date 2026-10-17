@@ -6,6 +6,9 @@
 runtime: "nodejs18"
 
 env:
+  # Staging cobra con el sandbox de Nuvei: la tarjeta sigue encendida.
+  - variable: NEXT_PUBLIC_PAGO_CON_TARJETA
+    value: "true"
   # Nuvei Payment Gateway — STAGING credentials (test cards only, no real charges)
   # Credenciales reales de desarrollo del proyecto, entregadas por Nuvei/Paymentez.
   - variable: NEXT_PUBLIC_NUVEI_CLIENT_APP_CODE
