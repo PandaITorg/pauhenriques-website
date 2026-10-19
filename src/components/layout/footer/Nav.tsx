@@ -3,7 +3,7 @@ import Link from "next/link";
 const Nav = () => {
   const links = [
     { href: "/", text: "Inicio" },
-    { href: "/tienda", text: "Tienda" },
+    { href: "https://wellme.ec/tienda", text: "Tienda" },
     { href: "/podcast", text: "Podcast" },
     { href: "/sobre-mi", text: "Sobre Mi" },
   ];

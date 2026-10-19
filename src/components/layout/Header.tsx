@@ -8,7 +8,6 @@ import Image from "next/image";
 import logo from "@/assets/pauhenriques-lightest-green.png";
 import DesktopNav from "@/components/layout/header/DesktopNav";
 import MobileMenu from "@/components/layout/header/MobileMenu";
-import CartIcon from "@/components/cart/CartIcon";
 import { useAuth } from "@/context/AuthContext";
 
 const Header = () => {
@@ -21,8 +20,9 @@ const Header = () => {
 
   const navLinks = [
     { href: "/podcast", text: "Podcast" },
-    { href: "/tienda", text: "Tienda" },
-    { href: "/plan-novios", text: "Plan Novios" },
+    // La tienda y el plan de novios se mudaron a Well Me (2026-10-19).
+    { href: "https://wellme.ec/tienda", text: "Tienda" },
+    { href: "https://wellme.ec/plan-novios", text: "Plan Novios" },
     { href: "/sobre-mi", text: "Sobre Mi" },
   ];
 
@@ -100,7 +100,6 @@ const Header = () => {
 
         {/* Right actions */}
         <div className="flex items-center gap-2 md:gap-3">
-          <CartIcon />
 
           {!loading && (
             <>
