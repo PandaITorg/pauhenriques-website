@@ -11,6 +11,7 @@ import type { User } from "firebase/auth";
 import { getClientAuth } from "@/lib/firebase-auth";
 import { z } from "zod";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import CodigoAccesoForm from "@/components/auth/CodigoAccesoForm";
 import { useAuth } from "@/context/AuthContext";
 import { getRoleFromClaims } from "@/lib/auth/roles";
 import { computePostLoginRedirect } from "@/lib/auth/postLoginRedirect";
@@ -116,6 +117,11 @@ function SignInContent() {
   // En ese caso no auto-redirigimos — mostramos UI con botón de cerrar
   // sesión para que pueda salir del estado "stuck".
   const [blockedNoRole, setBlockedNoRole] = useState(false);
+  // En el panel (admin.*) se entra por defecto con un código al correo; la contraseña queda de respaldo.
+  const [conCodigo, setConCodigo] = useState(false);
+  useEffect(() => {
+    setConCodigo(window.location.hostname.startsWith("admin."));
+  }, []);
 
   // Si Firebase client ya tiene un user pero no hay session cookie server-side,
   // sincronizar la cookie ANTES de redirigir. Evita loop /sign-in ↔ /admin.
@@ -294,6 +300,19 @@ function SignInContent() {
           Ingresa a tu cuenta para continuar
         </p>
 
+        {conCodigo ? (
+          <>
+            <CodigoAccesoForm />
+            <button
+              type="button"
+              onClick={() => setConCodigo(false)}
+              className="block w-full mt-6 text-xs text-text-main/45 hover:text-primary transition-colors"
+            >
+              Entrar con contraseña
+            </button>
+          </>
+        ) : (
+        <>
         {/* Google Sign In */}
         <GoogleSignInButton
           mode="signin"
@@ -433,6 +452,8 @@ function SignInContent() {
             )}
           </button>
         </form>
+        </>
+        )}
 
         {/* Footer */}
         <p className="text-center mt-6 text-sm text-text-main/45">

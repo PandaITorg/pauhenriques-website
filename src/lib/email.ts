@@ -608,6 +608,31 @@ export async function sendPaymentFailed(
   }
 }
 
+/** Código de un solo uso para entrar al panel. El fallo se registra, nunca se revela a quien lo pidió. */
+export async function sendAdminAccessCode(params: {
+  to: string;
+  codigo: string;
+  vigenciaMin: number;
+}): Promise<{ success: boolean }> {
+  if (!resend) {
+    console.error("[email] RESEND_API_KEY no configurada — no sale el código de acceso");
+    return { success: false };
+  }
+  const { error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: params.to,
+    subject: `Tu código para entrar al panel de Pau Henriques: ${params.codigo}`,
+    html: `<p style="font-family:sans-serif">Tu código para entrar al panel de Pau Henriques es:</p>
+      <p style="font-family:sans-serif;font-size:28px;letter-spacing:6px;font-weight:bold;color:#778a63">${params.codigo}</p>
+      <p style="font-family:sans-serif;color:#6b6b6b">Vence en ${params.vigenciaMin} minutos. Si no lo pediste, ignora este correo.</p>`,
+  });
+  if (error) {
+    console.error("[email] No se pudo enviar el código de acceso:", error);
+    return { success: false };
+  }
+  return { success: true };
+}
+
 function buildFailedHtml(params: PaymentFailedParams): string {
   const retryUrl = params.retryUrl || "${retryUrl}";
   const itemsHtml = params.items
