@@ -5,9 +5,10 @@ runtime: "nodejs18"
 
 env:
   # Cobro con tarjeta (src/lib/pago-tarjeta.ts). "false" = checkout, plan de novios y
-  # enlaces de pago ofrecen WhatsApp. Nuvei desactivó PAUHENRIQUES-EC-SERVER el 2026-10-17.
+  # enlaces de pago ofrecen WhatsApp. Nuvei desactivó PAUHENRIQUES-EC-SERVER el 2026-10-17
+  # y lo reactivó el 2026-10-19.
   - variable: NEXT_PUBLIC_PAGO_CON_TARJETA
-    value: "false"
+    value: "true"
   # Firebase Client SDK (NEXT_PUBLIC_*) - Públicas
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
     value: "AIzaSyCyDfV6yXA4-y2JSxniSdPU3RDwNTUEQEQ"
