@@ -5,17 +5,98 @@
 ## A. Identidad Panda OS
 
 - Este repo es un **proyecto Panda OS**. Su `id` se estampa al inicio del bloque (ej. `id: carico`).
-- Tu **estado, roadmap y bitácora viven FUERA del repo**, en
-  `C:\Users\andre\PandaIT\Panda-OS\bitacoras\<id>.md`, y los maneja **el cierre de jornada** (CLAUDE §5).
+- Tu **estado, roadmap y bitácora viven FUERA del repo**, en `bitacoras/<id>.md` dentro de Panda OS,
+  y los maneja **el cierre de jornada** (CLAUDE §5). La ruta absoluta no va aquí a propósito: cada
+  máquina resuelve sus carpetas por área desde el 21-sep, y una ruta fija en un documento que se
+  estampa en diecisiete repos es una ruta que caduca en dieciséis. Da igual: **no la tocas**.
 - **Regla de carril (innegociable):** NO edites la bitácora ni `Roadmaps/`. No son tuyos.
-  Tu único canal de "reporte" es el **commit**. *El Coder codea; el Líder cierra.*
+  Tu único canal de "reporte" es el **commit**. *Aquí se construye; el cierre es de otro turno.*
 
-## B. Reparto Líder ↔ Coder
+## B. Quién escribe el plan y quién lo ejecuta
 
-- **El Líder diseña:** escribe `docs/` (`ARCHITECTURE.md`, `SCHEMA.md`, `ROADMAP.md`) y redacta
+Es la misma IA en los dos lados, y por eso importa que el reparto esté escrito: sin él, el turno
+que construye empieza a rediseñar sobre la marcha y nadie se entera hasta el PR.
+
+- **El turno que planea** escribe `docs/` (`ARCHITECTURE.md`, `SCHEMA.md`, `ROADMAP.md`) y redacta
   los briefs numerados en `prompts/NN-*.md`, con `refs:` y `acceptance:`.
-- **El Coder ejecuta:** lee `docs/` **primero**, ejecuta el brief indicado, y no inventa arquitectura.
-- Si el Coder detecta que el plan está mal o incompleto, **lo dice** (no lo cambia en silencio).
+- **El turno que construye** lee `docs/` **primero**, ejecuta el brief indicado, y no inventa
+  arquitectura.
+- Si al construir se ve que el plan está mal o incompleto, **se dice** (no se cambia en silencio).
+
+## B-bis. La Orden de Desarrollo — EN PAUSA desde el 2026-09-25
+
+> ### ⛔ NO PIDAS UNA ORDEN. NO TE DETENGAS POR ELLA.
+>
+> **Andrés dejó de usar Órdenes de Desarrollo el 2026-09-25** y decidió trabajar directo desde
+> Claude Code. Si te describe lo que quiere, **constrúyelo**: no hay Orden que redactar, ni
+> `puedeTrabajar` que consultar, ni firma que esperar.
+>
+> Esta sección se queda —en vez de borrarse— porque el mecanismo existe y puede volver. Lo que
+> sigue describe cómo funcionaba, **no lo que hay que hacer hoy**.
+
+**Por qué este aviso ocupa tanto espacio.** Lo encontró la sesión de Tálou el 2026-09-29, cuatro
+días después de la revocación, leyendo el `AGENTS.md` recién estampado en su repo. Su diagnóstico
+vale más que la corrección:
+
+> *"Ese texto no solo está obsoleto: le da a la próxima sesión una razón citada para detenerse.
+> Alguien abre el repo, lee «nada se construye sin una Orden», ve a Andrés citado con fecha, y se
+> para a pedirle una Orden que él decidió no volver a usar. Es el peor tipo de instrucción vieja:
+> la que suena autorizada."*
+
+Una regla vieja que se lee como invento se descarta sola. Una que viene **citada, fechada y firmada
+por quien manda** se obedece — y frena trabajo que nadie quería frenar, en catorce repos a la vez.
+
+### Cómo funcionaba (por si vuelve)
+
+La cita que la sostenía, **superada**: Andrés, 2026-09-23: *"NADA se despacha sin una orden de
+desarrollo. La orden de desarrollo es la que manda. No hago micro cambios sino un proceso con
+objetivo, y la agencia se encarga de cumplirlo."*
+
+El mecanismo: `GET http://localhost:4317/api/orden?id=<id>` (cabecera `x-panda-token`) respondía
+`puedeTrabajar` y, si era `false`, `porQueNo` — distinguiendo "no hay Orden" de "hay una y falta que
+Andrés la firme". El primer entregable ante un encargo nuevo era la Orden, no el código.
+
+**Por qué existía.** La etapa dice que el proyecto PUEDE trabajar; la Orden decía QUÉ trabajo es.
+Sin ella, "se pasó del alcance" no se puede afirmar ni negar, porque no hay alcance contra el que
+medirlo. El 21-sep eso costó $87.51 en 80 minutos, y el 78% fue trabajo que nadie pidió.
+
+Ese problema **no desapareció con la pausa**: lo que cambió es quién pone el alcance. Andrés
+trabajando directo desde Claude Code lo pone él, en la conversación, y lo corrige al momento — que
+es más rápido y más fino que un documento firmado, mientras él esté delante. La Orden era el
+sustituto para cuando no lo estaba.
+
+**Qué la compone.** Un `objetivo` (para qué se hace, en una frase: lo que se tiene que poder
+responder al terminar, se cumplió o no), las `secciones` (las piezas, cada una será un hito), el
+`plazoDias` y —el campo que más ahorra— `fuera`: lo que explícitamente NO entra. Los briefs de
+`prompts/NN-*.md` son pedazos de una Orden, nunca su reemplazo.
+
+**Cuándo la escribes tú.** Cuando Andrés te describa lo que quiere de este proyecto. Él cuenta el
+objetivo; la Orden la redactas tú, que para eso leíste el código. No le pidas que la escriba.
+
+**Cómo se escribe.** Nunca a mano en `ordenes/`: se pide al server, que valida y versiona.
+
+```
+POST http://localhost:4317/api/orden/generar
+cabecera:  x-panda-token: <contenido de Panda-OS/.panda-token>
+cuerpo:    { "id": "<id del proyecto>", "datos": {
+             "cliente": "Panda IT", "total": 0,
+             "objetivo": "...", "plazoDias": 5,
+             "secciones": [{ "nombre": "...", "incluye": "...", "precio": 0 }],
+             "fuera": ["..."] } }
+```
+
+Dentro de Panda OS, el turno del proyecto tiene la tool `redactar_orden`, que hace esta misma llamada.
+
+**Queda SIN APROBAR, y eso es literal.** La orden nueva abre una tarjeta en la pantalla *Me toca a
+mí* de Andrés. Hasta que él la firme con su PIN, la agencia no despacha nada de ese proyecto. Tu
+trabajo al redactarla termina en decírselo: *"la Orden vN está escrita y te espera en Me toca a
+mí"*. No le pidas que corra nada.
+
+**Lo que NO haces nunca:** escribir o editar el campo `aprobada` de un `ordenes/orden-vN.json`, ni
+llamar a `/api/batones/<id>/accion` para aprobarla. Esa firma pide el PIN humano, que es la única
+credencial que un turno headless no puede conseguir — justamente para que la autorización no pueda salir de
+quien quiere gastar. Un archivo editado a mano no es una firma: es el agujero que el PIN cierra.
+Si te falta la Orden para avanzar, redáctala y espera; no la apruebes.
 
 ## C. Git, ramas y Pull Requests
 
@@ -122,7 +203,7 @@ convención; no hace falta re-auditar a mano. El nombre y la ruta son fijos para
 | **Service account de Google/Firebase** | `serviceAccountKey.json` en la **raíz del repo**, gitignored | `GOOGLE_APPLICATION_CREDENTIALS` → `admin.initializeApp()` por ADC |
 | **Env de producción** | `.env.production.local` (raíz), gitignored | el provisionador / runtime |
 | **Acceso SSH al VPS** | `.env.vps-access.local` (raíz), gitignored | deploy remoto |
-| **Secretos a disco para el Coder** | carpeta `deploy-secrets/` (raíz), gitignored, vía SEC1 | materializados efímeros para deploy |
+| **Secretos a disco para el deploy** | carpeta `deploy-secrets/` (raíz), gitignored, vía SEC1 | materializados efímeros para deploy |
 
 - **Descriptor por proyecto:** `Panda-OS/credentials.json` (hermano de `projects.json`, NO dentro de él —
   el generador de roadmaps regenera `projects.json` y pisaría campos a mano). Mapa `{ <id>: [ {kind, file,
@@ -150,7 +231,7 @@ convención; no hace falta re-auditar a mano. El nombre y la ruta son fijos para
 ## I. Estructura estándar del repo
 
 ```
-docs/        → diseño (lo escribe el Líder): ARCHITECTURE, SCHEMA, ROADMAP
+docs/        → diseño (lo escribe el turno que planea): ARCHITECTURE, SCHEMA, ROADMAP
 prompts/     → instrucciones numeradas para Code (NN-nombre.md)
 CLAUDE.md    → import a @AGENTS.md
 AGENTS.md    → reglas de agente; aquí se inyecta el bloque Panda OS (entre marcadores BEGIN/END)
@@ -172,7 +253,7 @@ construir, y mantén los archivos modulares.
   está escrita aquí y se estampa en el `AGENTS.md` de cada repo.
 - **No monolitos.** Ningún archivo de lógica debería pasar de **~400 líneas**; si pasa, es señal de partirlo en
   módulos por responsabilidad. Refactorizar mientras construyes es trabajo normal, no extra.
-- **El Arquitecto es el guardián (con Opus).** Puede auditar cualquier proyecto, identificar monolitos y
+- **El turno del proyecto es el guardián (con Opus).** Puede auditar cualquier proyecto, identificar monolitos y
   sobre-ingeniería (incluido `/ponytail-audit`), y proponer/ejecutar refactors seguros sin romper comportamiento.
 
 ## J-bis. El silencio es el fallo (estándar global)
@@ -193,6 +274,34 @@ completa es **ley del taller** (`CLAUDE.md §18`); esto es lo que aplica dentro 
 - **Lo que una pantalla promete, otra lo cumple.** Dos módulos correctos por separado pueden mentir juntos; ese
   contrato no vive en ninguno de los dos archivos y necesita su propia prueba.
 
+## J-ter. Selector de día y hora (estándar global)
+
+Andrés, 2026-10-21: este es el selector de **todos** los proyectos. Va en cada pantalla donde alguien
+elige un día y una hora cercanos: citas, visitas, reservas, recordatorios. Nació en el Call Center de
+Carico. El principio: **nunca se obliga a navegar un calendario.**
+
+- **Nunca** `<input type="date">`, `<input type="time">` ni librerías de calendario.
+- **La semana va en una fila**, de lunes a sábado, con flechas ‹ › para cambiar de semana. Cada botón
+  lleva el día abreviado y un número grande. El de hoy dice "hoy".
+- **La hora va en números grandes** (9 a 18) y, aparte, `:00` / `:30`. La última hora no lleva `:30`.
+- **No se ofrece lo que ya pasó**: ni días ni horas pasadas. La hora queda deshabilitada hasta elegir día.
+- **Al editar**, abre en la semana guardada y con la selección marcada. Si lo guardado ya pasó, igual
+  se ve: un campo que no muestra lo que tiene guardado miente.
+- **Cada proyecto ajusta** el rango de horas, si entra el domingo y los colores del cliente. La forma no cambia.
+
+No se escribe de cero. Se copia una de estas dos:
+
+- **React/Tailwind:** `carico-ecuador` → `packages/ui/src/components/selector-dia-hora.tsx`
+- **JS sin framework:** `cartera-clientes` → `public/selector.js` (sus estilos `.sel-*` están en
+  `public/index.html` del mismo proyecto)
+
+Dos casos donde la fila de la semana no sirve (afinado el 2026-10-22):
+
+- **Fecha lejana o sin tope** (un cupón hasta diciembre): primero atajos —"hoy", "en 7 días", "en 30
+  días", "fin de mes", "sin caducidad"— y la semana detrás. Copia: `talou-ec` →
+  `apps/admin/src/components/ui/CampoFecha.tsx`.
+- **Fecha vieja** (nacimiento, una factura del año pasado): un campo para escribirla.
+
 ## K. Comandos remotos (VPS) seguros — bounded, nunca streaming
 
 Code puede SSH-ear a un VPS para deploy/diagnóstico (`ssh`/`scp`/`sftp`/`rsync` están en el floor). Regla dura para
@@ -207,15 +316,27 @@ que un run headless **no se cuelgue** esperando un stream infinito:
   VPS en `known_hosts`. `accept-new` la acepta en la primera conexión sin desactivar la verificación en las siguientes.
 - **El deploy a producción sigue gateado** por el DENY floor + el OK de Andrés. Los secretos (`.env*`,
   `deploy-secrets/`) siguen denegados a lectura de Code — el puente SEC los entrega como env/archivo efímero.
-- **El floor no lo edita el Coder.** Cambiar `generate-permissions.mjs` es privilegiado; un run headless tiene
+- **El floor no se edita desde un run headless.** Cambiar `generate-permissions.mjs` es privilegiado; un run headless tiene
   ese archivo en `deny` a propósito (no se auto-otorga permisos). Si falta un permiso productivo, se agrega a
-  `ALLOW_BASE` desde una sesión interactiva y se regenera — nunca el Coder headless en caliente.
+  `ALLOW_BASE` desde una sesión interactiva y se regenera — nunca desde el run headless en caliente.
+- **`.claude/settings.json` SE VERSIONA; `.claude/settings.local.json` NUNCA.** El primero es el piso de
+  permisos, sale del generador y es igual en todos los repos, así que viaja con el repo. El segundo es de la
+  MÁQUINA —recoge lo que alguien aprobó a mano ahí— y si viajara, un permiso puntual de un equipo acabaría
+  siendo el default de todos. Un `.claude` a secas en el `.gitignore` tapa los dos: el generador lo convierte
+  en la regla fina. Ojo: un `.gitignore` **no** saca de git lo que ya está trackeado — eso se quita con
+  `git rm --cached`, y el generador lo avisa cuando lo detecta.
+- **`defaultMode: acceptEdits` lo hereda cualquiera que clone el repo**, y conviene decirlo aquí porque leyendo
+  el diff de ese archivo no salta: significa que un agente edita archivos sin pedir confirmación a cada paso.
+  Es la política de la casa, no un descuido — lo que la hace segura no es preguntar por cada edición (un
+  diálogo que siempre sale y siempre se acepta enseña a aceptar sin leer, §J-bis) sino el DENY floor, que gana
+  siempre y mantiene fuera secretos, deploys y destrucción. Lo hizo notar la sesión de Tálou al revisar su
+  propio `settings.json` antes de commitearlo, en vez de solo aceptarlo.
 
 ## L. Disciplina de diagnóstico — VERIFICADO vs HIPÓTESIS (R-config-externa)
 
 Nace del incidente del 28-jun-2026: ~3 horas perdidas persiguiendo causas falsas de un webhook que no recibía
 mensajes, cuando la causa real (un toggle por-WABA apagado en Meta) no era observable desde el código. Regla dura
-para no repetirlo: cuando el Arquitecto o el Coder reporten un diagnóstico —sobre todo de **config de paneles
+para no repetirlo: cuando PandAI reporte un diagnóstico —sobre todo de **config de paneles
 externos** (Meta/GitHub/Resend) que no se pueden ver desde aquí—:
 
 - **Etiqueta cada afirmación.** `VERIFICADO (corrí X y observé Y)` vs `HIPÓTESIS (no lo observo)`. Nunca presentes
