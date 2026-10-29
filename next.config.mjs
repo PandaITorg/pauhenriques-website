@@ -20,19 +20,19 @@ const nextConfig = {
     ],
   },
   // Desde el 2026-10-19 la tienda y el plan de novios viven en Well Me (wellme.ec); Pau se
-  // queda con los talleres. Redirecciones temporales (307) mientras se confirma que Well Me
-  // cobra bien; después pueden pasar a permanentes. Las rutas /api no se tocan: los avisos
-  // de Nuvei y el 3DS de pedidos viejos siguen llegando aquí.
+  // queda con los talleres. Permanentes (308) desde el 2026-10-29, cuando Well Me ya cobró y
+  // reembolsó de verdad: así Google pasa el posicionamiento a wellme.ec. Las rutas /api no se
+  // tocan: los avisos de Nuvei y el 3DS de pedidos viejos siguen llegando aquí.
   async redirects() {
     const WM = "https://wellme.ec";
     return [
-      { source: "/tienda", has: [{ type: "query", key: "tab", value: "catalogo" }], destination: `${WM}/carico`, permanent: false },
-      { source: "/tienda", destination: `${WM}/tienda`, permanent: false },
-      { source: "/tienda/:id", destination: `${WM}/tienda`, permanent: false },
-      { source: "/checkout", destination: `${WM}/tienda`, permanent: false },
-      { source: "/checkout/:path*", destination: `${WM}/tienda`, permanent: false },
-      { source: "/plan-novios", destination: `${WM}/plan-novios`, permanent: false },
-      { source: "/plan-novios/:path*", destination: `${WM}/plan-novios/:path*`, permanent: false },
+      { source: "/tienda", has: [{ type: "query", key: "tab", value: "catalogo" }], destination: `${WM}/carico`, permanent: true },
+      { source: "/tienda", destination: `${WM}/tienda`, permanent: true },
+      { source: "/tienda/:id", destination: `${WM}/tienda`, permanent: true },
+      { source: "/checkout", destination: `${WM}/tienda`, permanent: true },
+      { source: "/checkout/:path*", destination: `${WM}/tienda`, permanent: true },
+      { source: "/plan-novios", destination: `${WM}/plan-novios`, permanent: true },
+      { source: "/plan-novios/:path*", destination: `${WM}/plan-novios/:path*`, permanent: true },
     ];
   },
   // Allow cross-origin POST from bank ACS to 3DS callback
